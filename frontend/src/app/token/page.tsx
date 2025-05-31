@@ -29,7 +29,7 @@ export default function TokenPage() {
                 setAccessToken(token);
 
                 sessionStorage.setItem("accessToken", token);
-                router.push("/dashboard");
+                router.push('/dashboard') // Debug log
             } catch (err: unknown) {
                 console.error("Error retrieving access token:", err);
                 setError("Failed to retrieve access token");

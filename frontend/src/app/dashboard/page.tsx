@@ -13,10 +13,10 @@ export default function Dashboard() {
     useEffect(() => {
         async function fetchUser() {
             try {
-                const accessToken = localStorage.getItem("accessToken");
+                const accessToken = sessionStorage.getItem("accessToken");
                 const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`, { headers: { authorization: `Bearer ${accessToken}` }, }); // your backend route
                 setUser(response.data.data.user);
-     
+
                 setError(null);
             } catch (err) {
                 setError("Not authenticated. Please login.");
