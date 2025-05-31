@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { createWebhook } from "../utils/github-api.js";
+import { processPullRequest } from "../utils/processing.js";
 
 const prisma = new PrismaClient();
 const ghRepoRegex =
@@ -27,6 +28,7 @@ const getProjectDataHandler = async (req, res) => {
 
 const incomingProjectWebhookHandler = async (req, res) => {
     const { projectId } = req.params;
+    console.log(req.body);
 
     const project = await prisma.project.findUnique({
         where: { id: projectId },
@@ -41,7 +43,45 @@ const incomingProjectWebhookHandler = async (req, res) => {
     }
     const match = project.repoUrl.match(ghRepoRegex);
     const repo = `${match.groups.owner}/${match.groups.name}`;
-    console.log("Received webhook for repo: ", repo);
+
+    const githubEvent = req.headers["x-github-event"];
+    const { id: projectIdForLog } = project;
+
+    if (githubEvent === "push") {
+        const ref = req.body.ref;
+        if (ref) {
+            const branch = ref.split("/").pop();
+            if (branch === "main" || branch === "master") {
+                console.log(`Processing ${projectIdForLog}`);
+            } else {
+                console.log(
+                    `Push event on branch '${branch}' for project ${projectIdForLog}. Not the main/default branch.`,
+                );
+            }
+        } else {
+            console.log(
+                `Push event for project ${projectIdForLog}, but ref is missing in payload.`,
+            );
+        }
+    } else if (githubEvent === "pull_request") {
+        const pullRequestAction = req.body.action;
+        console.log(
+            `Pull request event (action: ${pullRequestAction}) for project ${projectIdForLog}. Logged accordingly.`,
+        );
+        processPullRequest(
+            projectId,
+            req.body.pull_request,
+            project.user.ghAccessToken,
+        );
+    } else if (githubEvent) {
+        console.log(
+            `Received unhandled event '${githubEvent}' for project ${projectIdForLog}.`,
+        );
+    } else {
+        console.log(
+            `Received webhook for project ${projectIdForLog} without 'x-github-event' header.`,
+        );
+    }
 
     return res.json({
         success: true,
@@ -94,6 +134,8 @@ const createProjectHandler = async (req, res) => {
         ghAccessToken,
         repo,
         "project",
+        false,
+        true,
     );
 
     res.json({

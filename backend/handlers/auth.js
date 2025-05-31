@@ -35,7 +35,7 @@ const githubCallbackHandler = async (req, res) => {
         });
     }
     const userData = {
-        name: userDataResponse.data.name,
+        name: userDataResponse.data.name ?? userDataResponse.data.login,
         ghUsername: userDataResponse.data.login,
         avatarUrl: userDataResponse.data.avatar_url,
         ghId: userDataResponse.data.id,

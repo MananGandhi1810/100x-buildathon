@@ -41,13 +41,20 @@ const getUserEmails = async (token) => {
     });
 };
 
-const createWebhook = async (id, token, repo, path, hooks = false) => {
+const createWebhook = async (
+    id,
+    token,
+    repo,
+    path,
+    hooks = false,
+    pull = false,
+) => {
     return await axios.post(
         `https://api.github.com/repos/${repo}/hooks`,
         {
             name: "web",
             active: true,
-            events: ["push"],
+            events: ["push", ...(pull ? ["pull_request"] : [])],
             config: {
                 url: `${process.env.BACKEND_URL}/${path}/${id}/${hooks ? "hooks" : ""}`,
                 content_type: "json",
@@ -77,10 +84,70 @@ const getUserRepositories = async (token) => {
     });
 };
 
+const getPRDiff = async (owner, repoName, prNumber, token) => {
+    const url = `https://api.github.com/repos/${owner}/${repoName}/pulls/${prNumber}`;
+    return await axios.get(url, {
+        headers: {
+            Accept: "application/vnd.github.v3.diff",
+            Authorization: `Bearer ${token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        validateStatus: false,
+    });
+};
+
+const getRepoArchive = async (
+    owner,
+    repoName,
+    ref,
+    token,
+    format = "zipball",
+) => {
+    const url = `https://api.github.com/repos/${owner}/${repoName}/${format}/${ref}`;
+    return await axios.get(url, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        responseType: "arraybuffer",
+        validateStatus: false,
+    });
+};
+
+const getFileTree = async (owner, repoName, treeSha, branchName, token) => {
+    const url = `https://api.github.com/repos/${owner}/${repoName}/git/trees/${treeSha}?recursive=true`;
+    const result = await axios.get(url, {
+        headers: {
+            Accept: "application/vnd.github.v3+json",
+            Authorization: `Bearer ${token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        validateStatus: false,
+    });
+
+    if (result.status >= 400) {
+        return null;
+    }
+
+    if (!result.data || !result.data.tree) {
+        return null;
+    }
+
+    const tree = result.data.tree.map((element) => {
+        return { path: element.path, type: element.type };
+    });
+
+    set(`file-tree:${repoName}/${branchName}`, JSON.stringify(tree), 10 * 60);
+    return JSON.stringify(tree);
+};
+
 export {
     getAccessToken,
     getUserDetails,
     getUserEmails,
     createWebhook,
     getUserRepositories,
+    getPRDiff,
+    getRepoArchive,
+    getFileTree,
 };

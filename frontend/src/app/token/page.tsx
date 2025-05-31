@@ -6,7 +6,7 @@ import axios from "axios";
 
 // Add interface for the response data
 interface TokenResponse {
-  access_token: string;
+  accessToken: string;
   token_type: string;
   scope: string;
 }
@@ -41,8 +41,8 @@ export default function TokenPage() {
 
         const data: TokenResponse = response.data.data;
 
-        if (data.access_token) {
-          const token = data.access_token;
+        if (data.accessToken) {
+          const token = data.accessToken;
           sessionStorage.setItem("accessToken", token);
           router.push("/dashboard");
         } else {
