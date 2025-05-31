@@ -1,8 +1,0 @@
-import { ArrayReply, BlobStringReply } from '../RESP/types';
-declare const _default: {
-    readonly IS_READ_ONLY: false;
-    readonly parseCommand: (this: void, parser: import("../..").CommandParser, key: import("../RESP/types").RedisArgument, group: import("../RESP/types").RedisArgument, consumer: import("../RESP/types").RedisArgument, minIdleTime: number, id: import("./generic-transformers").RedisVariadicArgument, options?: import("./XCLAIM").XClaimOptions | undefined) => void;
-    readonly transformReply: () => ArrayReply<BlobStringReply>;
-};
-export default _default;
-//# sourceMappingURL=XCLAIM_JUSTID.d.ts.map
