@@ -4,7 +4,6 @@ import { Separator } from "@/components/ui/separator";
 
 interface Cta4Props {
   title?: string;
-  description?: string;
   buttonText?: string;
   buttonUrl?: string;
   items?: string[];
@@ -20,7 +19,6 @@ const defaultItems = [
 
 const Cta4 = ({
   title = "Call to Action",
-  description = "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Architecto illo praesentium nisi, accusantium quae.",
   buttonText = "Get Started",
   buttonUrl = "https://shadcnblocks.com",
   items = defaultItems,
@@ -35,8 +33,8 @@ const Cta4 = ({
                 <h4 className="text-3xl font-medium tracking-tight md:text-4xl">
                   {title}
                 </h4>
-                <p className="text-muted-foreground text-lg leading-relaxed">
-                  {description}
+                <p className="text-lg text-muted-foreground">
+                  Let&apos;s build something amazing together
                 </p>
               </div>
               <Button size="lg" className="group" asChild>
@@ -49,7 +47,7 @@ const Cta4 = ({
             <div className="md:w-1/3">
               <Separator className="my-6 md:hidden" />
               <div className="space-y-6">
-                <h5 className="text-lg font-medium">What's included:</h5>
+                <h5 className="text-lg font-medium">What&apos;s included:</h5>
                 <ul className="flex flex-col space-y-4 text-base">
                   {items.map((item, idx) => (
                     <li className="flex items-center gap-3 group" key={idx}>

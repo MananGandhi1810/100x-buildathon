@@ -4,6 +4,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
+// Add interface for the response data
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  scope: string;
+}
+
+// Add error type
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function TokenPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -22,17 +39,22 @@ export default function TokenPage() {
           }
         );
 
-        if (response.data?.data?.accessToken) {
-          const token = response.data.data.accessToken;
+        const data: TokenResponse = response.data.data;
+
+        if (data.access_token) {
+          const token = data.access_token;
           sessionStorage.setItem("accessToken", token);
           router.push("/dashboard");
         } else {
           throw new Error("No access token in response");
         }
-      } catch (err: any) {
-        console.error("Error retrieving access token:", err);
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        console.error("Error retrieving access token:", error);
         setError(
-          err.response?.data?.message || "Failed to retrieve access token"
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to retrieve access token"
         );
         // Redirect back to signup after 3 seconds
         setTimeout(() => {
