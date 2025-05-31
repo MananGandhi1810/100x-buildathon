@@ -21,71 +21,25 @@ interface PricingPlan {
   isPopular?: boolean;
 }
 
-const Pricing4 = () => {
-  const [isAnnually, setIsAnnually] = useState(false);
+interface Pricing4Props {
+  title: string;
+  description: string;
+  plans: PricingPlan[];
+}
 
-  const plans: PricingPlan[] = [
-    {
-      name: "Developer",
-      price: {
-        monthly: 29,
-        yearly: 290,
-      },
-      description: "Perfect for individual developers and small projects",
-      features: [
-        "5 repositories",
-        "README Generator",
-        "Basic vulnerability scanning",
-        "Code structure visualization",
-        "Community support",
-      ],
-    },
-    {
-      name: "Team",
-      price: {
-        monthly: 89,
-        yearly: 890,
-      },
-      description: "Ideal for growing development teams",
-      features: [
-        "25 repositories",
-        "All AI-powered features",
-        "Advanced PR analysis",
-        "Chat with Code (500 queries/month)",
-        "Deploy with Chat",
-        "Priority support",
-      ],
-      badge: "Most Popular",
-      isPopular: true,
-    },
-    {
-      name: "Enterprise",
-      price: {
-        monthly: 0,
-        yearly: 0,
-      },
-      description: "For large organizations with advanced needs",
-      features: [
-        "Unlimited repositories",
-        "Custom AI model training",
-        "Advanced security compliance",
-        "Dedicated success manager",
-        "SLA guarantees",
-        "On-premise deployment",
-      ],
-    },
-  ];
+const Pricing4 = ({ title, description, plans }: Pricing4Props) => {
+  const [isAnnually, setIsAnnually] = useState(false);
 
   return (
     <section className="py-32">
       <div className="container">
         <div className="mx-auto flex max-w-7xl flex-col gap-6">
           <h2 className="text-4xl font-bold text-pretty lg:text-6xl">
-            Simple, transparent pricing
+            {title}
           </h2>
           <div className="flex flex-col justify-between gap-10 md:flex-row">
             <p className="max-w-3xl text-muted-foreground lg:text-xl">
-              Choose the plan that fits your team size and needs
+              {description}
             </p>
             <div className="flex h-11 w-fit shrink-0 items-center rounded-md bg-muted p-1 text-lg">
               <RadioGroup

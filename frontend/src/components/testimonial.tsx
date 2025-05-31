@@ -1,16 +1,7 @@
 "use client";
 
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
-import { useEffect, useState } from "react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import type { CarouselApi } from "@/components/ui/carousel";
 
 interface Testimonial {
   name: string;
@@ -33,97 +24,73 @@ const defaultTestimonials: Testimonial[] = [
     role: "Engineering Manager",
     company: "TechCorp",
     content:
-      "Our team's velocity increased by 40% after implementing this platform. The AI insights are incredibly accurate and save us hours of code review time.",
+      "CodeAI has transformed our development workflow. The automated code review and documentation features have increased our team's velocity by 40%.",
     rating: 5,
-    avatar: "/images/avatars/sarah-chen.jpg",
+    avatar: "https://github.com/shadcn.png",
   },
   {
     name: "Michael Rodriguez",
     role: "Senior Full-Stack Developer",
     company: "TechCorp",
     content:
-      "The vulnerability scanner caught critical security issues we missed in manual reviews. It's like having a security expert on the team 24/7.",
+      "The vulnerability scanner is incredibly effective. It caught several security issues in our codebase that we would have missed otherwise.",
     rating: 5,
-    avatar: "/images/avatars/michael-rodriguez.jpg",
+    avatar: "https://github.com/shadcn.png",
   },
   {
     name: "Emily Watson",
     role: "CTO",
     company: "StartupXYZ",
     content:
-      "Chat with Code feature is revolutionary. Our junior developers can now understand legacy codebases in minutes instead of days.",
+      "The 'Chat with Code' feature is revolutionary. Our junior developers can now understand and modify complex codebases with confidence.",
     rating: 5,
-    avatar: "/images/avatars/emily-watson.jpg",
+    avatar: "https://github.com/shadcn.png",
   },
 ];
 
 const Testimonial14 = ({
-  title = "Loved by developers worldwide",
-  description = "See what our community is saying",
+  title = "Trusted by Developers Worldwide",
+  description = "Join thousands of developers who are shipping better code, faster with AI-powered development tools.",
   testimonials = defaultTestimonials,
 }: Testimonial14Props) => {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    if (!api) {
-      return;
-    }
-
-    const updateCurrent = () => {
-      setCurrent(api.selectedScrollSnap());
-    };
-
-    api.on("select", updateCurrent);
-    return () => {
-      api.off("select", updateCurrent);
-    };
-  }, [api]);
-
   return (
     <section className="py-32">
-      <div className="container">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold text-pretty lg:text-6xl">
-              {title}
-            </h2>
-            <p className="mt-4 text-muted-foreground lg:text-xl">
-              {description}
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="flex flex-col gap-6 rounded-lg border p-6"
-              >
-                <div className="flex items-center gap-4">
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                    />
-                  </Avatar>
-                  <div>
-                    <h4 className="font-semibold">{testimonial.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {testimonial.role} at {testimonial.company}
-                    </p>
-                  </div>
+      <div className="container mx-auto">
+        <div className="mb-12 text-center">
+          <h2 className="text-4xl font-bold mb-4">{title}</h2>
+          <p className="text-muted-foreground text-lg">{description}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {testimonials.map((testimonial, index) => (
+            <div
+              key={index}
+              className="bg-card rounded-lg p-6 shadow-lg border border-border/40"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <Avatar>
+                  <AvatarImage
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                  />
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold">{testimonial.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {testimonial.role} at {testimonial.company}
+                  </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="size-5 fill-yellow-400 text-yellow-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground">{testimonial.content}</p>
               </div>
-            ))}
-          </div>
+              <div className="flex gap-1 mb-4">
+                {Array.from({ length: testimonial.rating }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                  />
+                ))}
+              </div>
+              <p className="text-muted-foreground">{testimonial.content}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
