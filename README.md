@@ -8,3 +8,4 @@
 5. Deploy with Chat
 6. Code Structure Visualization
 7. Automated Testing
+8. Development Environment Provisioning

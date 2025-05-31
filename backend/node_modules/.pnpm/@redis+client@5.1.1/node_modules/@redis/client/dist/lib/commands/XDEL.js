@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = {
+    IS_READ_ONLY: false,
+    parseCommand(parser, key, id) {
+        parser.push('XDEL');
+        parser.pushKey(key);
+        parser.pushVariadic(id);
+    },
+    transformReply: undefined
+};
+//# sourceMappingURL=XDEL.js.map
