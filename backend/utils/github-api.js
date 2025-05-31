@@ -41,7 +41,7 @@ const getUserEmails = async (token) => {
     });
 };
 
-const createWebhook = async (id, token, repo) => {
+const createWebhook = async (id, token, repo, path, hooks = false) => {
     return await axios.post(
         `https://api.github.com/repos/${repo}/hooks`,
         {
@@ -49,7 +49,7 @@ const createWebhook = async (id, token, repo) => {
             active: true,
             events: ["push"],
             config: {
-                url: `${process.env.BACKEND_URL}/webhook/${id}/`,
+                url: `${process.env.BACKEND_URL}/${path}/${id}/${hooks ? "hooks" : ""}`,
                 content_type: "json",
                 insecure_ssl: "0",
             },

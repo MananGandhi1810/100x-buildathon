@@ -1,0 +1,51 @@
+### Trigger a new deployment for a project
+# @name triggerDeployment
+# Note: The current /deploy/new endpoint seems to be for creating a new project definition,
+# not for triggering a deployment of an existing project. 
+# This request is based on the previous understanding of a deployment trigger.
+# You might need to adjust the endpoint or create a new one if this is not the desired behavior.
+POST http://localhost:8000/deployment/new
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro
+
+{
+    "name": "express-auth-template-deployment",
+    "githubUrl": "MananGandhi1810/express-auth-template",
+    "framework": "Express",
+    "branch": "main",
+    "path": ".",
+    "envSecrets": [
+        {"key": "NODE_ENV", "value": "production"},
+        {"key": "JWT_SECRET", "value": "a_very_secure_secret_for_deployment"}
+    ]
+}
+
+### Get all deployments (projects)
+# @name getAllDeployments
+GET http://localhost:8000/deployment/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro
+
+### Get deployment (project) by ID
+# @name getDeploymentById
+GET http://localhost:8000/deployment/540006
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro
+
+### Start a deployment (project's container)
+# @name startDeployment
+POST http://localhost:8000/deployment/540006/start
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro
+
+### Stop a deployment (project's container)
+# @name stopDeployment
+POST http://localhost:8000/deployment/540006/stop
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro
+
+### Get deployment (project) status
+# @name getDeploymentStatus
+GET http://localhost:8000/deployment/540006/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro
+
+### Get deployment (project) container port
+# @name getDeploymentPort
+GET http://localhost:8000/deployment/540006/port
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJjMTVnNXcwMDAwdHpqeXpseXFmMWx4Iiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDg2ODM3NTV9._FVpt6CdlB5fFa_I2Pbrr-YGI6HI6Yd7j1D1CQa_4Ro

@@ -8,6 +8,8 @@ import app from "../index.js";
 import http from "http";
 import https from "https";
 import fs from "fs";
+import { onQueueMessage } from "../utils/queue-manager.js";
+import { buildContainer } from "../deploy/deploy.js";
 
 /**
  * Get port from environment and store in Express.
@@ -40,6 +42,7 @@ if (
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
+onQueueMessage("deploy", (data, topic) => buildContainer(JSON.parse(data)));
 
 /**
  * Normalize a port into a number, string, or false.
