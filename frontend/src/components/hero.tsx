@@ -1,128 +1,108 @@
-import { ArrowDownRight, Star } from "lucide-react";
-
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import {
+  FaGoogle,
+  FaMicrosoft,
+  FaAmazon,
+  FaFacebook,
+  FaApple,
+} from "react-icons/fa";
 
 interface Hero3Props {
-  heading?: string;
-  description?: string;
-  buttons?: {
-    primary?: {
+  heading: string;
+  description: string;
+  buttons: {
+    primary: {
       text: string;
       url: string;
     };
-    secondary?: {
+    secondary: {
       text: string;
       url: string;
     };
   };
-  reviews?: {
+  reviews: {
     count: number;
+    rating: number;
     avatars: {
       src: string;
       alt: string;
     }[];
-    rating?: number;
   };
 }
 
-const Hero3 = ({
-  heading = "Blocks built with Shadcn & Tailwind",
-  description = "Finely crafted components built with React, Tailwind and Shadcn UI. Developers can copy and paste these blocks directly into their project.",
-  buttons = {
-    primary: {
-      text: "Sign Up",
-      url: "https://www.shadcnblocks.com",
-    },
-    secondary: {
-      text: "Get Started",
-      url: "https://www.shadcnblocks.com",
-    },
-  },
-  reviews = {
-    count: 200,
-    rating: 5.0,
-    avatars: [
-      {
-        src: "https://www.shadcnblocks.com/images/block/avatar-1.webp",
-        alt: "Avatar 1",
-      },
-      {
-        src: "https://www.shadcnblocks.com/images/block/avatar-2.webp",
-        alt: "Avatar 2",
-      },
-      {
-        src: "https://www.shadcnblocks.com/images/block/avatar-3.webp",
-        alt: "Avatar 3",
-      },
-      {
-        src: "https://www.shadcnblocks.com/images/block/avatar-4.webp",
-        alt: "Avatar 4",
-      },
-      {
-        src: "https://www.shadcnblocks.com/images/block/avatar-5.webp",
-        alt: "Avatar 5",
-      },
-    ],
-  },
-}: Hero3Props) => {
+const Hero3 = ({ heading, description, buttons, reviews }: Hero3Props) => {
+  const companyIcons = [
+    { icon: FaGoogle, color: "#4285F4" },
+    { icon: FaMicrosoft, color: "#00A4EF" },
+    { icon: FaAmazon, color: "#FF9900" },
+    { icon: FaFacebook, color: "#1877F2" },
+    { icon: FaApple, color: "#000000" },
+  ];
+
   return (
-    <section>
-      <div className="container grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
-        <div className="mx-auto flex flex-col items-center text-center md:ml-auto lg:max-w-3xl lg:items-start lg:text-left">
-          <h1 className="my-6 text-4xl font-bold text-pretty lg:text-6xl xl:text-7xl">
-            {heading}
-          </h1>
-          <p className="mb-8 max-w-xl text-muted-foreground lg:text-xl">
-            {description}
-          </p>
-          <div className="mb-12 flex w-fit flex-col items-center gap-4 sm:flex-row">
-            <span className="inline-flex items-center -space-x-4">
-              {reviews.avatars.map((avatar, index) => (
-                <Avatar key={index} className="size-12 border">
-                  <AvatarImage src={avatar.src} alt={avatar.alt} />
-                </Avatar>
-              ))}
-            </span>
-            <div>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, index) => (
-                  <Star
+    <section className="relative py-32">
+      <div className="container mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+            <h1 className="text-4xl font-bold mb-6 md:text-6xl lg:text-7xl">
+              {heading}
+            </h1>
+            <p className="text-muted-foreground text-lg mb-8 max-w-2xl">
+              {description}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+              {buttons.primary && (
+                <Button size="lg" asChild>
+                  <a href={buttons.primary.url}>{buttons.primary.text}</a>
+                </Button>
+              )}
+              {buttons.secondary && (
+                <Button size="lg" variant="outline" asChild>
+                  <a href={buttons.secondary.url}>{buttons.secondary.text}</a>
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-2">
+                {companyIcons.map(({ icon: Icon, color }, index) => (
+                  <div
                     key={index}
-                    className="size-5 fill-yellow-400 text-yellow-400"
-                  />
+                    className="relative w-10 h-10 rounded-full border-2 border-background overflow-hidden bg-white flex items-center justify-center"
+                  >
+                    <Icon className="w-6 h-6" style={{ color }} />
+                  </div>
                 ))}
-                <span className="mr-1 font-semibold">
-                  {reviews.rating?.toFixed(1)}
-                </span>
               </div>
-              <p className="text-left font-medium text-muted-foreground">
-                from {reviews.count}+ reviews
-              </p>
+              <div className="text-sm">
+                <span className="font-semibold">
+                  {reviews.count.toLocaleString()}
+                </span>{" "}
+                developers trust us
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.floor(reviews.rating) }).map(
+                    (_, i) => (
+                      <span key={i} className="text-yellow-400">
+                        ★
+                      </span>
+                    )
+                  )}
+                  <span className="text-muted-foreground">
+                    {reviews.rating.toFixed(1)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex w-full flex-col justify-center gap-2 sm:flex-row lg:justify-start">
-            {buttons.primary && (
-              <Button asChild className="w-full sm:w-auto">
-                <a href={buttons.primary.url}>{buttons.primary.text}</a>
-              </Button>
-            )}
-            {buttons.secondary && (
-              <Button asChild variant="outline">
-                <a href={buttons.secondary.url}>
-                  {buttons.secondary.text}
-                  <ArrowDownRight className="size-4" />
-                </a>
-              </Button>
-            )}
+          <div className="relative h-[800px] w-full">
+            <Image
+              src="/hero.png"
+              alt="AI-powered development tools"
+              fill
+              className="object-contain rounded-2xl"
+              priority
+            />
           </div>
-        </div>
-        <div className="flex">
-          <img
-            src="/hero.png"
-            alt="placeholder hero"
-            className="max-h-[600px] w-full rounded-md object-cover lg:max-h-[800px]"
-          />
         </div>
       </div>
     </section>

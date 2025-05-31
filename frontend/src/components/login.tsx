@@ -1,4 +1,5 @@
 import { FcGoogle } from "react-icons/fc";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,13 +41,16 @@ const Login2 = ({
           <div className="flex flex-col items-center gap-y-2">
             {/* Logo */}
             <div className="flex items-center gap-1 lg:justify-start">
-              <a href="https://shadcnblocks.com">
-                <img
-                  src={logo.src}
-                  alt={logo.alt}
-                  title={logo.title}
-                  className="h-12"
-                />
+              <a href={logo.url}>
+                <div className="relative h-12 w-12">
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    title={logo.title}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
               </a>
             </div>
             <h1 className="text-3xl font-semibold">{heading}</h1>
