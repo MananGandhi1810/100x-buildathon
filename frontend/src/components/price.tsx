@@ -1,13 +1,20 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { motion } from "motion/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PricingPlan {
   name: string;
@@ -31,17 +38,19 @@ const Pricing4 = ({ title, description, plans }: Pricing4Props) => {
   const [isAnnually, setIsAnnually] = useState(false);
 
   return (
-    <section className="py-32">
+    <section className="py-24">
       <div className="container">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6">
-          <h2 className="text-4xl font-bold text-pretty lg:text-6xl">
-            {title}
-          </h2>
-          <div className="flex flex-col justify-between gap-10 md:flex-row">
-            <p className="max-w-3xl text-muted-foreground lg:text-xl">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl font-medium tracking-tight lg:text-5xl">
+              {title}
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               {description}
             </p>
-            <div className="flex h-11 w-fit shrink-0 items-center rounded-md bg-muted p-1 text-lg">
+          </div>
+          <div className="flex flex-col items-center justify-center gap-8">
+            <div className="flex h-12 w-fit items-center rounded-full bg-muted p-1 text-lg">
               <RadioGroup
                 defaultValue="monthly"
                 className="h-full grid-cols-2"
@@ -49,7 +58,7 @@ const Pricing4 = ({ title, description, plans }: Pricing4Props) => {
                   setIsAnnually(value === "annually");
                 }}
               >
-                <div className='h-full rounded-md transition-all has-[button[data-state="checked"]]:bg-white'>
+                <div className="h-full rounded-full transition-all has-[button[data-state='checked']]:bg-white">
                   <RadioGroupItem
                     value="monthly"
                     id="monthly"
@@ -57,12 +66,12 @@ const Pricing4 = ({ title, description, plans }: Pricing4Props) => {
                   />
                   <Label
                     htmlFor="monthly"
-                    className="flex h-full cursor-pointer items-center justify-center px-7 font-semibold text-muted-foreground peer-data-[state=checked]:text-primary"
+                    className="flex h-full cursor-pointer items-center justify-center px-8 font-medium text-muted-foreground peer-data-[state=checked]:text-primary"
                   >
                     Monthly
                   </Label>
                 </div>
-                <div className='h-full rounded-md transition-all has-[button[data-state="checked"]]:bg-white'>
+                <div className="h-full rounded-full transition-all has-[button[data-state='checked']]:bg-white">
                   <RadioGroupItem
                     value="annually"
                     id="annually"
@@ -70,54 +79,82 @@ const Pricing4 = ({ title, description, plans }: Pricing4Props) => {
                   />
                   <Label
                     htmlFor="annually"
-                    className="flex h-full cursor-pointer items-center justify-center gap-1 px-7 font-semibold text-muted-foreground peer-data-[state=checked]:text-primary"
+                    className="flex h-full cursor-pointer items-center justify-center gap-1 px-8 font-medium text-muted-foreground peer-data-[state=checked]:text-primary"
                   >
                     Yearly
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="secondary" className="ml-2">
+                            Save 20%
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Get 2 months free with annual billing</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </Label>
                 </div>
               </RadioGroup>
             </div>
           </div>
-          <div className="flex w-full flex-col items-stretch gap-6 md:flex-row">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {plans.map((plan, index) => (
-              <div
+              <motion.div
                 key={index}
-                className={`flex w-full flex-col rounded-lg border p-6 text-left ${
-                  plan.isPopular ? "bg-muted" : ""
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`group relative flex w-full flex-col rounded-2xl border p-8 text-left transition-all duration-300 hover:border-border/60 ${
+                  plan.isPopular ? "bg-muted/50" : ""
                 }`}
               >
                 {plan.badge && (
-                  <Badge className="mb-8 block w-fit">{plan.badge}</Badge>
+                  <Badge className="absolute -top-3 left-8 mb-8 block w-fit">
+                    {plan.badge}
+                  </Badge>
                 )}
-                <h3 className="text-2xl font-semibold">{plan.name}</h3>
-                <p className="mt-2 text-muted-foreground">{plan.description}</p>
-                {plan.price.monthly > 0 ? (
-                  <>
-                    <span className="mt-4 text-4xl font-medium">
-                      £{isAnnually ? plan.price.yearly : plan.price.monthly}
-                    </span>
-                    <p className="text-muted-foreground">
-                      Per {isAnnually ? "year" : "month"}
-                    </p>
-                  </>
-                ) : (
-                  <span className="mt-4 text-4xl font-medium">Custom</span>
-                )}
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-medium">{plan.name}</h3>
+                  <p className="text-muted-foreground">{plan.description}</p>
+                  {plan.price.monthly > 0 ? (
+                    <div className="space-y-1">
+                      <span className="text-4xl font-medium">
+                        £{isAnnually ? plan.price.yearly : plan.price.monthly}
+                      </span>
+                      <p className="text-muted-foreground">
+                        Per {isAnnually ? "year" : "month"}
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-4xl font-medium">Custom</span>
+                  )}
+                </div>
                 <Separator className="my-6" />
-                <div className="flex flex-col justify-between gap-20">
-                  <ul className="space-y-4 text-muted-foreground">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <Check className="size-4" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full">
+                <ul className="space-y-4 text-muted-foreground">
+                  {plan.features.map((feature, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center gap-3 group/item"
+                    >
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 transition-colors duration-300 group-hover/item:bg-primary/20">
+                        <Check className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="group-hover/item:text-foreground transition-colors duration-300">
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8">
+                  <Button className="w-full group" size="lg">
                     {plan.price.monthly > 0 ? "Get Started" : "Contact Sales"}
+                    <Sparkles className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

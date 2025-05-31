@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "motion/react";
 
 import {
   Accordion,
@@ -9,6 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
 
 interface FeatureItem {
   id: number;
@@ -77,9 +79,18 @@ const Feature197 = ({ features = defaultFeatures }: Feature197Props) => {
   const [activeTabId, setActiveTabId] = useState<number | null>(1);
 
   return (
-    <section className="py-32">
+    <section className="py-24">
       <div className="container mx-auto">
-        <div className="mb-12 flex w-full items-start justify-between gap-12">
+        <div className="mb-16 text-center">
+          <h2 className="text-4xl font-medium tracking-tight mb-4">
+            Powerful Features
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Everything you need to build, test, and deploy your applications
+            with confidence
+          </p>
+        </div>
+        <div className="mb-12 flex w-full items-start justify-between gap-16">
           <div className="w-full md:w-1/2">
             <Accordion type="single" collapsible defaultValue="item-1">
               {features.map((tab) => (
@@ -88,10 +99,10 @@ const Feature197 = ({ features = defaultFeatures }: Feature197Props) => {
                     onClick={() => {
                       setActiveTabId(tab.id);
                     }}
-                    className="cursor-pointer py-5 no-underline! transition"
+                    className="cursor-pointer py-6 no-underline! transition hover:bg-muted/50 rounded-lg px-4"
                   >
                     <h6
-                      className={`text-xl font-semibold ${
+                      className={`text-xl font-medium ${
                         tab.id === activeTabId
                           ? "text-foreground"
                           : "text-muted-foreground"
@@ -101,39 +112,60 @@ const Feature197 = ({ features = defaultFeatures }: Feature197Props) => {
                     </h6>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <p className="mt-3 text-muted-foreground">
-                      {tab.description}
-                    </p>
+                    <div className="px-4 pb-4">
+                      <p className="text-muted-foreground leading-relaxed">
+                        {tab.description}
+                      </p>
+                      <Separator className="my-4" />
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                        <span>Learn more about {tab.title.toLowerCase()}</span>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
           </div>
-          <div className="relative m-auto hidden aspect-[4/3] w-1/2 overflow-hidden rounded-xl md:block">
-            {features.map((feature) => (
-              <div
-                key={feature.id}
-                className={`absolute inset-0 transition-opacity duration-300 ${
-                  feature.id === activeTabId ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                <div className="relative h-full w-full">
-                  <Image
-                    src={`/${feature.gradient}.png`}
-                    alt={feature.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority={feature.id === 1}
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <h3 className="text-4xl font-bold text-white drop-shadow-lg">
-                      {feature.title}
-                    </h3>
+          <div className="relative hidden md:block w-1/2 h-[600px] rounded-2xl overflow-hidden">
+            <AnimatePresence mode="wait">
+              {features.map((feature) => (
+                <motion.div
+                  key={feature.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{
+                    opacity: feature.id === activeTabId ? 1 : 0,
+                    scale: feature.id === activeTabId ? 1 : 0.95,
+                  }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className={`absolute inset-0 ${
+                    feature.id === activeTabId ? "z-10" : "z-0"
+                  }`}
+                >
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={`/${feature.gradient}.png`}
+                      alt={feature.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority={feature.id === 1}
+                      className="object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/60 to-black/30 flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <h3 className="text-4xl font-medium text-white">
+                          {feature.title}
+                        </h3>
+                        <p className="text-white/80 max-w-md mx-auto">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       </div>

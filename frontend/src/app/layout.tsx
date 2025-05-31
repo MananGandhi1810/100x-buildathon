@@ -3,6 +3,7 @@ import { Github, Home, FolderGit2 } from "lucide-react";
 import { Outfit } from "next/font/google";
 import { Button } from "@/components/ui/button";
 import "./globals.css";
+import "./grainy.css";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -18,39 +19,53 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased min-h-screen ${outfit.className}`}>
-        <div className="fixed inset-0 -z-10">
+      <body
+        className={`antialiased min-h-screen bg-grain  ${outfit.className}`}  
+      >
+        {/* <div className="fixed inset-0 -z-10 bg-grain">
           <img
             src="https://id-preview--cc5f56e0-6f7c-42ea-a708-591b65dccafa.lovable.app/Header-background.webp"
             alt="Background"
-            className="h-full w-full object-cover invert"
+            className="h-full w-full object-cover invert opacity-50 transition-opacity duration-500"
           />
-          <div className="absolute inset-0 bg-background/90" />
-        </div>
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 border-b border-border/40 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        </div> */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/40 border-b border-border/20 backdrop-blur-md supports-[backdrop-filter]:bg-background/40 transition-all duration-300">
           <div className="container flex h-16 items-center mx-auto px-5">
-            <Link href="/" className="flex items-center space-x-2">
-              <Github className="h-6 w-6" />
-              <span className="font-bold">DevAI</span>
+            <Link href="/" className="flex items-center space-x-2 group">
+              <Github className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
+              <span className="font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                DevAI
+              </span>
             </Link>
-            <div className="flex items-center space-x-4 ml-auto">
+            <div className="flex items-center space-x-6 ml-auto">
               <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <Home className="h-4 w-4 mr-2" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="transition-all duration-300 hover:bg-white/10"
+                >
+                  <Home className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-110" />
                   Home
                 </Button>
               </Link>
 
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <FolderGit2 className="h-4 w-4 mr-2" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="transition-all duration-300 hover:bg-white/10"
+                >
+                  <FolderGit2 className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-110" />
                   Your Projects
                 </Button>
               </Link>
             </div>
           </div>
         </nav>
-        <main className="container pt-16 mx-auto px-4">{children}</main>
+        <main className="container pt-24 mx-auto px-4 max-w-7xl">
+          {children}
+        </main>
       </body>
     </html>
   );
