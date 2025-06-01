@@ -70,12 +70,14 @@ model EnvSecrets {
 }
 
 model Project {
-    id          String   @id @default(cuid())
-    title       String
-    description String?
-    repoUrl     String?  @map("githubUrl")
-    user        User     @relation(fields: [userId], references: [id])
-    userId      String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    id            String   @id @default(cuid())
+    title         String
+    description   String?
+    repoUrl       String?  @map("githubUrl")
+    containerId   String?  @unique
+    containerPort String?
+    user          User     @relation(fields: [userId], references: [id])
+    userId        String
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
 }
