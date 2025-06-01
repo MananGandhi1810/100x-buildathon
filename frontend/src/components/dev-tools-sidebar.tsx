@@ -62,7 +62,7 @@ export function DevToolsSidebar({ id, ...props }: DevToolsSidebarProps) {
     },
     {
       title: "Deploy with Chat",
-      url: `/dashboard/${id}/deploy-with-chat`,
+      url: `/dashboard/${id}/deployments`,
       icon: Rocket,
     },
     {

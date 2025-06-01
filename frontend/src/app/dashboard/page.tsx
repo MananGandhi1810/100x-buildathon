@@ -1,19 +1,13 @@
-"use client";
+"use client"
 
-import { Input } from "@/components/ui/input";
-import { Search, Plus, Star, GitFork, LogOut, User, Github } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input"
+import { Search, Plus, LogOut, User, Github } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import axios from "axios"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +15,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -31,74 +25,75 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
+import { title } from "process"
 // Update the Project interface to match your API
 interface Project {
-  id: string;
-  title: string;
-  description: string;
-  repoUrl: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  title: string
+  description: string
+  repoUrl: string
+  userId: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface User {
-  name: string;
-  email: string;
-  avatarUrl?: string;
+  name: string
+  email: string
+  avatarUrl?: string
 }
 
 export default function Dashboard() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [repoUrl, setRepoUrl] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [repoUrl, setRepoUrl] = useState("")
+  const [repoTitle, setRepoTitle] = useState("")
+  const [repoDescription, setRepoDescription] = useState("")
+  const [isImporting, setIsImporting] = useState(false)
 
   useEffect(() => {
-    fetchUser();
-    fetchProjects();
-  }, [router]);
+    fetchUser()
+    fetchProjects()
+  }, [router])
 
   const fetchUser = async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
-        { headers: { authorization: `Bearer ${accessToken}` } }
-      );
-      setUser(response.data.data.user);
+      const accessToken = sessionStorage.getItem("accessToken")
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+      })
+      setUser(response.data.data.user)
     } catch (error) {
-      console.error("Error fetching user:", error);
-      router.push("/signup");
+      console.error("Error fetching user:", error)
+      router.push("/signup")
     }
-  };
+  }
 
   const fetchProjects = async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/list`,
-        { headers: { authorization: `Bearer ${accessToken}` } }
-      );
-      setProjects(response.data.data.projectData);
-      console.log("Fetched projects:", response.data.data.projectData);
-      setIsLoading(false);
+      const accessToken = sessionStorage.getItem("accessToken")
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/list`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+      })
+      setProjects(response.data.data.projectData)
+      console.log("Fetched projects:", response.data.data.projectData)
+      setIsLoading(false)
     } catch (error) {
-      console.error("Error fetching projects:", error);
-      setIsLoading(false);
+      console.error("Error fetching projects:", error)
+      setIsLoading(false)
       toast({
         title: "Error",
         description: "Failed to fetch projects",
         variant: "destructive",
-      });
+      })
     }
-  };
+  }
 
   const handleImportRepository = async () => {
     if (!repoUrl.trim()) {
@@ -106,67 +101,69 @@ export default function Dashboard() {
         title: "Error",
         description: "Please enter a repository URL",
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
 
     // Validate GitHub URL format
-    const ghRepoRegex = /https?:\/\/(www\.)?github.com\/[\w.-]+\/[\w.-]+/;
+    const ghRepoRegex = /https?:\/\/(www\.)?github.com\/[\w.-]+\/[\w.-]+/
     if (!ghRepoRegex.test(repoUrl)) {
       toast({
         title: "Error",
         description: "Please enter a valid GitHub repository URL",
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
 
-    setIsImporting(true);
+    setIsImporting(true)
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = sessionStorage.getItem("accessToken")
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/create?repo=${encodeURIComponent(repoUrl)}`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/create?repo=${encodeURIComponent(repoUrl)}&title=${encodeURIComponent(repoTitle)}&description=${encodeURIComponent(repoDescription)}`,
         {},
-        { headers: { authorization: `Bearer ${accessToken}` } }
-      );
+        { headers: { authorization: `Bearer ${accessToken}` } },
+      )
 
       toast({
         title: "Success",
         description: "Repository imported successfully!",
-      });
+      })
 
       // Refresh the projects list
-      await fetchProjects();
+      await fetchProjects()
 
       // Close dialog and reset form
-      setIsImportDialogOpen(false);
-      setRepoUrl("");
+      setIsImportDialogOpen(false)
+      setRepoUrl("")
+      setRepoTitle("")
+      setRepoDescription("")
     } catch (error: any) {
-      console.error("Error importing repository:", error);
+      console.error("Error importing repository:", error)
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to import repository",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsImporting(false);
+      setIsImporting(false)
     }
-  };
+  }
 
   const handleLogout = () => {
-    sessionStorage.removeItem("accessToken");
-    router.push("/signup");
-  };
+    sessionStorage.removeItem("accessToken")
+    router.push("/signup")
+  }
 
   const getRepoName = (url: string) => {
-    const match = url.match(/github\.com\/[\w.-]+\/([\w.-]+)/);
-    return match ? match[1] : "Unknown Repository";
-  };
+    const match = url.match(/github\.com\/[\w.-]+\/([\w.-]+)/)
+    return match ? match[1] : "Unknown Repository"
+  }
 
   const getRepoOwner = (url: string) => {
-    const match = url.match(/github\.com\/([\w.-]+)\/[\w.-]+/);
-    return match ? match[1] : "Unknown Owner";
-  };
+    const match = url.match(/github\.com\/([\w.-]+)\/[\w.-]+/)
+    return match ? match[1] : "Unknown Owner"
+  }
 
   // const formatDate = (dateString: string) => {
   //   const date = new Date(dateString);
@@ -180,11 +177,12 @@ export default function Dashboard() {
   //   return `${Math.ceil(diffDays / 30)} months ago`;
   // };
 
-  const filteredProjects = projects.filter((project) =>
-    getRepoName(project.repoUrl).toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = projects.filter(
+    (project) =>
+      getRepoName(project.repoUrl).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   if (isLoading) {
     return (
@@ -219,7 +217,7 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -232,42 +230,27 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-8 w-8 rounded-full hover:bg-accent"
-                >
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-accent">
                   <Avatar className="h-8 w-8 ring-2 ring-primary/10">
-                    <AvatarImage src={user?.avatarUrl} alt={user?.name} />
-                    <AvatarFallback className="bg-primary/10">
-                      {user?.name?.charAt(0) || "U"}
-                    </AvatarFallback>
+                    <AvatarImage src={user?.avatarUrl || "/placeholder.svg"} alt={user?.name} />
+                    <AvatarFallback className="bg-primary/10">{user?.name?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user?.name}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
-                    </p>
+                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/profile")}
-                  className="cursor-pointer"
-                >
+                <DropdownMenuItem onClick={() => router.push("/dashboard/profile")} className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer text-red-500 focus:text-red-500"
-                >
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 focus:text-red-500">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
@@ -280,12 +263,8 @@ export default function Dashboard() {
       <div className="space-y-8 p-6 mt-16 container mx-auto py-6 bg-transparent">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Your Repositories
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage and analyze your code repositories
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">Your Repositories</h1>
+            <p className="text-muted-foreground mt-1">Manage and analyze your code repositories</p>
           </div>
 
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -295,20 +274,18 @@ export default function Dashboard() {
                 Import Repository
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Github className="h-5 w-5" />
                   Import GitHub Repository
                 </DialogTitle>
-                <DialogDescription>
-                  Enter the GitHub repository URL you want to import and analyze.
-                </DialogDescription>
+                <DialogDescription>Enter the GitHub repository URL you want to import and analyze.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <label htmlFor="repo-url" className="text-sm font-medium">
-                    Repository URL
+                    Repository URL <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="repo-url"
@@ -321,13 +298,41 @@ export default function Dashboard() {
                     Make sure the repository is public or you have access to it.
                   </p>
                 </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="repo-title" className="text-sm font-medium">
+                    Title
+                  </label>
+                  <Input
+                    id="repo-title"
+                    placeholder="My Awesome Project"
+                    value={repoTitle}
+                    onChange={(e) => setRepoTitle(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="repo-description" className="text-sm font-medium">
+                    Description
+                  </label>
+                  <Input
+                    id="repo-description"
+                    placeholder="A brief description of your project"
+                    value={repoDescription}
+                    onChange={(e) => setRepoDescription(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setIsImportDialogOpen(false);
-                    setRepoUrl("");
+                    setIsImportDialogOpen(false)
+                    setRepoUrl("")
+                    setRepoTitle("")
+                    setRepoDescription("")
                   }}
                   disabled={isImporting}
                 >
@@ -373,10 +378,7 @@ export default function Dashboard() {
                 : "No repositories match your search criteria"}
             </p>
             {projects.length === 0 && (
-              <Button
-                onClick={() => setIsImportDialogOpen(true)}
-                className="gap-2"
-              >
+              <Button onClick={() => setIsImportDialogOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Import Repository
               </Button>
@@ -395,18 +397,16 @@ export default function Dashboard() {
                       {project.title || getRepoName(project.repoUrl)}
                     </CardTitle>
                     <CardDescription className="line-clamp-2">
-                      {project.description || `Repository: ${getRepoOwner(project.repoUrl)}/${getRepoName(project.repoUrl)}`}
+                      {project.description ||
+                        `Repository: ${getRepoOwner(project.repoUrl)}/${getRepoName(project.repoUrl)}`}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         <Github className="h-4 w-4" />
-                        <span className="truncate max-w-[120px]">
-                          {getRepoOwner(project.repoUrl)}
-                        </span>
+                        <span className="truncate max-w-[120px]">{getRepoOwner(project.repoUrl)}</span>
                       </div>
-                 
                     </div>
                   </CardContent>
                 </a>
@@ -416,5 +416,5 @@ export default function Dashboard() {
         )}
       </div>
     </>
-  );
+  )
 }

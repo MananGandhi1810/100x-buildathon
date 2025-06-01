@@ -1,4 +1,8 @@
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
+"use client"
+
+import type React from "react"
+
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,48 +10,166 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { MessageSquare, Send, Bot, User } from "lucide-react";
+} from "@/components/ui/breadcrumb"
+import { useParams } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { MessageSquare, Send, Bot, User, Loader2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import axios from "axios"
+import { toast } from "sonner"
+import ReactMarkdown from "react-markdown";
 
-const chatMessages = [
-  {
-    role: "assistant",
-    content:
-      "Hello! I'm your AI code assistant. I can help you understand your codebase, explain functions, suggest improvements, and answer questions about your project. What would you like to know?",
-  },
-  {
-    role: "user",
-    content:
-      "Can you explain what the authentication middleware does in this project?",
-  },
-  {
-    role: "assistant",
-    content:
-      "Based on your codebase, the authentication middleware validates JWT tokens and ensures users are authenticated before accessing protected routes. It checks for the Authorization header, verifies the token signature, and attaches user information to the request object.",
-  },
-];
-
+interface ChatMessage {
+  role: "user" | "assistant"
+  content: string
+}
 
 export default function ChatWithCodePage() {
-  const params = useParams<{ id: string }>();
-  const repoSlug = params.id;
+  const params = useParams<{ id: string }>()
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content:
+        "Hello! I'm your AI code assistant. I can help you understand your codebase, explain functions, suggest improvements, and answer questions about your project. What would you like to know?",
+    },
+  ])
+  const [inputMessage, setInputMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [projectData, setProjectData] = useState<any>(null)
+
+  useEffect(() => {
+    fetchProjectData()
+  }, [params.id])
+  useEffect(() => {
+    if (!params.id) return;
+
+    const savedMessages = localStorage.getItem(`chat_messages_${params.id}`);
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (err) {
+        console.error("Error parsing saved messages from localStorage:", err);
+      }
+    } else {
+      setMessages([
+        {
+          role: "assistant",
+          content:
+            "Hello! I'm your AI code assistant. I can help you understand your codebase, explain functions, suggest improvements, and answer questions about your project. What would you like to know?",
+        },
+      ]);
+    }
+  }, [params.id]);
+  useEffect(() => {
+    if (params.id) {
+      localStorage.setItem(`chat_messages_${params.id}`, JSON.stringify(messages));
+    }
+  }, [messages, params.id]);
+
+  const fetchProjectData = async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken")
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+      })
+      setProjectData(response.data.data.project)
+    } catch (error) {
+      console.error("Error fetching project data:", error)
+      toast.error("Failed to fetch project data")
+    }
+  }
+
+  const extractRepoInfo = (repoUrl: string) => {
+    const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
+    if (match) {
+      return {
+        owner: match[1],
+        repo: match[2].replace(/\.git$/, ""), // Remove .git suffix if present
+      }
+    }
+    return null
+  }
+
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || isLoading || !projectData) return
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: inputMessage.trim(),
+    }
+
+    // Add user message to chat
+    setMessages((prev) => [...prev, userMessage])
+    setInputMessage("")
+    setIsLoading(true)
+
+    try {
+      const accessToken = sessionStorage.getItem("accessToken")
+      const repoInfo = extractRepoInfo(projectData.repoUrl)
+
+      if (!repoInfo) {
+        throw new Error("Invalid repository URL")
+      }
+
+      // Prepare messages for API (include conversation history)
+      const apiMessages = [...messages, userMessage]
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}/chat`,
+        {
+          owner: repoInfo.owner,
+          repo: repoInfo.repo,
+          token: process.env.NEXT_PUBLIC_GITHUB_TOKEN || "your_github_token_here",
+          messages: apiMessages,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      )
+
+      // Add assistant response to chat
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content:
+          response.data.data.reply ||
+          response.data.message ||
+          "I received your message but couldn't generate a response.",
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (error: any) {
+      console.error("Error sending message:", error)
+
+      // Add error message to chat
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content: "Sorry, I encountered an error while processing your message. Please try again.",
+      }
+
+      setMessages((prev) => [...prev, errorMessage])
+      toast.error(error.response?.data?.message || "Failed to send message")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+    
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
   return (
     <SidebarProvider>
       <DevToolsSidebar id={params.id} />
@@ -59,10 +181,7 @@ export default function ChatWithCodePage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink
-                    href="/dashboard"
-                    className="hover:text-primary transition-colors"
-                  >
+                  <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -81,11 +200,14 @@ export default function ChatWithCodePage() {
                 <MessageSquare className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Chat with Code
-                </h1>
+                <h1 className="text-3xl font-bold tracking-tight">Chat with Code</h1>
                 <p className="text-muted-foreground mt-1.5">
                   Interactive AI assistant for your codebase
+                  {projectData && (
+                    <span className="ml-2 text-sm">
+                      • {extractRepoInfo(projectData.repoUrl)?.owner}/{extractRepoInfo(projectData.repoUrl)?.repo}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -94,59 +216,83 @@ export default function ChatWithCodePage() {
               <CardHeader className="border-b pb-4">
                 <CardTitle>Code Assistant</CardTitle>
                 <CardDescription>
-                  Ask questions about your code, get explanations, and receive
-                  suggestions
+                  Ask questions about your code, get explanations, and receive suggestions
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col flex-1 p-4">
-                <ScrollArea className="flex-1 pr-4">
-                  <div className="space-y-6">
-                    {chatMessages.map((message, index) => (
+              <CardContent className="flex flex-col flex-1 p-4 overflow-y-auto">
+                <div className="flex-1 pr-4 overflow-y-auto">
+                  <div className="space-y-6 ">
+                    {messages.map((message, index) => (
                       <div
                         key={index}
-                        className={`flex gap-3 ${message.role === "user"
-                          ? "justify-end"
-                          : "justify-start"
-                          }`}
+                        className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`flex gap-3 max-w-[80%] ${message.role === "user"
-                            ? "flex-row-reverse"
-                            : "flex-row"
+                          className={`flex gap-3 max-w-[80%] ${message.role === "user" ? "flex-row-reverse" : "flex-row"
                             }`}
                         >
                           <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${message.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                               }`}
                           >
-                            {message.role === "user" ? (
-                              <User className="h-4 w-4" />
-                            ) : (
-                              <Bot className="h-4 w-4" />
-                            )}
+                            {message.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                           </div>
                           <div
-                            className={`rounded-lg px-4 py-2.5 text-sm ${message.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                            className={`rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                               }`}
                           >
-                            {message.content}
+                            <ReactMarkdown
+                              components={{
+                                code: ({ node, inline, className, children, ...props }) => {
+                                  const isInline = inline || !className
+                                  return isInline ? (
+                                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                                      {children}
+                                    </code>
+                                  ) : (
+                                    <pre className="bg-muted p-3 rounded-md overflow-x-auto mb-3">
+                                      <code className="text-sm font-mono">{children}</code>
+                                    </pre>
+                                  )
+                                },
+                              }}>
+                                {message.content || "No response from AI."}
+                              </ReactMarkdown>
                           </div>
                         </div>
                       </div>
                     ))}
+                    {isLoading && (
+                      <div className="flex gap-3 justify-start">
+                        <div className="flex gap-3 max-w-[80%]">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-muted">
+                            <Bot className="h-4 w-4" />
+                          </div>
+                          <div className="rounded-lg px-4 py-2.5 text-sm bg-muted flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Thinking...
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </ScrollArea>
+                </div>
                 <div className="mt-4 flex gap-2 pt-4 border-t">
                   <Input
                     placeholder="Ask a question about your code..."
                     className="flex-1 h-11 shadow-sm"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={isLoading}
                   />
-                  <Button size="icon" className="h-11 w-11 shadow-sm">
-                    <Send className="h-4 w-4" />
+                  <Button
+                    size="icon"
+                    className="h-11 w-11 shadow-sm"
+                    onClick={sendMessage}
+                    disabled={isLoading || !inputMessage.trim()}
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </Button>
                 </div>
               </CardContent>
@@ -155,5 +301,5 @@ export default function ChatWithCodePage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }
