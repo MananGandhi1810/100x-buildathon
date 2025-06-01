@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { createWebhook, getPullRequests } from "../utils/github-api.js";
-import { processPullRequest, processPush, processAllPullRequests } from "../utils/processing.js";
+import {
+    processPush,
+    processAllPullRequests,
+    processSinglePullRequest,
+} from "../utils/processing.js";
 
 const prisma = new PrismaClient();
 const ghRepoRegex =
@@ -78,6 +82,7 @@ const incomingProjectWebhookHandler = async (req, res) => {
 
     const githubEvent = req.headers["x-github-event"];
     const { id: projectIdForLog } = project;
+    console.log(githubEvent);
 
     if (githubEvent === "push") {
         const ref = req.body.ref;
@@ -104,21 +109,36 @@ const incomingProjectWebhookHandler = async (req, res) => {
     } else if (githubEvent === "pull_request") {
         const pullRequestAction = req.body.action;
         console.log(
-            `Pull request event (action: ${pullRequestAction}) for project ${projectIdForLog}. Logged accordingly.`,
+            `Pull request event (action: ${pullRequestAction}) for project ${projectIdForLog}. Processing efficiently.`,
         );
-        const { readme, diagram } = await processPullRequest(
+
+        const repoFullName = req.body.pull_request.base.repo.full_name;
+        const [owner, repo] = repoFullName.split("/");
+
+        await processSinglePullRequest(
+            owner,
+            repo,
+            project.user.ghAccessToken,
             projectId,
             req.body.pull_request,
-            project.user.ghAccessToken,
+            pullRequestAction,
         );
-    } else if (githubEvent) {
-        console.log(
-            `Received unhandled event '${githubEvent}' for project ${projectIdForLog}.`,
-        );
-    } else {
-        console.log(
-            `Received webhook for project ${projectIdForLog} without 'x-github-event' header.`,
-        );
+    } else if (githubEvent == "ping") {
+        await Promise.all([
+            processPush(
+                match.groups.owner,
+                match.groups.name,
+                "HEAD",
+                project.user.ghAccessToken,
+            ),
+            processAllPullRequests(
+                match.groups.owner,
+                match.groups.name,
+                project.user.ghAccessToken,
+                project.id,
+                true,
+            ),
+        ]);
     }
 
     return res.json({
@@ -167,7 +187,7 @@ const createProjectHandler = async (req, res) => {
             userId: req.user.id,
         },
     });
-    
+
     const projectRequest = await createWebhook(
         project.id,
         ghAccessToken,

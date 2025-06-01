@@ -11,5 +11,5 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImdhbmRoa
 
 ### Get specific project data
 # @name getProject
-GET http://localhost:8000/project/cmbcm28bn0001tz5342tcc2eo
+GET http://localhost:8000/project/cmbdi8v0y0001tz2bd2jcx1kz
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImdhbmRoaW1hbmFuMTgxMEBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW5HYW5kaGlBbHQiLCJpZCI6ImNtYmNscTk3bzAwMDB0em1heDRpZXJmZjAiLCJzY29wZSI6ImFjY2VzcyIsImlhdCI6MTc0ODcxODMwN30.aGWo4w6flo3UDhrsKrhxe3b01nSUYT152AnmoZhra8g

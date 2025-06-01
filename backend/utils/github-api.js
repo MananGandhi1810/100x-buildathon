@@ -135,7 +135,6 @@ const getFileTree = async (owner, repoName, treeSha, token) => {
     if (!result.data || !result.data.tree) {
         return null;
     }
-    console.log(result.data.tree);
     const tree = result.data.tree.map((element) => {
         return { path: element.path, type: element.type };
     });
@@ -156,28 +155,30 @@ const getPullRequests = async (owner, repoName, token, state = "all") => {
     });
 };
 
-async function getPullRequestsNew(owner, repo) {
+async function getPullRequestsNew(owner, repo, token = null) {
     let allPullRequests = [];
     let page = 1;
     const perPage = 100;
 
+    const authToken = token || process.env.GITHUB_TOKEN;
+
     try {
         while (true) {
-            const response = await fetch(
-                `https://api.github.com/repos/${owner}/${repo}/pulls?state=all&page=${page}&per_page=${perPage}`,
-                {
-                    headers: {
-                        Authorization: `token ${process.env.GITHUB_TOKEN}`,
-                        Accept: "application/vnd.github.v3+json",
-                    },
+            const url = `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&page=${page}&per_page=${perPage}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `token ${authToken}`,
+                    Accept: "application/vnd.github.v3+json",
                 },
-            );
+            });
 
             if (!response.ok) {
                 break;
             }
 
             const pullRequests = await response.json();
+
             if (pullRequests.length === 0) {
                 break;
             }

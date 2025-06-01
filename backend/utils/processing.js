@@ -1,5 +1,11 @@
 import { set, get, exists } from "./keyvalue-db.js";
-import { getFileTree, getPRDiff, getRepoArchive, getPullRequestsNew, getPullRequestDiff } from "./github-api.js";
+import {
+    getFileTree,
+    getPRDiff,
+    getRepoArchive,
+    getPullRequestsNew,
+    getPullRequestDiff,
+} from "./github-api.js";
 import { GoogleGenAI } from "@google/genai";
 import tar from "tar-stream";
 import zlib from "zlib";
@@ -69,7 +75,13 @@ ${codeDescription}`,
     return diagramContent;
 }
 
-async function generatePullRequestReview(owner, repo, prNumber, diff, codebase) {
+async function generatePullRequestReview(
+    owner,
+    repo,
+    prNumber,
+    diff,
+    codebase,
+) {
     const reviewRedisKey = `pr_review:${owner}:${repo}:${prNumber}`;
     const expiry = 24 * 60 * 60;
 
@@ -160,6 +172,7 @@ const processPullRequest = async (
     projectId,
     pullRequestPayload,
     githubToken,
+    ignoreCache = false,
 ) => {
     if (
         !pullRequestPayload ||
@@ -170,11 +183,7 @@ const processPullRequest = async (
         !pullRequestPayload.base.repo ||
         !pullRequestPayload.base.repo.full_name
     ) {
-        console.error(
-            "[processPullRequest] Invalid or incomplete pullRequestPayload:",
-            pullRequestPayload,
-        );
-        return;
+        return null;
     }
 
     const commitHash = pullRequestPayload.head.sha;
@@ -191,10 +200,6 @@ const processPullRequest = async (
         );
 
         if (diffResponse.status !== 200) {
-            console.error(
-                `[processPullRequest] Error fetching PR diff for ${repoFullName} PR #${prNumber}. Status: ${diffResponse.status}`,
-                diffResponse.data,
-            );
             return null;
         }
         const diff = diffResponse.data;
@@ -207,10 +212,6 @@ const processPullRequest = async (
         );
 
         if (archiveResponse.status !== 200) {
-            console.error(
-                `[processPullRequest] Error fetching repo archive for ${repoFullName} commit ${commitHash}. Status: ${archiveResponse.status}`,
-                archiveResponse.data,
-            );
             return null;
         }
 
@@ -232,39 +233,37 @@ const processPullRequest = async (
 
         await set(processingKey, JSON.stringify(processingData));
 
-        // Get the repository contents for the PR review
         const repoContentsKey = `repo_contents:${owner}:${repoName}:${commitHash}`;
         let allFileContents = [];
-        
+
         if (await exists(repoContentsKey)) {
             const cachedContents = await get(repoContentsKey);
             allFileContents = JSON.parse(cachedContents);
         } else {
-            // Extract file contents from the archive for the review
-            const extractedContents = await extractContentsFromArchive(archiveResponse.data);
+            const extractedContents = await extractContentsFromArchive(
+                archiveResponse.data,
+            );
             allFileContents = extractedContents;
-            // Cache the contents for future use
-            await set(repoContentsKey, JSON.stringify(allFileContents), 24 * 60 * 60);
+            await set(
+                repoContentsKey,
+                JSON.stringify(allFileContents),
+                24 * 60 * 60,
+            );
         }
-        
-        // Generate AI review for the pull request
+
         const aiReview = await generatePullRequestReview(
             owner,
             repoName,
             prNumber,
             diff,
-            allFileContents
+            allFileContents,
         );
-        
+
         return {
             title: pullRequestPayload.title,
-            aiReview: aiReview
+            aiReview: aiReview,
         };
     } catch (error) {
-        console.error(
-            `[processPullRequest] Error during PR processing for project ${projectId}, PR #${prNumber}:`,
-            error,
-        );
         const processingKey = `pull_request:${projectId}:${commitHash || "unknown_commit"}`;
         try {
             await set(
@@ -280,10 +279,6 @@ const processPullRequest = async (
                 }),
             );
         } catch (dbError) {
-            console.error(
-                `[processPullRequest] Critical: Failed to even store error state for ${processingKey}:`,
-                dbError,
-            );
         }
         return null;
     }
@@ -291,24 +286,20 @@ const processPullRequest = async (
 
 async function generateReadmeAndDiagram(owner, repo, ref, allFileContents) {
     const codeDescriptionForDiagram = allFileContents
-        .map(
-            (file) =>
-                `File: ${file.name}\nContent:\n${file.content}\n\n`,
-        )
+        .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
         .join("");
     const diagramTitle = `Code Structure for ${repo}/${ref}`;
 
-    const [generatedReadmeText, generatedDiagramMermaid] =
-        await Promise.all([
-            generateReadme(owner, repo, ref, allFileContents),
-            generateDiagram(
-                codeDescriptionForDiagram,
-                diagramTitle,
-                owner,
-                repo,
-                ref,
-            ),
-        ]);
+    const [generatedReadmeText, generatedDiagramMermaid] = await Promise.all([
+        generateReadme(owner, repo, ref, allFileContents),
+        generateDiagram(
+            codeDescriptionForDiagram,
+            diagramTitle,
+            owner,
+            repo,
+            ref,
+        ),
+    ]);
 
     return {
         readme: generatedReadmeText,
@@ -320,11 +311,15 @@ const processPush = async (owner, repo, ref, githubToken) => {
     const repoContentsKey = `repo_contents:${owner}:${repo}:${ref}`;
     const expiry = 24 * 60 * 60;
 
-    // Check if repo contents are cached
     if (await exists(repoContentsKey)) {
         const cachedContents = await get(repoContentsKey);
         const allFileContents = JSON.parse(cachedContents);
-        return await generateReadmeAndDiagram(owner, repo, ref, allFileContents);
+        return await generateReadmeAndDiagram(
+            owner,
+            repo,
+            ref,
+            allFileContents,
+        );
     }
 
     const archiveResponse = await getRepoArchive(owner, repo, ref, githubToken);
@@ -363,7 +358,12 @@ const processPush = async (owner, repo, ref, githubToken) => {
 
             await set(repoContentsKey, JSON.stringify(allFileContents), expiry);
 
-            const result = await generateReadmeAndDiagram(owner, repo, ref, allFileContents);
+            const result = await generateReadmeAndDiagram(
+                owner,
+                repo,
+                ref,
+                allFileContents,
+            );
             resolve(result);
         });
 
@@ -378,18 +378,25 @@ const processPush = async (owner, repo, ref, githubToken) => {
     });
 };
 
-const processAllPullRequests = async (owner, repo, githubToken, projectId) => {
-    const pullRequestsKey = `pull_requests:${owner}:${repo}`;
+const processAllPullRequests = async (
+    owner,
+    repo,
+    githubToken,
+    projectId,
+    ignoreCache = false,
+) => {
+    const pullRequestsKey = `pull_requests_open:${owner}:${repo}`;
     const expiry = 24 * 60 * 60;
 
-    // Check if pull requests are cached
-    if (await exists(pullRequestsKey)) {
+    if ((await exists(pullRequestsKey)) && !ignoreCache) {
         const cachedPRs = await get(pullRequestsKey);
-        return JSON.parse(cachedPRs);
+        const parsedPRs = JSON.parse(cachedPRs);
+        return parsedPRs;
     }
 
-    const pullRequests = await getPullRequestsNew(owner, repo);
-    
+    const pullRequests = await getPullRequestsNew(owner, repo, githubToken);
+    console.log("Pull Requests:", pullRequests);
+
     if (!pullRequests || pullRequests.length === 0) {
         return [];
     }
@@ -397,24 +404,121 @@ const processAllPullRequests = async (owner, repo, githubToken, projectId) => {
     const processedPRs = [];
 
     for (const pr of pullRequests) {
-        const prData = await processPullRequest(projectId, pr, githubToken);
-        if (prData) {
-            processedPRs.push({
-                number: pr.number,
-                title: pr.title,
-                state: pr.state,
-                url: pr.html_url,
-                createdAt: pr.created_at,
-                updatedAt: pr.updated_at,
-                ...prData
-            });
+        if (pr.state === "open") {
+            const prData = await processPullRequest(projectId, pr, githubToken);
+            if (prData) {
+                processedPRs.push({
+                    number: pr.number,
+                    title: pr.title,
+                    state: pr.state,
+                    url: pr.html_url,
+                    createdAt: pr.created_at,
+                    updatedAt: pr.updated_at,
+                    ...prData,
+                });
+            }
         }
     }
 
-    // Cache the processed pull requests
     await set(pullRequestsKey, JSON.stringify(processedPRs), expiry);
-    
+
     return processedPRs;
 };
 
-export { processPullRequest, processPush, generateReadme, generateDiagram, processAllPullRequests, generatePullRequestReview };
+const processSinglePullRequest = async (
+    owner,
+    repo,
+    githubToken,
+    projectId,
+    pullRequestPayload,
+    action,
+) => {
+    const pullRequestsKey = `pull_requests_open:${owner}:${repo}`;
+    const expiry = 24 * 60 * 60;
+
+    // Get existing cached pull requests
+    let existingPRs = [];
+    if (await exists(pullRequestsKey)) {
+        const cachedPRs = await get(pullRequestsKey);
+        existingPRs = JSON.parse(cachedPRs);
+    } else {
+        // If no pull requests exist in cache, recalculate all pull requests
+        return await processAllPullRequests(
+            owner,
+            repo,
+            githubToken,
+            projectId,
+        );
+    }
+
+    const prNumber = pullRequestPayload.number;
+
+    if (action === "opened" && pullRequestPayload.state === "open") {
+        // Process the new pull request
+        const prData = await processPullRequest(
+            projectId,
+            pullRequestPayload,
+            githubToken,
+        );
+        if (prData) {
+            const newPR = {
+                number: pullRequestPayload.number,
+                title: pullRequestPayload.title,
+                state: pullRequestPayload.state,
+                url: pullRequestPayload.html_url,
+                createdAt: pullRequestPayload.created_at,
+                updatedAt: pullRequestPayload.updated_at,
+                ...prData,
+            };
+
+            // Add to existing PRs if not already present
+            const existingIndex = existingPRs.findIndex(
+                (pr) => pr.number === prNumber,
+            );
+            if (existingIndex === -1) {
+                existingPRs.push(newPR);
+            }
+        }
+    } else if (action === "closed") {
+        // Remove the closed pull request from cache
+        existingPRs = existingPRs.filter((pr) => pr.number !== prNumber);
+    } else if (action === "synchronize" || action === "edited") {
+        // Update existing pull request
+        const existingIndex = existingPRs.findIndex(
+            (pr) => pr.number === prNumber,
+        );
+        if (existingIndex !== -1 && pullRequestPayload.state === "open") {
+            const prData = await processPullRequest(
+                projectId,
+                pullRequestPayload,
+                githubToken,
+            );
+            if (prData) {
+                existingPRs[existingIndex] = {
+                    number: pullRequestPayload.number,
+                    title: pullRequestPayload.title,
+                    state: pullRequestPayload.state,
+                    url: pullRequestPayload.html_url,
+                    createdAt: pullRequestPayload.created_at,
+                    updatedAt: pullRequestPayload.updated_at,
+                    ...prData,
+                };
+            }
+        }
+    }
+
+    // Update the cache with the modified pull requests
+    await set(pullRequestsKey, JSON.stringify(existingPRs), expiry);
+
+    return existingPRs;
+};
+
+export {
+    processPullRequest,
+    processPush,
+    generateReadme,
+    generateDiagram,
+    processAllPullRequests,
+    generatePullRequestReview,
+    processSinglePullRequest,
+};
