@@ -540,13 +540,12 @@ const provisionUseHandler = async (req, res, next) => {
 
 const projectChatHandler = async (req, res) => {
     const { projectId } = req.params;
-    const { owner, repo, token, messages } = req.body;
+    const { owner, repo, messages } = req.body;
 
-    if (!owner || !repo || !token || !messages) {
+    if (!owner || !repo || !messages) {
         return res.status(400).json({
             success: false,
-            message:
-                "Request body must contain owner, repo, token, and messages.",
+            message: "Request body must contain owner, repo, and messages.",
             data: null,
         });
     }
@@ -558,16 +557,6 @@ const projectChatHandler = async (req, res) => {
             data: null,
         });
     }
-
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || typeof lastMessage.content !== "string") {
-        return res.status(400).json({
-            success: false,
-            message: "The last message must have a content string.",
-            data: null,
-        });
-    }
-    const userPromptContent = lastMessage.content;
 
     try {
         const project = await prisma.project.findUnique({
@@ -594,10 +583,10 @@ const projectChatHandler = async (req, res) => {
         const aiServiceBaseUrl =
             process.env.AI_SERVICE_BASE_URL || "http://127.0.0.1:8888";
         const payloadToAiService = {
-            owner: owner, // From req.body
-            repo: repo, // From req.body
-            token: token, // From req.body
-            prompt: userPromptContent,
+            owner: owner,
+            repo: repo,
+            token: req.user.ghAccessToken,
+            messages: messages,
         };
 
         const aiResponse = await fetch(`${aiServiceBaseUrl}/chat`, {

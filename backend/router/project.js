@@ -17,7 +17,7 @@ router.get("/list", checkAuth, projectListHandler);
 router.get("/:projectId", checkAuth, getProjectDataHandler);
 router.post("/:projectId/provision", checkAuth, provisionProjectHandler);
 router.use("/:projectId/provision/use/*", provisionUseHandler);
-router.post("/:projectId/chat", checkAuth, projectChatHandler); // Add the new route
+router.post("/:projectId/chat", checkAuth, projectChatHandler); 
 router.post("/:projectId", incomingProjectWebhookHandler);
 
 export default router;
