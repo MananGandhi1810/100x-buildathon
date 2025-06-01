@@ -96,8 +96,7 @@ Install dependencies for each part of the project using `pnpm`:
     ```bash
     cd backend
     pnpm install
-    pnpm prisma generate # Generate Prisma Client
-    pnpm prisma migrate dev # Apply database migrations
+    pnpm prisma migrate dev
     cd ..
     ```
 
@@ -112,7 +111,7 @@ Install dependencies for each part of the project using `pnpm`:
     ```bash
     cd ai
     python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    source venv/bin/activate
     pip install -r requirements.txt
     cd ..
     ```
@@ -136,7 +135,7 @@ Install dependencies for each part of the project using `pnpm`:
 *   **AI Service**:
     ```bash
     cd ai
-    source venv/bin/activate # If not already activated
+    source venv/bin/activate
     flask run
     ```
     The Flask AI service will typically start on `http://localhost:5000`.
