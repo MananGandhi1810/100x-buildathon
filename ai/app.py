@@ -27,7 +27,6 @@ redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=T
 CACHE_TTL = 24 * 3600  # 24 hours in seconds
 redis_client.flushdb()
 
-
 # ─────────────────────────────────────────
 # LLM (Gemini) Setup
 # ─────────────────────────────────────────
@@ -425,5 +424,96 @@ def endpoint_bug_detect():
         print(f"[ERROR] bug_detect: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/chat", methods=["POST"])
+def endpoint_chat():
+    """
+    Chat with code feature:
+    Expects JSON: {
+      "owner": "...",
+      "repo": "...",
+      "token": "...",
+      "messages": [ {"role":"system"/"user"/"assistant","content":"..."} , ... ]
+    }
+    Returns: { "reply": "<LLM response>" }
+    """
+    try:
+        body = request.get_json(force=True)
+        owner, repo, token = validate_request_json(body)
+        messages = body.get("messages")
+        if not messages or not isinstance(messages, list):
+            raise ValueError("Request JSON must include a 'messages' array.")
+
+        # Fetch and concatenate codebase (up to ~200k characters)
+        code_blob = fetch_full_code(owner, repo, token)
+
+        # Build a single prompt: system + code context + conversation
+        system_prompt = (
+            "You are a helpful AI assistant specialized in analyzing code. "
+            "Below is the codebase. Use it to answer the user’s questions. "
+            "If you need to reference a file or snippet, quote the relevant lines."
+            "\n\nCodebase:\n" + code_blob + "\n\n"
+        )
+
+        # Append system prompt as first message
+        prompt_parts = [ {"role":"system", "content": system_prompt} ]
+        # Then add user/assistant conversation
+        for msg in messages:
+            role = msg.get("role")
+            content = msg.get("content")
+            if role not in ("system","user","assistant") or not isinstance(content,str):
+                continue
+            prompt_parts.append({"role": role, "content": content})
+
+        # Flatten prompts into a single text prompt for Gemini
+        chat_prompt = ""
+        for part in prompt_parts:
+            prefix = "[System]:" if part["role"]=="system" else ("[User]:" if part["role"]=="user" else "[Assistant]:")
+            chat_prompt += f"{prefix} {part['content']}\n"
+        chat_prompt += "[Assistant]:"
+
+        # Call Gemini to generate chat response
+        reply = call_gemini(chat_prompt)
+
+        return jsonify({"reply": reply})
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        print(f"[ERROR] chat: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# ─────────────────────────────────────────
+# Helper: Fetch Full Codebase for Chat
+# ─────────────────────────────────────────
+def fetch_full_code(owner: str, repo: str, token: str, max_length: int = 200000) -> str:
+    """
+    Fetch and concatenate code files (up to max_length characters) into one text blob.
+    Each file is prefixed with "#### File: <path>\n<content>\n".
+    """
+    headers = github_headers(token)
+    branch = get_default_branch(owner, repo, headers)
+    tree_sha = get_tree_sha_for_branch(owner, repo, branch, headers)
+    tree = get_github_tree(owner, repo, tree_sha, headers)
+
+    code_parts = []
+    total_len = 0
+
+    for element in tree:
+        if element["type"] != "blob":
+            continue
+        path = element["path"]
+        ext = Path(path).suffix
+        if ext not in SUPPORTED_EXTENSIONS:
+            continue
+        content = fetch_file_content(owner, repo, path, branch, headers)
+        header = f"#### File: {path}\n"
+        snippet = header + content + "\n\n"
+        if total_len + len(snippet) > max_length:
+            break
+        code_parts.append(snippet)
+        total_len += len(snippet)
+
+    return "".join(code_parts)
+
 if __name__ == "__main__":
-    app.run( port=8888)
+    app.run(port=8888)
