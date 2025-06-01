@@ -98,7 +98,6 @@ const getProjectDataHandler = async (req, res) => {
             testsData = await testsResponse.json();
         } catch (e) {
             console.error("Error parsing JSON for tests:", e);
-            // testsData remains null
         }
     } else {
         console.error(
@@ -113,7 +112,6 @@ const getProjectDataHandler = async (req, res) => {
             mocksData = await mocksResponse.json();
         } catch (e) {
             console.error("Error parsing JSON for mocks:", e);
-            // mocksData remains null
         }
     } else {
         console.error(
@@ -128,7 +126,6 @@ const getProjectDataHandler = async (req, res) => {
             bugsData = await bugsResponse.json();
         } catch (e) {
             console.error("Error parsing JSON for bugs:", e);
-            // bugsData remains null
         }
     } else {
         console.error(
@@ -158,7 +155,6 @@ const getProjectDataHandler = async (req, res) => {
 
 const incomingProjectWebhookHandler = async (req, res) => {
     const { projectId } = req.params;
-    console.log(req.body);
 
     const project = await prisma.project.findUnique({
         where: { id: projectId },
@@ -176,35 +172,22 @@ const incomingProjectWebhookHandler = async (req, res) => {
 
     const githubEvent = req.headers["x-github-event"];
     const { id: projectIdForLog } = project;
-    console.log(githubEvent);
 
     if (githubEvent === "push") {
         const ref = req.body.ref;
         if (ref) {
             const branch = ref.split("/").pop();
             if (branch === "main" || branch === "master") {
-                console.log(`Processing ${projectIdForLog}`);
                 await processPush(
                     match.groups.owner,
                     match.groups.name,
                     req.body.head_commit.id,
                     project.user.ghAccessToken,
                 );
-            } else {
-                console.log(
-                    `Push event on branch '${branch}' for project ${projectIdForLog}. Not the main/default branch.`,
-                );
             }
-        } else {
-            console.log(
-                `Push event for project ${projectIdForLog}, but ref is missing in payload.`,
-            );
         }
     } else if (githubEvent === "pull_request") {
         const pullRequestAction = req.body.action;
-        console.log(
-            `Pull request event (action: ${pullRequestAction}) for project ${projectIdForLog}. Processing efficiently.`,
-        );
 
         const repoFullName = req.body.pull_request.base.repo.full_name;
         const [owner, repo] = repoFullName.split("/");
@@ -397,7 +380,6 @@ const provisionProjectHandler = async (req, res) => {
         });
 
         await container.start();
-        console.log("Container Started");
 
         const createDirExec = await container.exec({
             Cmd: ["mkdir", "-p", "/home/coder/workspace"],
@@ -405,7 +387,6 @@ const provisionProjectHandler = async (req, res) => {
             AttachStderr: true,
         });
         await createDirExec.start();
-        console.log("Directory Made");
 
         const repoUrl = project.user.ghAccessToken
             ? `https://${project.user.ghAccessToken}@github.com/${owner}/${name}.git`
@@ -418,8 +399,7 @@ const provisionProjectHandler = async (req, res) => {
             WorkingDir: "/home/coder",
         });
 
-        const cloneStream = await cloneExec.start();
-        console.log("Git Cloned");
+        const cloneStream = cloneExec.start();
 
         const containerInfo = await container.inspect();
         const hostPort =
@@ -483,7 +463,6 @@ const createProjectProxy = (projectId, port) => {
             }
         },
         onProxyReqWs: (proxyReq, req, socket, options, head) => {
-            console.log("WebSocket proxy request:", req.url);
             proxyReq.setHeader("Host", `localhost:${port}`);
             proxyReq.setHeader(
                 "X-Forwarded-For",

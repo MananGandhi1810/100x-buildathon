@@ -454,7 +454,6 @@ const processSinglePullRequest = async (
     const prNumber = pullRequestPayload.number;
 
     if (action === "opened" && pullRequestPayload.state === "open") {
-        // Process the new pull request
         const prData = await processPullRequest(
             projectId,
             pullRequestPayload,
@@ -471,7 +470,6 @@ const processSinglePullRequest = async (
                 ...prData,
             };
 
-            // Add to existing PRs if not already present
             const existingIndex = existingPRs.findIndex(
                 (pr) => pr.number === prNumber,
             );
