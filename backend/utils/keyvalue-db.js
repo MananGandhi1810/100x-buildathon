@@ -1,7 +1,6 @@
 import { createClient } from "@node-redis/client";
 
 const redis = createClient({ url: process.env.REDIS_URL });
-console.log(process.env.REDIS_URL);
 redis.connect();
 
 const exists = (key) => {
