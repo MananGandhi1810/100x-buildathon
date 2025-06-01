@@ -5,7 +5,7 @@ services:
         image: bitnami/postgresql:latest
         restart: unless-stopped
         ports:
-            - "2345:5432/tcp"
+            - "8003:5432/tcp"
         volumes:
             - pg-data:/bitnami/postgresql
         environment:
@@ -29,6 +29,27 @@ services:
             - ALLOW_EMPTY_PASSWORD=yes
         labels:
             - "com.centurylinklabs.watchtower.enable=false"
+
+    backend:
+        image: ghcr.io/manangandhi1810/10000x-devs-backend:latest
+        restart: unless-stopped
+        ports:
+            - 8001:8000/tcp
+            # - 5555:5555/tcp
+        volumes:
+            - ./backend/.env:/usr/src/app/.env
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./backend/access.log:/usr/src/app/access.log
+        user: root
+        command: sh -c "pnpx prisma migrate deploy && npm run start"
+
+    ai:
+        image: ghcr.io/manangandhi1810/10000x-devs-ai:latest
+        restart: unless-stopped
+        volumes:
+            - ./.env:/app/.env
+        ports:
+            - 8002:8888/tcp
 
 volumes:
     pg-data:
