@@ -25,6 +25,8 @@ if not GEMINI_API_KEY:
 # ─────────────────────────────────────────
 redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 CACHE_TTL = 24 * 3600  # 24 hours in seconds
+redis_client.flushdb()
+
 
 # ─────────────────────────────────────────
 # LLM (Gemini) Setup
