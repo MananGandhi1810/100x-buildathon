@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,233 +8,74 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { GitPullRequest, CheckCircle2, AlertCircle, Clock } from "lucide-react";
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { useParams } from "next/navigation";
+} from "@/components/ui/breadcrumb"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { GitPullRequest, CheckCircle2, Clock } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Badge } from "@/components/ui/badge"
+import { useParams } from "next/navigation"
+import axios from "axios"
 
 // Add proper types for PR analysis
 interface PRAnalysis {
-  status: "completed" | "in_progress";
-  summary: string;
-  suggestions?: string[];
+  status: "completed" | "in_progress"
+  summary: string
+  suggestions?: string[]
   security?: {
-    issues: number;
-    warnings: number;
-  };
+    issues: number
+    warnings: number
+  }
   performance?: {
-    impact: "high" | "medium" | "low" | "none";
-    suggestions: string[];
-  };
+    impact: "high" | "medium" | "low" | "none"
+    suggestions: string[]
+  }
 }
 
 interface PR {
-  id: number;
-  title: string;
-  author: string;
-  status: "open" | "merged" | "closed";
-  changes: {
-    files: number;
-    additions: number;
-    deletions: number;
-  };
-  lastUpdated: string;
-  analysis: PRAnalysis;
+  number: number
+  title: string
+  state: "open" | "merged" | "closed"
+  url: string
+  createdAt: string
+  updatedAt: string
+  aiReview?: string
 }
 
-// Update dummy data with proper types
-const dummyPRs: PR[] = [
-  {
-    id: 1,
-    title: "Add authentication middleware",
-    author: "john_doe",
-    status: "open",
-    changes: {
-      files: 5,
-      additions: 120,
-      deletions: 45,
-    },
-    lastUpdated: "2 hours ago",
-    analysis: {
-      status: "completed",
-      summary:
-        "The PR looks good overall with minor suggestions for improvement.",
-      suggestions: [
-        "Consider adding input validation for the email field",
-        "Add error handling for database connection failures",
-        "Update documentation to reflect the new authentication flow",
-      ],
-      security: {
-        issues: 0,
-        warnings: 2,
-      },
-      performance: {
-        impact: "low",
-        suggestions: ["Consider caching user sessions"],
-      },
-    },
-  },
-  {
-    id: 2,
-    title: "Implement user profile page",
-    author: "jane_smith",
-    status: "open",
-    changes: {
-      files: 8,
-      additions: 230,
-      deletions: 90,
-    },
-    lastUpdated: "1 day ago",
-    analysis: {
-      status: "in_progress",
-      summary: "Analysis in progress...",
-    },
-  },
-  {
-    id: 3,
-    title: "Fix navigation bug in mobile view",
-    author: "alex_wilson",
-    status: "merged",
-    changes: {
-      files: 3,
-      additions: 45,
-      deletions: 20,
-    },
-    lastUpdated: "3 days ago",
-    analysis: {
-      status: "completed",
-      summary: "The PR has been successfully merged with no issues.",
-      suggestions: [],
-      security: {
-        issues: 0,
-        warnings: 0,
-      },
-      performance: {
-        impact: "none",
-        suggestions: [],
-      },
-    },
-  },
-];
-
 export default function PRAnalyzerPage() {
-  const [selectedPR, setSelectedPR] = useState<PR>(dummyPRs[0]);
-  const repoSlug = useParams<{ id: string }>().id;
+  const [pullRequests, setPullRequests] = useState<PR[]>([])
+  const [selectedPR, setSelectedPR] = useState<PR | null>(null)
+  const [loading, setLoading] = useState(true)
+  const params = useParams<{ id: string }>()
 
-  const renderSuggestions = () => {
-    if (!selectedPR.analysis.suggestions?.length) return null;
+  useEffect(() => {
+    const fetchPullRequests = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        });        const prs = response.data.data.pullRequests || []
+        setPullRequests(prs)
+        if (prs.length > 0) {
+          setSelectedPR(prs[0])
+        }
+      } catch (error) {
+        console.error("Error fetching pull requests:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-yellow-500" />
-          <h3 className="font-medium">Suggestions</h3>
-        </div>
-        <ul className="space-y-2">
-          {selectedPR.analysis.suggestions.map((suggestion, index) => (
-            <li key={index} className="flex items-start gap-2">
-              <span className="text-muted-foreground">•</span>
-              <span>{suggestion}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
-  const renderSecurityMetrics = () => {
-    if (!selectedPR.analysis.security) return null;
-
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Security</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Issues</span>
-              <Badge
-                variant={
-                  (selectedPR.analysis.security.issues ?? 0) > 0
-                    ? "destructive"
-                    : "default"
-                }
-              >
-                {selectedPR.analysis.security.issues}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Warnings</span>
-              <Badge
-                variant={
-                  (selectedPR.analysis.security.warnings ?? 0) > 0
-                    ? "secondary"
-                    : "default"
-                }
-              >
-                {selectedPR.analysis.security.warnings}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderPerformanceMetrics = () => {
-    if (!selectedPR.analysis.performance) return null;
-
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Impact</span>
-              <Badge
-                variant={
-                  selectedPR.analysis.performance.impact === "high"
-                    ? "destructive"
-                    : selectedPR.analysis.performance.impact === "medium"
-                      ? "secondary"
-                      : "default"
-                }
-              >
-                {selectedPR.analysis.performance.impact}
-              </Badge>
-            </div>
-            {selectedPR.analysis.performance.suggestions?.length > 0 && (
-              <div className="text-sm text-muted-foreground">
-                {selectedPR.analysis.performance.suggestions[0]}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+    fetchPullRequests()
+  }, [params.id])
 
   return (
     <SidebarProvider>
-      <DevToolsSidebar id={repoSlug} />
+      <DevToolsSidebar id={params.id} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
           <div className="flex items-center gap-2 px-4">
@@ -243,19 +84,13 @@ export default function PRAnalyzerPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink
-                    href="/dashboard"
-                    className="hover:text-primary transition-colors"
-                  >
+                  <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink
-                    href={`/dashboard/${repoSlug}`}
-                    className="hover:text-primary transition-colors"
-                  >
+                  <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
                     Repository
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -274,12 +109,8 @@ export default function PRAnalyzerPage() {
                 <GitPullRequest className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Pull Request Analyzer
-                </h1>
-                <p className="text-muted-foreground mt-1.5">
-                  Analyze and review pull requests with AI assistance
-                </p>
+                <h1 className="text-3xl font-bold tracking-tight">Pull Request Analyzer</h1>
+                <p className="text-muted-foreground mt-1.5">Analyze and review pull requests with AI assistance</p>
               </div>
             </div>
 
@@ -293,38 +124,43 @@ export default function PRAnalyzerPage() {
                 <CardContent>
                   <ScrollArea className="h-[calc(100vh-300px)]">
                     <div className="space-y-2">
-                      {dummyPRs.map((pr) => (
-                        <div
-                          key={pr.id}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedPR.id === pr.id
-                              ? "bg-primary/10 border border-primary/20"
-                              : "hover:bg-muted/50"
-                            }`}
-                          onClick={() => setSelectedPR(pr)}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-medium">{pr.title}</h3>
-                            <Badge
-                              variant={
-                                pr.status === "merged"
-                                  ? "default"
-                                  : pr.status === "open"
-                                    ? "secondary"
-                                    : "destructive"
-                              }
-                            >
-                              {pr.status}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>@{pr.author}</span>
-                            <span>•</span>
-                            <span>{pr.changes.files} files</span>
-                            <span>•</span>
-                            <span>{pr.lastUpdated}</span>
-                          </div>
+                      {loading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <p className="text-muted-foreground">Loading pull requests...</p>
                         </div>
-                      ))}
+                      ) : pullRequests.length === 0 ? (
+                        <div className="flex items-center justify-center p-4">
+                          <p className="text-muted-foreground">No pull requests found</p>
+                        </div>
+                      ) : (
+                        pullRequests.map((pr) => (
+                          <div
+                            key={pr.number}
+                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                              selectedPR?.number === pr.number
+                                ? "bg-primary/10 border border-primary/20"
+                                : "hover:bg-muted/50"
+                            }`}
+                            onClick={() => setSelectedPR(pr)}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-medium">{pr.title}</h3>
+                              <Badge
+                                variant={
+                                  pr.state === "merged" ? "default" : pr.state === "open" ? "secondary" : "destructive"
+                                }
+                              >
+                                {pr.state}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>PR #{pr.number}</span>
+                              <span>•</span>
+                              <span>{new Date(pr.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </ScrollArea>
                 </CardContent>
@@ -335,44 +171,35 @@ export default function PRAnalyzerPage() {
                 <CardHeader>
                   <CardTitle>PR Analysis</CardTitle>
                   <CardDescription>
-                    {selectedPR.analysis.status === "completed"
+                    {selectedPR?.aiReview
                       ? "AI-powered analysis of the selected pull request"
-                      : "Analysis in progress..."}
+                      : "Select a PR to view analysis"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[calc(100vh-300px)]">
-                    <div className="space-y-6">
-                      {selectedPR.analysis.status === "completed" ? (
-                        <>
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className="h-5 w-5 text-green-500" />
-                              <h3 className="font-medium">Summary</h3>
-                            </div>
-                            <p className="text-muted-foreground">
-                              {selectedPR.analysis.summary}
-                            </p>
-                          </div>
-
-                          {renderSuggestions()}
-
-                          <div className="grid grid-cols-2 gap-4">
-                            {renderSecurityMetrics()}
-                            {renderPerformanceMetrics()}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center space-y-2">
-                            <Clock className="h-8 w-8 text-muted-foreground animate-spin" />
-                            <p className="text-muted-foreground">
-                              Analyzing pull request...
-                            </p>
-                          </div>
+                    {!selectedPR ? (
+                      <div className="flex items-center justify-center h-full">
+                        <p className="text-muted-foreground">Select a pull request to view analysis</p>
+                      </div>
+                    ) : !selectedPR.aiReview ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center space-y-2">
+                          <Clock className="h-8 w-8 text-muted-foreground mx-auto" />
+                          <p className="text-muted-foreground">No analysis available for this pull request</p>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <h3 className="font-medium">AI Review</h3>
+                          </div>
+                          <div className="whitespace-pre-line text-muted-foreground">{selectedPR.aiReview}</div>
+                        </div>
+                      </div>
+                    )}
                   </ScrollArea>
                 </CardContent>
               </Card>
@@ -381,5 +208,5 @@ export default function PRAnalyzerPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }

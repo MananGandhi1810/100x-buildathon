@@ -73,7 +73,7 @@ const tools = [
     title: "Deploy with Chat",
     description: "Deploy applications using natural language",
     icon: Rocket,
-    href: (repoSlug: string) => `/dashboard/${repoSlug}/deploy-with-chat`,
+    href: (repoSlug: string) => `/dashboard/${repoSlug}/deployments`,
     color: "text-orange-600",
   },
   {
