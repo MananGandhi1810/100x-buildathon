@@ -485,7 +485,7 @@ def endpoint_chat():
 # ─────────────────────────────────────────
 # Helper: Fetch Full Codebase for Chat
 # ─────────────────────────────────────────
-def fetch_full_code(owner: str, repo: str, token: str, max_length: int = 200000) -> str:
+def fetch_full_code(owner: str, repo: str, token: str, max_length: int = 300000) -> str:
     """
     Fetch and concatenate code files (up to max_length characters) into one text blob.
     Each file is prefixed with "#### File: <path>\n<content>\n".
