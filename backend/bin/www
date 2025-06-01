@@ -4,6 +4,10 @@
  * Module dependencies.
  */
 
+import dotenv from "dotenv";
+
+dotenv.config();
+
 import app from "../index.js";
 import http from "http";
 import https from "https";

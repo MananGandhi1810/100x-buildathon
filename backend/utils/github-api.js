@@ -1,7 +1,6 @@
 import axios from "axios";
 import { exists, get, set } from "./keyvalue-db.js";
-import dotenv from "dotenv";
-dotenv.config();
+
 
 const ghRepoRegex =
     /https?:\/\/(www\.)?github.com\/(?<owner>[\w.-]+)\/(?<name>[\w.-]+)/;
