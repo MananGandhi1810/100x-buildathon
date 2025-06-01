@@ -23,7 +23,9 @@ if not GEMINI_API_KEY:
 # ─────────────────────────────────────────
 # Redis client (default localhost:6379)
 # ─────────────────────────────────────────
-redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+# Get Redis URL from environment or use default
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 CACHE_TTL = 24 * 3600  # 24 hours in seconds
 redis_client.flushdb()
 
