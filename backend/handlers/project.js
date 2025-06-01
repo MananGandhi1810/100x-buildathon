@@ -242,7 +242,7 @@ const projectListHandler = async (req, res) => {
 };
 
 const createProjectHandler = async (req, res) => {
-    const { repo: url } = req.query;
+    const { repo: url, title, description } = req.query;
     const ghAccessToken = req.user.ghAccessToken;
 
     if (!url || url.trim() === "") {
@@ -258,8 +258,8 @@ const createProjectHandler = async (req, res) => {
 
     const project = await prisma.project.create({
         data: {
-            title: "",
-            description: "",
+            title: title,
+            description: description,
             repoUrl: `https://github.com/${repo}`,
             userId: req.user.id,
         },
