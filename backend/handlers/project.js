@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { createWebhook } from "../utils/github-api.js";
-import { processPullRequest } from "../utils/processing.js";
+import { processPullRequest, processPush } from "../utils/processing.js";
 
 const prisma = new PrismaClient();
 const ghRepoRegex =
@@ -11,7 +11,9 @@ const getProjectDataHandler = async (req, res) => {
 
     const project = await prisma.project.findUnique({
         where: { id: projectId },
+        include: { user: true },
     });
+    
     if (!project) {
         return res.status(404).json({
             success: false,
@@ -19,10 +21,31 @@ const getProjectDataHandler = async (req, res) => {
             data: null,
         });
     }
+
+    const match = project.repoUrl.match(ghRepoRegex);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid repository URL",
+            data: null,
+        });
+    }
+
+    const { readme, diagram } = await processPush(
+        match.groups.owner,
+        match.groups.name,
+        "main",
+        project.user.ghAccessToken,
+    ) || {};
+
     return res.json({
         success: true,
         message: "Project found",
-        data: { project },
+        data: { 
+            project,
+            readme,
+            diagram,
+        },
     });
 };
 
@@ -53,6 +76,12 @@ const incomingProjectWebhookHandler = async (req, res) => {
             const branch = ref.split("/").pop();
             if (branch === "main" || branch === "master") {
                 console.log(`Processing ${projectIdForLog}`);
+                await processPush(
+                    match.groups.owner,
+                    match.groups.name,
+                    req.body.head_commit.id,
+                    project.user.ghAccessToken,
+                );
             } else {
                 console.log(
                     `Push event on branch '${branch}' for project ${projectIdForLog}. Not the main/default branch.`,
@@ -68,7 +97,7 @@ const incomingProjectWebhookHandler = async (req, res) => {
         console.log(
             `Pull request event (action: ${pullRequestAction}) for project ${projectIdForLog}. Logged accordingly.`,
         );
-        processPullRequest(
+        const { readme, diagram } = await processPullRequest(
             projectId,
             req.body.pull_request,
             project.user.ghAccessToken,

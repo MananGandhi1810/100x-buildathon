@@ -101,7 +101,7 @@ const getRepoArchive = async (
     repoName,
     ref,
     token,
-    format = "zipball",
+    format = "tarball",
 ) => {
     const url = `https://api.github.com/repos/${owner}/${repoName}/${format}/${ref}`;
     return await axios.get(url, {
@@ -114,8 +114,12 @@ const getRepoArchive = async (
     });
 };
 
-const getFileTree = async (owner, repoName, treeSha, branchName, token) => {
+const getFileTree = async (owner, repoName, treeSha, token) => {
     const url = `https://api.github.com/repos/${owner}/${repoName}/git/trees/${treeSha}?recursive=true`;
+    const kvKey = `file-tree:${owner}/${repoName}/${treeSha}`;
+    if (await exists(kvKey)) {
+        return await get(kvKey);
+    }
     const result = await axios.get(url, {
         headers: {
             Accept: "application/vnd.github.v3+json",
@@ -124,7 +128,6 @@ const getFileTree = async (owner, repoName, treeSha, branchName, token) => {
         },
         validateStatus: false,
     });
-
     if (result.status >= 400) {
         return null;
     }
@@ -132,12 +135,12 @@ const getFileTree = async (owner, repoName, treeSha, branchName, token) => {
     if (!result.data || !result.data.tree) {
         return null;
     }
-
+    console.log(result.data.tree);
     const tree = result.data.tree.map((element) => {
         return { path: element.path, type: element.type };
     });
 
-    set(`file-tree:${repoName}/${branchName}`, JSON.stringify(tree), 10 * 60);
+    set(kvKey, JSON.stringify(tree), 3 * 60 * 60);
     return JSON.stringify(tree);
 };
 
