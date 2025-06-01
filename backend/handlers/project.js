@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { createWebhook } from "../utils/github-api.js";
-import { processPullRequest, processPush } from "../utils/processing.js";
+import { createWebhook, getPullRequests } from "../utils/github-api.js";
+import { processPullRequest, processPush, processAllPullRequests } from "../utils/processing.js";
 
 const prisma = new PrismaClient();
 const ghRepoRegex =
@@ -13,7 +13,7 @@ const getProjectDataHandler = async (req, res) => {
         where: { id: projectId },
         include: { user: true },
     });
-    
+
     if (!project) {
         return res.status(404).json({
             success: false,
@@ -31,20 +31,29 @@ const getProjectDataHandler = async (req, res) => {
         });
     }
 
-    const { readme, diagram } = await processPush(
+    const { readme, diagram } =
+        (await processPush(
+            match.groups.owner,
+            match.groups.name,
+            "main",
+            project.user.ghAccessToken,
+        )) || {};
+
+    const pullRequests = await processAllPullRequests(
         match.groups.owner,
         match.groups.name,
-        "main",
         project.user.ghAccessToken,
-    ) || {};
+        projectId,
+    );
 
     return res.json({
         success: true,
         message: "Project found",
-        data: { 
+        data: {
             project,
             readme,
             diagram,
+            pullRequests,
         },
     });
 };
@@ -158,6 +167,7 @@ const createProjectHandler = async (req, res) => {
             userId: req.user.id,
         },
     });
+    
     const projectRequest = await createWebhook(
         project.id,
         ghAccessToken,
@@ -167,10 +177,22 @@ const createProjectHandler = async (req, res) => {
         true,
     );
 
+    // Process all existing pull requests for the new project
+    const pullRequests = await processAllPullRequests(
+        match.groups.owner,
+        match.groups.name,
+        ghAccessToken,
+        project.id,
+    );
+
     res.json({
         success: true,
         message: "Project created successfully",
-        data: projectRequest.data,
+        data: {
+            project,
+            webhook: projectRequest.data,
+            pullRequests,
+        },
     });
 };
 
