@@ -47,7 +47,7 @@ services:
         image: ghcr.io/manangandhi1810/10000x-devs-ai:latest
         restart: unless-stopped
         volumes:
-            - ./.env:/app/.env
+            - ./ai/.env:/app/.env
         ports:
             - 8002:8888/tcp
 
