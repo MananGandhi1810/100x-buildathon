@@ -14,7 +14,7 @@ import google.generativeai as genai
 # ─────────────────────────────────────────
 # Load only GEMINI_API_KEY from .env
 # ─────────────────────────────────────────
-load_dotenv()  # expects .env next to this script
+load_dotenv()  # expects .env in same directory as this script
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
@@ -24,9 +24,7 @@ if not GEMINI_API_KEY:
 # Redis client (default localhost:6379)
 # ─────────────────────────────────────────
 redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
-
-# TTL for cache entries: 24 hours (in seconds)
-CACHE_TTL = 24 * 3600
+CACHE_TTL = 24 * 3600  # 24 hours in seconds
 
 # ─────────────────────────────────────────
 # LLM (Gemini) Setup
@@ -50,18 +48,20 @@ SUPPORTED_EXTENSIONS = {
     ".php": "php",
 }
 
+# ─────────────────────────────────────────
+# Utility: Clean triple‐backtick fences
+# ─────────────────────────────────────────
 def clean_code_block(s: str) -> str:
-    """Strip triple‐backtick fences from LLM output."""
     if not isinstance(s, str):
         return ""
     s = re.sub(r"^```[\w]*\n", "", s.strip(), flags=re.MULTILINE)
     s = re.sub(r"```$", "", s.strip(), flags=re.MULTILINE)
     return s.strip()
 
+# ─────────────────────────────────────────
+# Gemini call helper
+# ─────────────────────────────────────────
 def call_gemini(prompt: str, expect_json: bool = False):
-    """
-    Send `prompt` to Gemini. If expect_json=True, extract the first JSON array.
-    """
     try:
         resp = LLM_MODEL.generate_content(prompt)
         text = resp.text.strip()
@@ -88,30 +88,18 @@ def github_headers(token: str):
     }
 
 def get_default_branch(owner: str, repo: str, headers: dict) -> str:
-    """
-    GET /repos/{owner}/{repo}
-    Returns default_branch.
-    """
     url = f"https://api.github.com/repos/{owner}/{repo}"
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()["default_branch"]
 
 def get_commit_sha_for_branch(owner: str, repo: str, branch: str, headers: dict) -> str:
-    """
-    GET /repos/{owner}/{repo}/git/refs/heads/{branch}
-    → returns commit SHA directly.
-    """
     url_ref = f"https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch}"
     resp = requests.get(url_ref, headers=headers)
     resp.raise_for_status()
     return resp.json()["object"]["sha"]
 
 def get_tree_sha_for_branch(owner: str, repo: str, branch: str, headers: dict) -> str:
-    """
-    GET /repos/{owner}/{repo}/git/commits/{commit_sha}
-    → returns tree SHA for that commit.
-    """
     commit_sha = get_commit_sha_for_branch(owner, repo, branch, headers)
     url_commit = f"https://api.github.com/repos/{owner}/{repo}/git/commits/{commit_sha}"
     resp = requests.get(url_commit, headers=headers)
@@ -119,20 +107,12 @@ def get_tree_sha_for_branch(owner: str, repo: str, branch: str, headers: dict) -
     return resp.json()["tree"]["sha"]
 
 def get_github_tree(owner: str, repo: str, tree_sha: str, headers: dict):
-    """
-    GET /repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1
-    Returns a list of {"path":..., "type":...}.
-    """
     url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1"
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json().get("tree", [])
 
 def fetch_file_content(owner: str, repo: str, path: str, branch: str, headers: dict) -> str:
-    """
-    GET /repos/{owner}/{repo}/contents/{path}?ref={branch}
-    Returns decoded UTF-8 file content (if base64-encoded).
-    """
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
     resp = requests.get(url, headers=headers, params={"ref": branch})
     resp.raise_for_status()
@@ -190,18 +170,9 @@ Code:
 """
 
 # ─────────────────────────────────────────
-# Core Generation + Caching Logic
+# Core Generation Functions
 # ─────────────────────────────────────────
 def list_all_files(owner: str, repo: str, token: str, single_file: str = None):
-    """
-    1) Find default branch
-    2) Find commit SHA for that branch
-    3) Find tree SHA for that branch
-    4) GET tree recursively
-    5) Filter blobs by SUPPORTED_EXTENSIONS
-
-    Returns list of (rel_path, language).
-    """
     headers = github_headers(token)
     branch = get_default_branch(owner, repo, headers)
     tree_sha = get_tree_sha_for_branch(owner, repo, branch, headers)
@@ -222,25 +193,7 @@ def list_all_files(owner: str, repo: str, token: str, single_file: str = None):
         return []
     return files
 
-def get_cache_key(owner: str, repo: str, commit_sha: str, feature: str, single_file: str = None) -> str:
-    """
-    Construct a Redis key of the form:
-      "<owner>:<repo>:<commit_sha>:<feature>" 
-    or if single_file is provided:
-      "<owner>:<repo>:<commit_sha>:<feature>:<single_file>"
-    """
-    base_key = f"{owner}:{repo}:{commit_sha}:{feature}"
-    if single_file:
-        # Replace any colons in the filename to avoid conflicts
-        sanitized = single_file.replace(":", "_")
-        return f"{base_key}:{sanitized}"
-    return base_key
-
 def generate_tests(owner: str, repo: str, token: str, single_file: str = None):
-    """
-    Fetch each file’s content, call Gemini for test generation, and return a dict:
-    { rel_path: {"language": ..., "test_cases": "..."} }
-    """
     headers = github_headers(token)
     branch = get_default_branch(owner, repo, headers)
     files = list_all_files(owner, repo, token, single_file)
@@ -255,10 +208,6 @@ def generate_tests(owner: str, repo: str, token: str, single_file: str = None):
     return results
 
 def generate_mocks(owner: str, repo: str, token: str, single_file: str = None):
-    """
-    Fetch each file’s content, call Gemini for mock generation, and return a dict:
-    { rel_path: {"language": ..., "mock_data": "..."} }
-    """
     headers = github_headers(token)
     branch = get_default_branch(owner, repo, headers)
     files = list_all_files(owner, repo, token, single_file)
@@ -273,10 +222,6 @@ def generate_mocks(owner: str, repo: str, token: str, single_file: str = None):
     return results
 
 def detect_bugs(owner: str, repo: str, token: str, single_file: str = None):
-    """
-    Fetch each file’s content, call Gemini for bug detection, and return a dict:
-    { rel_path: {"language": ..., "bug_report": [...] } }
-    """
     headers = github_headers(token)
     branch = get_default_branch(owner, repo, headers)
     files = list_all_files(owner, repo, token, single_file)
@@ -290,52 +235,118 @@ def detect_bugs(owner: str, repo: str, token: str, single_file: str = None):
     return results
 
 # ─────────────────────────────────────────
-# Flask App + Endpoints with Redis Caching
+# Cache‐Key Utility
 # ─────────────────────────────────────────
-app = Flask(__name__)
+def get_cache_key(owner: str, repo: str, commit_sha: str, feature: str, single_file: str = None) -> str:
+    base_key = f"{owner}:{repo}:{commit_sha}:{feature}"
+    if single_file:
+        sanitized = single_file.replace(":", "_")
+        return f"{base_key}:{sanitized}"
+    return base_key
 
+# ─────────────────────────────────────────
+# Stack Overflow Integration
+# ─────────────────────────────────────────
+def fetch_stackoverflow_for_issue(issue_text: str, max_hits: int = 3):
+    """
+    Given an issue text, query Stack Overflow for top relevant questions (with accepted answers).
+    Returns a list of up to `max_hits` hits:
+    [
+      {
+        "question_id": ...,
+        "title": "...",
+        "link": "...",
+        "accepted_answer": {
+          "answer_id": ...,
+          "body": "..."
+        }
+      },
+      ...
+    ]
+    """
+    try:
+        search_url = "https://api.stackexchange.com/2.3/search/advanced"
+        params = {
+            "order": "desc",
+            "sort": "relevance",
+            "accepted": "True",
+            "title": issue_text,
+            "site": "stackoverflow",
+            "pagesize": max_hits,
+        }
+        resp = requests.get(search_url, params=params)
+        resp.raise_for_status()
+        questions = resp.json().get("items", [])
+        hits = []
+        for q in questions:
+            qid = q["question_id"]
+            title = q["title"]
+            link = q["link"]
+
+            # Fetch top answer for this question
+            ans_url = f"https://api.stackexchange.com/2.3/questions/{qid}/answers"
+            ans_params = {
+                "order": "desc",
+                "sort": "votes",
+                "site": "stackoverflow",
+                "filter": "withbody",
+                "pagesize": 1
+            }
+            ans_resp = requests.get(ans_url, params=ans_params)
+            ans_resp.raise_for_status()
+            answers = ans_resp.json().get("items", [])
+            accepted = None
+            if answers:
+                accepted = {
+                    "answer_id": answers[0]["answer_id"],
+                    "body": answers[0]["body"],
+                    "is_accepted": answers[0].get("is_accepted", False)
+                }
+            hits.append({
+                "question_id": qid,
+                "title": title,
+                "link": link,
+                "accepted_answer": accepted
+            })
+        return hits
+    except Exception as e:
+        print(f"[StackOverflow API error] {e}")
+        return []
+
+# ─────────────────────────────────────────
+# Request Validation Utility
+# ─────────────────────────────────────────
 def validate_request_json(data):
-    """
-    Ensure 'owner', 'repo', and 'token' exist in request JSON.
-    """
     owner = data.get("owner")
-    repo  = data.get("repo")
+    repo = data.get("repo")
     token = data.get("token")
     if not owner or not repo or not token:
         raise ValueError("Request JSON must include 'owner', 'repo', and 'token'.")
     return owner, repo, token
 
+# ─────────────────────────────────────────
+# Flask App + Endpoints
+# ─────────────────────────────────────────
+app = Flask(__name__)
+
 @app.route("/generate_tests", methods=["POST"])
 def endpoint_generate_tests():
-    """
-    Expects JSON body containing:
-      { "owner": "...", "repo": "...", "token": "...", "file": "<optional>" }
-    Uses Redis key "<owner>:<repo>:<commit_sha>:generate_tests[:<file>]".
-    """
     try:
         body = request.get_json(force=True)
         owner, repo, token = validate_request_json(body)
         single_file = body.get("file")
 
-        # Build GitHub headers and fetch commit SHA for caching
         headers = github_headers(token)
         default_branch = get_default_branch(owner, repo, headers)
         commit_sha = get_commit_sha_for_branch(owner, repo, default_branch, headers)
 
-        # Build cache key
         cache_key = get_cache_key(owner, repo, commit_sha, "generate_tests", single_file)
-
-        # Try Redis lookup
         cached = redis_client.get(cache_key)
         if cached is not None:
-            # Refresh TTL
             redis_client.expire(cache_key, CACHE_TTL)
             return jsonify(json.loads(cached))
 
-        # Not in cache → generate
         result = generate_tests(owner, repo, token, single_file)
-
-        # Store in Redis (stringify as JSON)
         redis_client.setex(cache_key, CACHE_TTL, json.dumps(result))
         return jsonify(result)
 
@@ -347,11 +358,6 @@ def endpoint_generate_tests():
 
 @app.route("/generate_mocks", methods=["POST"])
 def endpoint_generate_mocks():
-    """
-    Expects JSON body containing:
-      { "owner": "...", "repo": "...", "token": "...", "file": "<optional>" }
-    Uses Redis key "<owner>:<repo>:<commit_sha>:generate_mocks[:<file>]".
-    """
     try:
         body = request.get_json(force=True)
         owner, repo, token = validate_request_json(body)
@@ -379,11 +385,6 @@ def endpoint_generate_mocks():
 
 @app.route("/bug_detect", methods=["POST"])
 def endpoint_bug_detect():
-    """
-    Expects JSON body containing:
-      { "owner": "...", "repo": "...", "token": "...", "file": "<optional>" }
-    Uses Redis key "<owner>:<repo>:<commit_sha>:bug_detect[:<file>]".
-    """
     try:
         body = request.get_json(force=True)
         owner, repo, token = validate_request_json(body)
@@ -399,9 +400,22 @@ def endpoint_bug_detect():
             redis_client.expire(cache_key, CACHE_TTL)
             return jsonify(json.loads(cached))
 
-        result = detect_bugs(owner, repo, token, single_file)
-        redis_client.setex(cache_key, CACHE_TTL, json.dumps(result))
-        return jsonify(result)
+        # Step 1: Run raw bug detection via Gemini
+        raw_result = detect_bugs(owner, repo, token, single_file)
+
+        # Step 2: Enrich each bug with StackOverflow hits
+        for rel_path, data in raw_result.items():
+            enriched = []
+            for issue_entry in data["bug_report"]:
+                issue_text = issue_entry.get("issue", "")
+                so_hits = fetch_stackoverflow_for_issue(issue_text, max_hits=3)
+                issue_entry["stackoverflow_hits"] = so_hits
+                enriched.append(issue_entry)
+            raw_result[rel_path]["bug_report"] = enriched
+
+        # Step 3: Cache enriched result
+        redis_client.setex(cache_key, CACHE_TTL, json.dumps(raw_result))
+        return jsonify(raw_result)
 
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
