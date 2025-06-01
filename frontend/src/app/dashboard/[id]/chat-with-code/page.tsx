@@ -7,6 +7,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,10 +44,13 @@ const chatMessages = [
   },
 ];
 
+
 export default function ChatWithCodePage() {
+  const params = useParams<{ id: string }>();
+  const repoSlug = params.id;
   return (
     <SidebarProvider>
-      <DevToolsSidebar />
+      <DevToolsSidebar id={params.id} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
           <div className="flex items-center gap-2 px-4">
@@ -100,25 +104,22 @@ export default function ChatWithCodePage() {
                     {chatMessages.map((message, index) => (
                       <div
                         key={index}
-                        className={`flex gap-3 ${
-                          message.role === "user"
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
+                        className={`flex gap-3 ${message.role === "user"
+                          ? "justify-end"
+                          : "justify-start"
+                          }`}
                       >
                         <div
-                          className={`flex gap-3 max-w-[80%] ${
-                            message.role === "user"
-                              ? "flex-row-reverse"
-                              : "flex-row"
-                          }`}
+                          className={`flex gap-3 max-w-[80%] ${message.role === "user"
+                            ? "flex-row-reverse"
+                            : "flex-row"
+                            }`}
                         >
                           <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
-                              message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
-                            }`}
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                              }`}
                           >
                             {message.role === "user" ? (
                               <User className="h-4 w-4" />
@@ -127,11 +128,10 @@ export default function ChatWithCodePage() {
                             )}
                           </div>
                           <div
-                            className={`rounded-lg px-4 py-2.5 text-sm ${
-                              message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
-                            }`}
+                            className={`rounded-lg px-4 py-2.5 text-sm ${message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                              }`}
                           >
                             {message.content}
                           </div>

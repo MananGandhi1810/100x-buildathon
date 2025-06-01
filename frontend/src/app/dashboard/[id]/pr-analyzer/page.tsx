@@ -26,6 +26,7 @@ import {
 import { GitPullRequest, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { useParams } from "next/navigation";
 
 // Add proper types for PR analysis
 interface PRAnalysis {
@@ -131,8 +132,9 @@ const dummyPRs: PR[] = [
   },
 ];
 
-export default function PRAnalyzerPage({ params }: { params: { id: string } }) {
+export default function PRAnalyzerPage() {
   const [selectedPR, setSelectedPR] = useState<PR>(dummyPRs[0]);
+  const repoSlug = useParams<{ id: string }>().id;
 
   const renderSuggestions = () => {
     if (!selectedPR.analysis.suggestions?.length) return null;
@@ -212,8 +214,8 @@ export default function PRAnalyzerPage({ params }: { params: { id: string } }) {
                   selectedPR.analysis.performance.impact === "high"
                     ? "destructive"
                     : selectedPR.analysis.performance.impact === "medium"
-                    ? "secondary"
-                    : "default"
+                      ? "secondary"
+                      : "default"
                 }
               >
                 {selectedPR.analysis.performance.impact}
@@ -232,7 +234,7 @@ export default function PRAnalyzerPage({ params }: { params: { id: string } }) {
 
   return (
     <SidebarProvider>
-      <DevToolsSidebar />
+      <DevToolsSidebar id={repoSlug} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
           <div className="flex items-center gap-2 px-4">
@@ -251,7 +253,7 @@ export default function PRAnalyzerPage({ params }: { params: { id: string } }) {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink
-                    href={`/dashboard/${params.id}`}
+                    href={`/dashboard/${repoSlug}`}
                     className="hover:text-primary transition-colors"
                   >
                     Repository
@@ -294,11 +296,10 @@ export default function PRAnalyzerPage({ params }: { params: { id: string } }) {
                       {dummyPRs.map((pr) => (
                         <div
                           key={pr.id}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                            selectedPR.id === pr.id
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedPR.id === pr.id
                               ? "bg-primary/10 border border-primary/20"
                               : "hover:bg-muted/50"
-                          }`}
+                            }`}
                           onClick={() => setSelectedPR(pr)}
                         >
                           <div className="flex items-center justify-between mb-1">
@@ -308,8 +309,8 @@ export default function PRAnalyzerPage({ params }: { params: { id: string } }) {
                                 pr.status === "merged"
                                   ? "default"
                                   : pr.status === "open"
-                                  ? "secondary"
-                                  : "destructive"
+                                    ? "secondary"
+                                    : "destructive"
                               }
                             >
                               {pr.status}

@@ -46,7 +46,7 @@ const Navbar = () => {
           {/* Sign In Button */}
           <div className="flex items-center">
             <Link
-              href="/login"
+              href="/signup"
               className="inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-foreground bg-muted/50 hover:bg-muted transition-colors duration-200"
             >
               Sign In

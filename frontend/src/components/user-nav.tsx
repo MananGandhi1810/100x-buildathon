@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import axios from "axios"
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Settings } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,14 +16,43 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 
-const user = {
-  name: "John Doe",
-  email: "john@example.com",
-  avatar: "/placeholder.svg?height=32&width=32",
+interface User {
+  name: string
+  email: string
+  avatarUrl: string
 }
 
 export function UserNav() {
   const { isMobile } = useSidebar()
+
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const accessToken = sessionStorage.getItem("accessToken") // retrieve token from sessionStorage
+
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          withCredentials: true, // optional: only needed if your API sets/uses cookies
+        })
+
+        setUser(res.data.data.user)
+      } catch (error) {
+        console.error("Error fetching user:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [])
+  
+
+  if (loading || !user) return null
 
   return (
     <SidebarMenu>
@@ -33,8 +64,13 @@ export function UserNav() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                <AvatarFallback className="rounded-lg">JD</AvatarFallback>
+                <AvatarImage src={user.avatarUrl || "/placeholder.svg"} alt={user.name} />
+                <AvatarFallback className="rounded-lg">
+                  {user.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
@@ -52,8 +88,13 @@ export function UserNav() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">JD</AvatarFallback>
+                  <AvatarImage src={user.avatarUrl || "/placeholder.svg"} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">
+                    {user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
