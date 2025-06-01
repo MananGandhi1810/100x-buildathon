@@ -5,7 +5,7 @@ services:
         image: bitnami/postgresql:latest
         restart: unless-stopped
         ports:
-            - "2345:5432/tcp"
+            - "8003:5432/tcp"
         volumes:
             - pg-data:/bitnami/postgresql
         environment:
@@ -42,6 +42,7 @@ services:
             - ./backend/access.log:/usr/src/app/access.log
         user: root
         command: sh -c "pnpx prisma migrate deploy && npm run start"
+        env_file: ./backend/.env
 
     ai:
         image: ghcr.io/manangandhi1810/10000x-devs-ai:latest
