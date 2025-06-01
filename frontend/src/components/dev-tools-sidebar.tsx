@@ -1,5 +1,3 @@
-"use client";
-
 import type * as React from "react";
 import {
   FileText,
@@ -31,70 +29,72 @@ import {
 import { RepositorySelector } from "@/components/repository-selector";
 import { UserNav } from "@/components/user-nav";
 
-const devTools = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "README Generator",
-    url: "/dashboard/readme-generator",
-    icon: FileText,
-  },
-  {
-    title: "Pull Request Analyzer",
-    url: "/dashboard/pr-analyzer",
-    icon: GitPullRequest,
-  },
-  {
-    title: "Vulnerability Scanner",
-    url: "/dashboard/vulnerability-scanner",
-    icon: Shield,
-  },
-  {
-    title: "Chat with Code",
-    url: "/dashboard/chat-with-code",
-    icon: MessageSquare,
-  },
-  {
-    title: "Deploy with Chat",
-    url: "/dashboard/deploy-with-chat",
-    icon: Rocket,
-  },
-  {
-    title: "Code Structure Visualization",
-    url: "/dashboard/code-structure",
-    icon: Network,
-  },
-  {
-    title: "Automated Testing",
-    url: "/dashboard/automated-testing",
-    icon: TestTube,
-  },
-  {
-    title: "Environment Provisioning",
-    url: "/dashboard/environment-provisioning",
-    icon: Server,
-  },
-];
+interface DevToolsSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  id: string; // Receive the param
+}
 
-const settingsItems = [
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
-  {
-    title: "Profile",
-    url: "/dashboard/profile",
-    icon: User,
-  },
-];
+export function DevToolsSidebar({ id, ...props }: DevToolsSidebarProps) {
+  const devTools = [
+    {
+      title: "Dashboard",
+      url: `/dashboard/${id}`,
+      icon: Home,
+    },
+    {
+      title: "README Generator",
+      url: `/dashboard/${id}/readme-generator`,
+      icon: FileText,
+    },
+    {
+      title: "Pull Request Analyzer",
+      url: `/dashboard/${id}/pr-analyzer`,
+      icon: GitPullRequest,
+    },
+    {
+      title: "Vulnerability Scanner",
+      url: `/dashboard/${id}/vulnerability-scanner`,
+      icon: Shield,
+    },
+    {
+      title: "Chat with Code",
+      url: `/dashboard/${id}/chat-with-code`,
+      icon: MessageSquare,
+    },
+    {
+      title: "Deploy with Chat",
+      url: `/dashboard/${id}/deploy-with-chat`,
+      icon: Rocket,
+    },
+    {
+      title: "Code Structure Visualization",
+      url: `/dashboard/${id}/code-structure`,
+      icon: Network,
+    },
+    {
+      title: "Automated Testing",
+      url: `/dashboard/${id}/automated-testing`,
+      icon: TestTube,
+    },
+    {
+      title: "Environment Provisioning",
+      url: `/dashboard/${id}/environment-provisioning`,
+      icon: Server,
+    },
+  ];
 
-export function DevToolsSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+  const settingsItems = [
+    {
+      title: "Settings",
+      url: `/dashboard/${id}/settings`,
+      icon: Settings,
+    },
+    {
+      title: "Profile",
+      url: `/dashboard/${id}/profile`,
+      icon: User,
+    },
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="bg-grain">

@@ -1,3 +1,4 @@
+"use client";
 import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
 import {
   Breadcrumb,
@@ -15,11 +16,42 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { FileText, Download, Copy } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useParams } from 'next/navigation'
+import axios from "axios"
+import ReactMarkdown from "react-markdown";
 
 export default function ReadmeGeneratorPage() {
+  const [projectData, setProjectData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const params = useParams<{ id: string }>();
+  const repoSlug = params.id;
+
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}`, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        });
+        console.log("Project data response:", response.data.data);
+        setProjectData(response.data.data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError(true);
+        setLoading(false);
+      }
+    };
+
+    fetchProjectData();
+  }, [params.id]);
+
   return (
     <SidebarProvider>
-      <DevToolsSidebar />
+      <DevToolsSidebar id={params.id} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
           <div className="flex items-center gap-2 px-4">
@@ -49,35 +81,7 @@ export default function ReadmeGeneratorPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Information</CardTitle>
-                  <CardDescription>Provide details about your project to generate a README</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="project-name">Project Name</Label>
-                    <Input id="project-name" placeholder="my-awesome-project" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="A brief description of what your project does..."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tech-stack">Technology Stack</Label>
-                    <Input id="tech-stack" placeholder="React, TypeScript, Node.js..." />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="features">Key Features</Label>
-                    <Textarea id="features" placeholder="List the main features of your project..." rows={3} />
-                  </div>
-                  <Button className="w-full">Generate README</Button>
-                </CardContent>
-              </Card>
+              
 
               <Card>
                 <CardHeader>
@@ -86,8 +90,10 @@ export default function ReadmeGeneratorPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="min-h-[400px] rounded-md border bg-muted/50 p-4">
-                    <div className="text-sm text-muted-foreground">
-                      Fill out the project information to generate your README...
+                    <div className="prose text-sm text-muted-foreground">
+                     <ReactMarkdown>
+                        {projectData?.readme || "Your README content will be generated here."}
+                     </ReactMarkdown>
                     </div>
                   </div>
                   <div className="mt-4 flex gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Star, GitFork, LogOut, User } from "lucide-react";
+import { Search, Plus, Star, GitFork, LogOut, User, Github } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -23,16 +23,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-
-// Add proper type for the repository data
-interface Repository {
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+// Update the Project interface to match your API
+interface Project {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  lastUpdated: string;
-  stars: number;
-  language: string;
-  forks: number;
+  repoUrl: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface User {
@@ -41,103 +50,140 @@ interface User {
   avatarUrl?: string;
 }
 
-// Update the repositories array with proper type
-const repositories: Repository[] = [
-  {
-    id: "1",
-    name: "code-ai-platform",
-    description: "An AI-powered code analysis and development platform",
-    stars: 1234,
-    language: "TypeScript",
-    lastUpdated: "2 days ago",
-    forks: 0,
-  },
-  {
-    id: "2",
-    name: "ml-model-trainer",
-    description: "Machine learning model training and deployment toolkit",
-    stars: 890,
-    language: "Python",
-    lastUpdated: "1 week ago",
-    forks: 0,
-  },
-  {
-    id: "3",
-    name: "react-components",
-    description: "Collection of reusable React components",
-    stars: 567,
-    language: "JavaScript",
-    lastUpdated: "3 days ago",
-    forks: 0,
-  },
-  {
-    id: "4",
-    name: "api-gateway",
-    description: "Microservices API gateway with authentication",
-    stars: 789,
-    language: "Go",
-    lastUpdated: "5 days ago",
-    forks: 0,
-  },
-  {
-    id: "5",
-    name: "data-visualization",
-    description: "Interactive data visualization library",
-    stars: 432,
-    language: "TypeScript",
-    lastUpdated: "1 day ago",
-    forks: 0,
-  },
-  {
-    id: "6",
-    name: "cloud-deployment",
-    description: "Cloud infrastructure deployment automation",
-    stars: 654,
-    language: "Terraform",
-    lastUpdated: "4 days ago",
-    forks: 0,
-  },
-];
-
 export default function Dashboard() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
-    // Simulate loading delay
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const accessToken = sessionStorage.getItem("accessToken");
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
-          { headers: { authorization: `Bearer ${accessToken}` } }
-        );
-        setUser(response.data.data.user);
-      } catch (error) {
-        console.error("Error fetching repositories:", error);
-        router.push("/signup");
-      }
-    }
     fetchUser();
+    fetchProjects();
   }, [router]);
+
+  const fetchUser = async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
+        { headers: { authorization: `Bearer ${accessToken}` } }
+      );
+      setUser(response.data.data.user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      router.push("/signup");
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/list`,
+        { headers: { authorization: `Bearer ${accessToken}` } }
+      );
+      setProjects(response.data.data.projectData);
+      console.log("Fetched projects:", response.data.data.projectData);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to fetch projects",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImportRepository = async () => {
+    if (!repoUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a repository URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate GitHub URL format
+    const ghRepoRegex = /https?:\/\/(www\.)?github.com\/[\w.-]+\/[\w.-]+/;
+    if (!ghRepoRegex.test(repoUrl)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid GitHub repository URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/create?repo=${encodeURIComponent(repoUrl)}`,
+        {},
+        { headers: { authorization: `Bearer ${accessToken}` } }
+      );
+
+      toast({
+        title: "Success",
+        description: "Repository imported successfully!",
+      });
+
+      // Refresh the projects list
+      await fetchProjects();
+
+      // Close dialog and reset form
+      setIsImportDialogOpen(false);
+      setRepoUrl("");
+    } catch (error: any) {
+      console.error("Error importing repository:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to import repository",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const handleLogout = () => {
     sessionStorage.removeItem("accessToken");
     router.push("/signup");
   };
 
-  const filteredRepos = repositories.filter((repo) =>
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const getRepoName = (url: string) => {
+    const match = url.match(/github\.com\/[\w.-]+\/([\w.-]+)/);
+    return match ? match[1] : "Unknown Repository";
+  };
+
+  const getRepoOwner = (url: string) => {
+    const match = url.match(/github\.com\/([\w.-]+)\/[\w.-]+/);
+    return match ? match[1] : "Unknown Owner";
+  };
+
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   const now = new Date();
+  //   const diffTime = Math.abs(now.getTime() - date.getTime());
+  //   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  //   if (diffDays === 1) return "1 day ago";
+  //   if (diffDays < 7) return `${diffDays} days ago`;
+  //   if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+  //   return `${Math.ceil(diffDays / 30)} months ago`;
+  // };
+
+  const filteredProjects = projects.filter((project) =>
+    getRepoName(project.repoUrl).toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isLoading) {
@@ -230,6 +276,7 @@ export default function Dashboard() {
           </div>
         </div>
       </nav>
+
       <div className="space-y-8 p-6 mt-16 container mx-auto py-6 bg-transparent">
         <div className="flex items-center justify-between">
           <div>
@@ -240,10 +287,68 @@ export default function Dashboard() {
               Manage and analyze your code repositories
             </p>
           </div>
-          <Button className="gap-2 shadow-sm hover:shadow-md transition-all">
-            <Plus className="h-4 w-4" />
-            Import Repository
-          </Button>
+
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 shadow-sm hover:shadow-md transition-all">
+                <Plus className="h-4 w-4" />
+                Import Repository
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Github className="h-5 w-5" />
+                  Import GitHub Repository
+                </DialogTitle>
+                <DialogDescription>
+                  Enter the GitHub repository URL you want to import and analyze.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <label htmlFor="repo-url" className="text-sm font-medium">
+                    Repository URL
+                  </label>
+                  <Input
+                    id="repo-url"
+                    placeholder="https://github.com/username/repository"
+                    value={repoUrl}
+                    onChange={(e) => setRepoUrl(e.target.value)}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Make sure the repository is public or you have access to it.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsImportDialogOpen(false);
+                    setRepoUrl("");
+                  }}
+                  disabled={isImporting}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleImportRepository} disabled={isImporting}>
+                  {isImporting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Import
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="flex gap-4 items-center">
@@ -258,41 +363,57 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRepos.map((repo) => (
-            <Card
-              key={repo.id}
-              className="group hover:border-primary/50 transition-all duration-200 hover:shadow-md"
-            >
-              <a href={`/dashboard/${repo.id}`} className="block">
-                <CardHeader className="pb-3">
-                  <CardTitle className="group-hover:text-primary transition-colors text-lg">
-                    {repo.name}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {repo.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <Star className="h-4 w-4 text-yellow-500" />
-                      <span>{repo.stars.toLocaleString()}</span>
+        {filteredProjects.length === 0 ? (
+          <div className="text-center py-12">
+            <Github className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No repositories found</h3>
+            <p className="text-muted-foreground mb-4">
+              {projects.length === 0
+                ? "Get started by importing your first repository"
+                : "No repositories match your search criteria"}
+            </p>
+            {projects.length === 0 && (
+              <Button
+                onClick={() => setIsImportDialogOpen(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Import Repository
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map((project) => (
+              <Card
+                key={project.id}
+                className="group hover:border-primary/50 transition-all duration-200 hover:shadow-md"
+              >
+                <a href={`/dashboard/${project.id}`} className="block">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="group-hover:text-primary transition-colors text-lg">
+                      {project.title || getRepoName(project.repoUrl)}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {project.description || `Repository: ${getRepoOwner(project.repoUrl)}/${getRepoName(project.repoUrl)}`}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Github className="h-4 w-4" />
+                        <span className="truncate max-w-[120px]">
+                          {getRepoOwner(project.repoUrl)}
+                        </span>
+                      </div>
+                 
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <GitFork className="h-4 w-4 text-blue-500" />
-                      <span>{repo.forks.toLocaleString()}</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full bg-muted text-xs font-medium">
-                      {repo.language}
-                    </span>
-                    <span className="text-xs">Updated {repo.lastUpdated}</span>
-                  </div>
-                </CardContent>
-              </a>
-            </Card>
-          ))}
-        </div>
+                  </CardContent>
+                </a>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </>
   );

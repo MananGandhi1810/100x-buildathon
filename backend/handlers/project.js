@@ -68,7 +68,7 @@ const getProjectDataHandler = async (req, res) => {
     let aiError = null;
 
     const aiServiceBaseUrl =
-        process.env.AI_SERVICE_BASE_URL || "http://localhost:8888";
+        process.env.AI_SERVICE_BASE_URL || "http://127.0.0.1:8888";
     const payload = {
         owner: owner,
         repo: repoName,

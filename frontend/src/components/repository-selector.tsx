@@ -1,7 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, GitBranch } from "lucide-react"
+import { Check, ChevronsUpDown, GitBranch, Loader2 } from "lucide-react"
+import axios from "axios"
+import { useRouter, useParams, usePathname } from "next/navigation"
 
 import {
   DropdownMenu,
@@ -13,37 +15,202 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 
-const repositories = [
-  {
-    name: "my-awesome-project",
-    owner: "johndoe",
-    private: false,
-    language: "TypeScript",
-  },
-  {
-    name: "react-dashboard",
-    owner: "johndoe",
-    private: true,
-    language: "JavaScript",
-  },
-  {
-    name: "api-service",
-    owner: "company",
-    private: true,
-    language: "Python",
-  },
-  {
-    name: "mobile-app",
-    owner: "johndoe",
-    private: false,
-    language: "React Native",
-  },
-]
+interface Project {
+  id: string
+  title: string
+  description: string
+  repoUrl: string
+  userId: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface Repository {
+  id: string
+  name: string
+  owner: string
+  language: string
+  repoUrl: string
+  title: string
+}
 
 export function RepositorySelector() {
   const { isMobile } = useSidebar()
-  const [selectedRepo, setSelectedRepo] = React.useState(repositories[0])
+  const router = useRouter()
+  const params = useParams()
+  const pathname = usePathname()
+  const [repositories, setRepositories] = React.useState<Repository[]>([])
+  const [selectedRepo, setSelectedRepo] = React.useState<Repository | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
 
+  // Get current project ID from URL slug
+  const currentProjectId = params?.id as string
+
+  // Extract repository info from GitHub URL
+  const parseRepoUrl = (url: string) => {
+    const match = url.match(/github\.com\/([\w.-]+)\/([\w.-]+)/)
+    if (match) {
+      return {
+        owner: match[1],
+        name: match[2]
+      }
+    }
+    return { owner: "Unknown", name: "Unknown Repository" }
+  }
+
+  // Fetch projects from API
+  const fetchProjects = React.useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const accessToken = sessionStorage.getItem("accessToken")
+      if (!accessToken) {
+        router.push("/signup")
+        return
+      }
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/list`,
+        { headers: { authorization: `Bearer ${accessToken}` } }
+      )
+
+      const projects: Project[] = response.data.data.projectData
+
+      // Transform projects to repository format
+      const repos: Repository[] = projects.map((project) => {
+        const { owner, name } = parseRepoUrl(project.repoUrl)
+        return {
+          id: project.id,
+          name: project.title || name,
+          owner,
+          language: "Unknown", // You might want to fetch this from GitHub API or store it
+          repoUrl: project.repoUrl,
+          title: project.title
+        }
+      })
+
+      setRepositories(repos)
+
+      // Set selected repository based on current URL slug
+      if (currentProjectId && repos.length > 0) {
+        const currentRepo = repos.find(repo => repo.id === currentProjectId)
+        if (currentRepo) {
+          setSelectedRepo(currentRepo)
+        } else {
+          // If project ID in URL doesn't exist, redirect to dashboard
+          router.push("/dashboard")
+        }
+      } else if (repos.length > 0 && !selectedRepo && !currentProjectId) {
+        // If no project ID in URL and no selected repo, set first one
+        setSelectedRepo(repos[0])
+      }
+    } catch (error: any) {
+      console.error("Error fetching projects:", error)
+      setError("Failed to load repositories")
+
+      // If unauthorized, redirect to signup
+      if (error.response?.status === 401) {
+        router.push("/signup")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router, currentProjectId])
+
+  // Fetch projects on component mount
+  React.useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
+
+  // Handle repository selection
+  const handleRepoSelect = (repo: Repository) => {
+    setSelectedRepo(repo)
+    // Navigate to the selected repository's page
+    router.push(`/dashboard/${repo.id}`)
+  }
+
+  // Update selected repo when URL changes
+  React.useEffect(() => {
+    if (currentProjectId && repositories.length > 0) {
+      const currentRepo = repositories.find(repo => repo.id === currentProjectId)
+      if (currentRepo && selectedRepo?.id !== currentRepo.id) {
+        setSelectedRepo(currentRepo)
+      }
+      console.log("Current repo updated:", currentRepo)
+      console.log("Selected repo:", selectedRepo)
+    }
+  }, [currentProjectId, repositories, selectedRepo?.id])
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" disabled>
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <Loader2 className="size-4 animate-spin" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">Loading...</span>
+              <span className="truncate text-xs text-sidebar-foreground/70">
+                Fetching repositories
+              </span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" disabled>
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-red-500 text-white">
+              <GitBranch className="size-4" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">Error</span>
+              <span className="truncate text-xs text-sidebar-foreground/70">
+                {error}
+              </span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+
+  // No repositories state
+  if (repositories.length === 0) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            onClick={() => router.push("/dashboard")}
+            className="cursor-pointer"
+          >
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <GitBranch className="size-4" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">No Repositories</span>
+              <span className="truncate text-xs text-sidebar-foreground/70">
+                Click to import
+              </span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+
+  // Normal state with repositories
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -57,9 +224,11 @@ export function RepositorySelector() {
                 <GitBranch className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{selectedRepo.name}</span>
+                <span className="truncate font-semibold">
+                  {selectedRepo?.name || "Select Repository"}
+                </span>
                 <span className="truncate text-xs text-sidebar-foreground/70">
-                  {selectedRepo.owner}/{selectedRepo.language}
+                  {selectedRepo ? `${selectedRepo.owner}` : "No repository selected"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -71,26 +240,40 @@ export function RepositorySelector() {
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">Select Repository</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
+              Select Repository ({repositories.length})
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {repositories.map((repo) => (
               <DropdownMenuItem
-                key={`${repo.owner}/${repo.name}`}
-                onClick={() => setSelectedRepo(repo)}
-                className="gap-2 p-2"
+                key={repo.id}
+                onClick={() => handleRepoSelect(repo)}
+                className="gap-2 p-2 cursor-pointer"
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">
                   <GitBranch className="size-4 shrink-0" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-medium">{repo.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {repo.owner} • {repo.language}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-medium truncate">{repo.name}</span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {repo.owner}
                   </span>
                 </div>
-                {selectedRepo.name === repo.name && <Check className="ml-auto size-4" />}
+                {selectedRepo?.id === repo.id && (
+                  <Check className="ml-auto size-4 text-primary" />
+                )}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => router.push("/dashboard")}
+              className="gap-2 p-2 cursor-pointer text-primary"
+            >
+              <div className="flex size-6 items-center justify-center rounded-sm border border-primary">
+                <GitBranch className="size-4 shrink-0" />
+              </div>
+              <span className="font-medium">Import New Repository</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
