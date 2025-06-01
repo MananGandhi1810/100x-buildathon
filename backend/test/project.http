@@ -22,3 +22,21 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImdhbmRoa
 ### Access code-server homepage (GET request) - No auth required
 # @name accessCodeServerHome
 GET http://localhost:8000/project/cmbdi8v0y0001tz2bd2jcx1kz/provision/use/
+
+### Send a chat message to a project
+# @name projectChat
+POST http://localhost:8000/project/cmbdi8v0y0001tz2bd2jcx1kz/chat
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImdhbmRoaW1hbmFuMTgxMEBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW5HYW5kaGlBbHQiLCJpZCI6ImNtYmNscTk3bzAwMDB0em1heDRpZXJmZjAiLCJzY29wZSI6ImFjY2VzcyIsImlhdCI6MTc0ODcxODMwN30.aGWo4w6flo3UDhrsKrhxe3b01nSUYT152AnmoZhra8g
+
+{
+  "owner": "testowner",
+  "repo": "testrepo",
+  "token": "ghp_yourgithubtoken",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, what can you tell me about this project?"
+    }
+  ]
+}

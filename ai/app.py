@@ -27,7 +27,6 @@ redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=T
 CACHE_TTL = 24 * 3600  # 24 hours in seconds
 redis_client.flushdb()
 
-
 # ─────────────────────────────────────────
 # LLM (Gemini) Setup
 # ─────────────────────────────────────────
@@ -50,6 +49,7 @@ SUPPORTED_EXTENSIONS = {
     ".php": "php",
 }
 
+
 # ─────────────────────────────────────────
 # Utility: Clean triple‐backtick fences
 # ─────────────────────────────────────────
@@ -59,6 +59,7 @@ def clean_code_block(s: str) -> str:
     s = re.sub(r"^```[\w]*\n", "", s.strip(), flags=re.MULTILINE)
     s = re.sub(r"```$", "", s.strip(), flags=re.MULTILINE)
     return s.strip()
+
 
 # ─────────────────────────────────────────
 # Gemini call helper
@@ -80,6 +81,7 @@ def call_gemini(prompt: str, expect_json: bool = False):
         print(f"LLM error: {e}")
         return [] if expect_json else ""
 
+
 # ─────────────────────────────────────────
 # GitHub API helper functions
 # ─────────────────────────────────────────
@@ -89,17 +91,20 @@ def github_headers(token: str):
         "Authorization": f"Bearer {token}",
     }
 
+
 def get_default_branch(owner: str, repo: str, headers: dict) -> str:
     url = f"https://api.github.com/repos/{owner}/{repo}"
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()["default_branch"]
 
+
 def get_commit_sha_for_branch(owner: str, repo: str, branch: str, headers: dict) -> str:
     url_ref = f"https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch}"
     resp = requests.get(url_ref, headers=headers)
     resp.raise_for_status()
     return resp.json()["object"]["sha"]
+
 
 def get_tree_sha_for_branch(owner: str, repo: str, branch: str, headers: dict) -> str:
     commit_sha = get_commit_sha_for_branch(owner, repo, branch, headers)
@@ -108,13 +113,19 @@ def get_tree_sha_for_branch(owner: str, repo: str, branch: str, headers: dict) -
     resp.raise_for_status()
     return resp.json()["tree"]["sha"]
 
+
 def get_github_tree(owner: str, repo: str, tree_sha: str, headers: dict):
-    url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1"
+    url = (
+        f"https://api.github.com/repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1"
+    )
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json().get("tree", [])
 
-def fetch_file_content(owner: str, repo: str, path: str, branch: str, headers: dict) -> str:
+
+def fetch_file_content(
+    owner: str, repo: str, path: str, branch: str, headers: dict
+) -> str:
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
     resp = requests.get(url, headers=headers, params={"ref": branch})
     resp.raise_for_status()
@@ -122,6 +133,7 @@ def fetch_file_content(owner: str, repo: str, path: str, branch: str, headers: d
     if data.get("encoding") == "base64" and "content" in data:
         return base64.b64decode(data["content"]).decode("utf-8", errors="ignore")
     return ""
+
 
 # ─────────────────────────────────────────
 # AI Prompt Templates
@@ -136,6 +148,7 @@ Code:
 {code}
 """
 
+
 def prompt_generate_mocks(code: str, language: str) -> str:
     return f"""
 Given the following {language} code (functions/classes/modules), generate:
@@ -146,6 +159,7 @@ Output ONLY the code, one test function per example (named test_*), ready to cop
 Code:
 {code}
 """
+
 
 def prompt_bug_finder(code: str, language: str) -> str:
     return f"""
@@ -171,6 +185,7 @@ Code:
 {code}
 """
 
+
 # ─────────────────────────────────────────
 # Core Generation Functions
 # ─────────────────────────────────────────
@@ -189,11 +204,12 @@ def list_all_files(owner: str, repo: str, token: str, single_file: str = None):
         if ext in SUPPORTED_EXTENSIONS:
             files.append((path, SUPPORTED_EXTENSIONS[ext]))
     if single_file:
-        for (p, lang) in files:
+        for p, lang in files:
             if p == single_file:
                 return [(p, lang)]
         return []
     return files
+
 
 def generate_tests(owner: str, repo: str, token: str, single_file: str = None):
     headers = github_headers(token)
@@ -209,6 +225,7 @@ def generate_tests(owner: str, repo: str, token: str, single_file: str = None):
         results[rel_path] = {"language": language, "test_cases": tests}
     return results
 
+
 def generate_mocks(owner: str, repo: str, token: str, single_file: str = None):
     headers = github_headers(token)
     branch = get_default_branch(owner, repo, headers)
@@ -223,6 +240,7 @@ def generate_mocks(owner: str, repo: str, token: str, single_file: str = None):
         results[rel_path] = {"language": language, "mock_data": mocks}
     return results
 
+
 def detect_bugs(owner: str, repo: str, token: str, single_file: str = None):
     headers = github_headers(token)
     branch = get_default_branch(owner, repo, headers)
@@ -236,15 +254,19 @@ def detect_bugs(owner: str, repo: str, token: str, single_file: str = None):
         results[rel_path] = {"language": language, "bug_report": bugs}
     return results
 
+
 # ─────────────────────────────────────────
 # Cache‐Key Utility
 # ─────────────────────────────────────────
-def get_cache_key(owner: str, repo: str, commit_sha: str, feature: str, single_file: str = None) -> str:
+def get_cache_key(
+    owner: str, repo: str, commit_sha: str, feature: str, single_file: str = None
+) -> str:
     base_key = f"{owner}:{repo}:{commit_sha}:{feature}"
     if single_file:
         sanitized = single_file.replace(":", "_")
         return f"{base_key}:{sanitized}"
     return base_key
+
 
 # ─────────────────────────────────────────
 # Stack Overflow Integration
@@ -292,7 +314,7 @@ def fetch_stackoverflow_for_issue(issue_text: str, max_hits: int = 3):
                 "sort": "votes",
                 "site": "stackoverflow",
                 "filter": "withbody",
-                "pagesize": 1
+                "pagesize": 1,
             }
             ans_resp = requests.get(ans_url, params=ans_params)
             ans_resp.raise_for_status()
@@ -302,18 +324,21 @@ def fetch_stackoverflow_for_issue(issue_text: str, max_hits: int = 3):
                 accepted = {
                     "answer_id": answers[0]["answer_id"],
                     "body": answers[0]["body"],
-                    "is_accepted": answers[0].get("is_accepted", False)
+                    "is_accepted": answers[0].get("is_accepted", False),
                 }
-            hits.append({
-                "question_id": qid,
-                "title": title,
-                "link": link,
-                "accepted_answer": accepted
-            })
+            hits.append(
+                {
+                    "question_id": qid,
+                    "title": title,
+                    "link": link,
+                    "accepted_answer": accepted,
+                }
+            )
         return hits
     except Exception as e:
         print(f"[StackOverflow API error] {e}")
         return []
+
 
 # ─────────────────────────────────────────
 # Request Validation Utility
@@ -326,10 +351,12 @@ def validate_request_json(data):
         raise ValueError("Request JSON must include 'owner', 'repo', and 'token'.")
     return owner, repo, token
 
+
 # ─────────────────────────────────────────
 # Flask App + Endpoints
 # ─────────────────────────────────────────
 app = Flask(__name__)
+
 
 @app.route("/generate_tests", methods=["POST"])
 def endpoint_generate_tests():
@@ -342,7 +369,9 @@ def endpoint_generate_tests():
         default_branch = get_default_branch(owner, repo, headers)
         commit_sha = get_commit_sha_for_branch(owner, repo, default_branch, headers)
 
-        cache_key = get_cache_key(owner, repo, commit_sha, "generate_tests", single_file)
+        cache_key = get_cache_key(
+            owner, repo, commit_sha, "generate_tests", single_file
+        )
         cached = redis_client.get(cache_key)
         if cached is not None:
             redis_client.expire(cache_key, CACHE_TTL)
@@ -358,6 +387,7 @@ def endpoint_generate_tests():
         print(f"[ERROR] generate_tests: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/generate_mocks", methods=["POST"])
 def endpoint_generate_mocks():
     try:
@@ -369,7 +399,9 @@ def endpoint_generate_mocks():
         default_branch = get_default_branch(owner, repo, headers)
         commit_sha = get_commit_sha_for_branch(owner, repo, default_branch, headers)
 
-        cache_key = get_cache_key(owner, repo, commit_sha, "generate_mocks", single_file)
+        cache_key = get_cache_key(
+            owner, repo, commit_sha, "generate_mocks", single_file
+        )
         cached = redis_client.get(cache_key)
         if cached is not None:
             redis_client.expire(cache_key, CACHE_TTL)
@@ -384,6 +416,7 @@ def endpoint_generate_mocks():
     except Exception as e:
         print(f"[ERROR] generate_mocks: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/bug_detect", methods=["POST"])
 def endpoint_bug_detect():
@@ -425,5 +458,115 @@ def endpoint_bug_detect():
         print(f"[ERROR] bug_detect: {e}")
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/chat", methods=["POST"])
+def endpoint_chat():
+    """
+    Chat with code feature:
+    Expects JSON: {
+      "owner": "...",
+      "repo": "...",
+      "token": "...",
+      "messages": [ {"role":"system"/"user"/"assistant","content":"..."} , ... ]
+    }
+    Returns: { "reply": "<LLM response>" }
+    """
+    try:
+        body = request.get_json(force=True)
+        owner, repo, token = validate_request_json(body)
+        messages = body.get("messages")
+        if not messages or not isinstance(messages, list):
+            raise ValueError("Request JSON must include a 'messages' array.")
+
+        # Fetch and concatenate codebase (up to ~200k characters)
+        code_blob = fetch_full_code(owner, repo, token)
+
+        # Build a single prompt: system + code context + conversation
+        system_prompt = (
+            "You are a helpful AI assistant specialized in analyzing code. "
+            "Below is the codebase. Use it to answer the user’s questions. "
+            "If you need to reference a file or snippet, quote the relevant lines."
+            "\n\nCodebase:\n" + code_blob + "\n\n"
+        )
+
+        # Append system prompt as first message
+        prompt_parts = [{"role": "system", "content": system_prompt}]
+        # Then add user/assistant conversation
+        for msg in messages:
+            role = msg.get("role")
+            content = msg.get("content")
+            if role not in ("system", "user", "assistant") or not isinstance(
+                content, str
+            ):
+                continue
+            prompt_parts.append({"role": role, "content": content})
+
+        # Flatten prompts into a single text prompt for Gemini
+        chat_prompt = ""
+        for part in prompt_parts:
+            prefix = (
+                "[System]:"
+                if part["role"] == "system"
+                else ("[User]:" if part["role"] == "user" else "[Assistant]:")
+            )
+            chat_prompt += f"{prefix} {part['content']}\n"
+        chat_prompt += "[Assistant]:"
+
+        # Call Gemini to generate chat response
+        reply = call_gemini(chat_prompt)
+
+        return jsonify({"reply": reply})
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        print(f"[ERROR] chat: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────
+# Helper: Fetch Full Codebase for Chat
+# ─────────────────────────────────────────
+def fetch_full_code(owner: str, repo: str, token: str, max_length: int = 300000) -> str:
+    """
+    Fetch and concatenate code files (up to max_length characters) into one text blob.
+    Each file is prefixed with "#### File: <path>\n<content>\n".
+    """
+    headers = github_headers(token)
+    default_branch = get_default_branch(owner, repo, headers)
+    commit_sha = get_commit_sha_for_branch(owner, repo, default_branch, headers)
+
+    cache_key = get_cache_key(owner, repo, commit_sha, "fetch_full_code")
+    cached = redis_client.get(cache_key)
+    if cached is not None:
+        redis_client.expire(cache_key, CACHE_TTL)
+        return cached
+
+    tree_sha = get_tree_sha_for_branch(owner, repo, default_branch, headers)
+    tree = get_github_tree(owner, repo, tree_sha, headers)
+
+    code_parts = []
+    total_len = 0
+
+    for element in tree:
+        if element["type"] != "blob":
+            continue
+        path = element["path"]
+        ext = Path(path).suffix
+        if ext not in SUPPORTED_EXTENSIONS:
+            continue
+        content = fetch_file_content(owner, repo, path, default_branch, headers)
+        header = f"#### File: {path}\n"
+        snippet = header + content + "\n\n"
+        if total_len + len(snippet) > max_length:
+            break
+        code_parts.append(snippet)
+        total_len += len(snippet)
+
+    full_code = "".join(code_parts)
+    redis_client.setex(cache_key, CACHE_TTL, full_code)
+    return full_code
+
+
 if __name__ == "__main__":
-    app.run( port=8888)
+    app.run(port=8888)

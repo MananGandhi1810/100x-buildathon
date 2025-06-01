@@ -538,6 +538,107 @@ const provisionUseHandler = async (req, res, next) => {
     }
 };
 
+const projectChatHandler = async (req, res) => {
+    const { projectId } = req.params;
+    const { owner, repo, token, messages } = req.body;
+
+    if (!owner || !repo || !token || !messages) {
+        return res.status(400).json({
+            success: false,
+            message:
+                "Request body must contain owner, repo, token, and messages.",
+            data: null,
+        });
+    }
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Messages must be a non-empty array.",
+            data: null,
+        });
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || typeof lastMessage.content !== "string") {
+        return res.status(400).json({
+            success: false,
+            message: "The last message must have a content string.",
+            data: null,
+        });
+    }
+    const userPromptContent = lastMessage.content;
+
+    try {
+        const project = await prisma.project.findUnique({
+            where: { id: projectId },
+        });
+
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found",
+                data: null,
+            });
+        }
+
+        if (project.userId !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Access denied: You don't have permission to access this project's chat.",
+                data: null,
+            });
+        }
+
+        const aiServiceBaseUrl =
+            process.env.AI_SERVICE_BASE_URL || "http://127.0.0.1:8888";
+        const payloadToAiService = {
+            owner: owner, // From req.body
+            repo: repo, // From req.body
+            token: token, // From req.body
+            prompt: userPromptContent,
+        };
+
+        const aiResponse = await fetch(`${aiServiceBaseUrl}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadToAiService),
+        });
+
+        if (aiResponse.ok) {
+            const responseData = await aiResponse.json();
+            return res.json({
+                success: true,
+                message: "AI chat response received",
+                data: responseData,
+            });
+        } else {
+            const errorText = await aiResponse.text();
+            console.error(
+                `Error from AI service /chat for project ${projectId} (using payload owner/repo):`,
+                aiResponse.status,
+                errorText,
+            );
+            return res.status(aiResponse.status).json({
+                success: false,
+                message: `Error from AI service: ${errorText}`,
+                data: null,
+            });
+        }
+    } catch (error) {
+        console.error(
+            `Error in projectChatHandler for project ${projectId}:`,
+            error,
+        );
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while processing chat request.",
+            data: null,
+        });
+    }
+};
+
 export {
     getProjectDataHandler,
     incomingProjectWebhookHandler,
@@ -546,4 +647,5 @@ export {
     provisionProjectHandler,
     provisionUseHandler,
     createProjectProxy,
+    projectChatHandler, // Add the new handler here
 };
