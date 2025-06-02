@@ -135,8 +135,7 @@ export default function Dashboard() {
     try {
       const accessToken = sessionStorage.getItem("accessToken");
       const response = await axios.post(
-        `${
-          process.env.NEXT_PUBLIC_SERVER_URL
+        `${process.env.NEXT_PUBLIC_SERVER_URL
         }/project/create?repo=${encodeURIComponent(
           repoUrl
         )}&title=${encodeURIComponent(
@@ -250,7 +249,7 @@ export default function Dashboard() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-sm bg-grain">
         <div className="flex h-16 items-center px-4 container mx-auto">
           <div className="flex-1">
-            <h1 className="text-xl font-bold text-primary">YetiCodes</h1>
+            <h1 className="text-xl font-bold text-primary">10000x Devs</h1>
           </div>
           <div className="flex items-center gap-4">
             <DropdownMenu>

@@ -15,7 +15,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-transparent opacity-50 blur-3xl" />
           <Hero3
             heading="Ship Better Code, Faster with AI"
-            description="YetiCodes helps developers write, review, and ship better code with AI-powered tools. Get instant code reviews, automated testing, and intelligent suggestions."
+            description="10000x Devs helps developers write, review, and ship better code with AI-powered tools. Get instant code reviews, automated testing, and intelligent suggestions."
             buttons={{
               primary: {
                 text: "Get Started Free",
@@ -140,7 +140,7 @@ export default function Home() {
                 role: "Engineering Manager",
                 company: "TechCorp",
                 content:
-                  "YetiCodes has transformed our development workflow. The AI-powered code reviews have increased our team's velocity by 40% while maintaining code quality.",
+                  "10000x Devs has transformed our development workflow. The AI-powered code reviews have increased our team's velocity by 40% while maintaining code quality.",
                 rating: 5,
                 avatar: "/avatars/sarah.png",
               },
@@ -239,8 +239,8 @@ export default function Home() {
             title="Get in Touch"
             description="Have questions about our AI-powered development tools? Our team is here to help you get started."
             phone="+1 (555) 123-4567"
-            email="support@yeticodes.com"
-            web={{ label: "yeticodes.com", url: "https://yeticodes.com" }}
+            email="support@10000x Devs.com"
+            web={{ label: "10000x Devs.com", url: "https://10000x Devs.com" }}
           />
         </section>
       </main>{" "}
