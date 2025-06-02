@@ -27,7 +27,7 @@ export default function SignupPage() {
         if (accessToken) {
           const response = await axios.get(
             `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
-            { headers: { authorization: `Bearer ${accessToken}` } }
+            { headers: { authorization: `Bearer ${accessToken}` } },
           );
           if (response.data.data.user) {
             router.replace("/dashboard");

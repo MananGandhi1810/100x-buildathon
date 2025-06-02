@@ -111,7 +111,7 @@ export default function AutomatedTestingPage() {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -122,11 +122,11 @@ export default function AutomatedTestingPage() {
 
         // Convert API response to test suites format
         const suites: TestSuite[] = Object.entries(
-          data.data.aiAnalysis.tests || {}
+          data.data.aiAnalysis.tests || {},
         ).map(([filePath, testData], index) => {
           const testCases = extractTestCases(testData.test_cases);
           const failedTests = testCases.filter(
-            (tc) => tc.status === "failed"
+            (tc) => tc.status === "failed",
           ).length;
 
           return {
@@ -141,8 +141,8 @@ export default function AutomatedTestingPage() {
             type: filePath.includes("/api/")
               ? "integration"
               : filePath.includes("components")
-              ? "unit"
-              : "unit",
+                ? "unit"
+                : "unit",
             status: failedTests > 0 ? "failed" : "completed",
             coverage: Math.floor(Math.random() * 30) + 70, // This should come from API in real implementation
             lastRun: `${Math.floor(Math.random() * 24)} hours ago`,
@@ -206,8 +206,8 @@ export default function AutomatedTestingPage() {
         prev.map((suite) =>
           suite.id === suiteId
             ? { ...suite, status: "completed", lastRun: "Just now" }
-            : suite
-        )
+            : suite,
+        ),
       );
       setRunningTests((prev) => {
         const newSet = new Set(prev);
@@ -334,8 +334,8 @@ export default function AutomatedTestingPage() {
                                     test.status === "completed"
                                       ? "default"
                                       : test.status === "running"
-                                      ? "secondary"
-                                      : "destructive"
+                                        ? "secondary"
+                                        : "destructive"
                                   }
                                 >
                                   {test.status}
@@ -401,7 +401,7 @@ export default function AutomatedTestingPage() {
                                 | "overview"
                                 | "test-cases"
                                 | "coverage"
-                                | "code"
+                                | "code",
                             )
                           }
                         >
@@ -438,7 +438,7 @@ export default function AutomatedTestingPage() {
                                   <div className="text-2xl font-bold text-green-500">
                                     {
                                       selectedTest.testCases.filter(
-                                        (tc) => tc.status === "passed"
+                                        (tc) => tc.status === "passed",
                                       ).length
                                     }
                                   </div>
@@ -454,7 +454,7 @@ export default function AutomatedTestingPage() {
                                   <div className="text-2xl font-bold text-red-500">
                                     {
                                       selectedTest.testCases.filter(
-                                        (tc) => tc.status === "failed"
+                                        (tc) => tc.status === "failed",
                                       ).length
                                     }
                                   </div>
@@ -525,8 +525,8 @@ export default function AutomatedTestingPage() {
                                           testCase.status === "passed"
                                             ? "default"
                                             : testCase.status === "failed"
-                                            ? "destructive"
-                                            : "secondary"
+                                              ? "destructive"
+                                              : "secondary"
                                         }
                                       >
                                         {testCase.status}
@@ -589,7 +589,7 @@ export default function AutomatedTestingPage() {
                                         <span className="text-sm">
                                           {Math.max(
                                             selectedTest.coverage - 5,
-                                            0
+                                            0,
                                           )}
                                           %
                                         </span>
@@ -597,7 +597,7 @@ export default function AutomatedTestingPage() {
                                       <Progress
                                         value={Math.max(
                                           selectedTest.coverage - 5,
-                                          0
+                                          0,
                                         )}
                                         className="h-2"
                                       />

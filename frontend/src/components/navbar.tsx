@@ -14,28 +14,28 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-primary">
-              10000x Devs
-            </span>
+            <span className="text-2xl font-bold text-primary">10000x Devs</span>
           </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
-              className={`text-sm font-medium transition-colors duration-200 ${pathname === "/"
+              className={`text-sm font-medium transition-colors duration-200 ${
+                pathname === "/"
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
-                }`}
+              }`}
             >
               Home
             </Link>
             <Link
               href="/signup"
-              className={`text-sm font-medium transition-colors duration-200 ${pathname === "/signup"
+              className={`text-sm font-medium transition-colors duration-200 ${
+                pathname === "/signup"
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
-                }`}
+              }`}
             >
               Sign Up
             </Link>

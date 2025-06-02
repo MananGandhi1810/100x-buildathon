@@ -16,7 +16,7 @@ export function DotsBackground({ children, className }: DotsBackgroundProps) {
           "absolute inset-0 opacity-35 ",
           "[background-size:40px_40px]",
           "[background-image:radial-gradient(#e5e5e5_1px,transparent_1px)]",
-          "dark:[background-image:radial-gradient(#262626_1px,transparent_1px)]"
+          "dark:[background-image:radial-gradient(#262626_1px,transparent_1px)]",
         )}
       />
       {/* Radial gradient for the container to give a faded look */}

@@ -78,7 +78,7 @@ export default function Dashboard() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
         {
           headers: { authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
       setUser(data.data.user);
     } catch (error) {
@@ -94,7 +94,7 @@ export default function Dashboard() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/project/list`,
         {
           headers: { authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
       setProjects(response.data.data.projectData);
       console.log("Fetched projects:", response.data.data.projectData);
@@ -123,14 +123,15 @@ export default function Dashboard() {
     try {
       const accessToken = sessionStorage.getItem("accessToken");
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL
+        `${
+          process.env.NEXT_PUBLIC_SERVER_URL
         }/project/create?repo=${encodeURIComponent(
-          repoUrl
+          repoUrl,
         )}&title=${encodeURIComponent(
-          repoTitle
+          repoTitle,
         )}&description=${encodeURIComponent(repoDescription)}`,
         {},
-        { headers: { authorization: `Bearer ${accessToken}` } }
+        { headers: { authorization: `Bearer ${accessToken}` } },
       );
 
       toast.success("Repository imported successfully!");
@@ -186,7 +187,7 @@ export default function Dashboard() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase())
+      project.description.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (isLoading) {
@@ -440,7 +441,7 @@ export default function Dashboard() {
                     <CardDescription className="line-clamp-2">
                       {project.description ||
                         `Repository: ${getRepoOwner(
-                          project.repoUrl
+                          project.repoUrl,
                         )}/${getRepoName(project.repoUrl)}`}
                     </CardDescription>
                   </CardHeader>

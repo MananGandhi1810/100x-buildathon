@@ -1,10 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { Plus, Play, Square, Eye, ExternalLink, GitBranch, Clock, Server } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect, useCallback } from "react";
+import {
+  Plus,
+  Play,
+  Square,
+  Eye,
+  ExternalLink,
+  GitBranch,
+  Clock,
+  Server,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -12,15 +27,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
-import axios from "axios"
-import { useParams } from "next/navigation"
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import axios from "axios";
+import { useParams } from "next/navigation";
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -28,36 +49,49 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 interface EnvSecret {
-  key: string
-  value: string
+  key: string;
+  value: string;
 }
 
 interface Deployment {
-  id: string
-  name: string
-  description?: string
-  framework: string
-  githubUrl: string
-  status?: string
-  createdAt: string
-  updatedAt: string
-  envSecrets?: EnvSecret[]
-  containerId?: string
-  containerPort?: number
+  id: string;
+  name: string;
+  description?: string;
+  framework: string;
+  githubUrl: string;
+  status?: string;
+  createdAt: string;
+  updatedAt: string;
+  envSecrets?: EnvSecret[];
+  containerId?: string;
+  containerPort?: number;
 }
 
-const frameworks = ["Node", "React", "Express", "Next", "Flask", "Django", "Docker", "Other"]
+const frameworks = [
+  "Node",
+  "React",
+  "Express",
+  "Next",
+  "Flask",
+  "Django",
+  "Docker",
+  "Other",
+];
 
 export default function DeploymentsPage() {
-  const [deployments, setDeployments] = useState<Deployment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const params = useParams<{ id: string }>()
+  const [deployments, setDeployments] = useState<Deployment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const params = useParams<{ id: string }>();
 
   // Form state for new deployment
   const [formData, setFormData] = useState({
@@ -66,54 +100,62 @@ export default function DeploymentsPage() {
     githubUrl: "",
     framework: "",
     envSecrets: [{ key: "", value: "" }],
-  })
+  });
 
   const fetchProjectData = useCallback(async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
         },
-      })
-      const projectData = response.data.data.project
-      console.log("Project data response:", projectData)
+      );
+      const projectData = response.data.data.project;
+      console.log("Project data response:", projectData);
       setFormData((prev) => ({
         ...prev,
         githubUrl: projectData.repoUrl,
-      }))
+      }));
     } catch (error) {
-      console.error("Error fetching project data:", error)
-      toast.error("Failed to fetch project data")
+      console.error("Error fetching project data:", error);
+      toast.error("Failed to fetch project data");
     }
-  }, [params.id])
+  }, [params.id]);
 
   useEffect(() => {
     const init = async () => {
-      await fetchDeployments()
-      await fetchProjectData()
-    }
-    init()
-  }, [fetchProjectData])
+      await fetchDeployments();
+      await fetchProjectData();
+    };
+    init();
+  }, [fetchProjectData]);
 
   const fetchDeployments = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
         },
-      })
-      setDeployments(response.data.data.deployments)
+      );
+      setDeployments(response.data.data.deployments);
     } catch (error) {
-      console.error("Error fetching deployments:", error)
-      toast.error("Failed to fetch deployments")
+      console.error("Error fetching deployments:", error);
+      toast.error("Failed to fetch deployments");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const createDeployment = async () => {
     try {
-      const filteredEnvSecrets = formData.envSecrets.filter((secret) => secret.key.trim() && secret.value.trim())
+      const filteredEnvSecrets = formData.envSecrets.filter(
+        (secret) => secret.key.trim() && secret.value.trim(),
+      );
 
       await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/new`,
@@ -126,25 +168,26 @@ export default function DeploymentsPage() {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         },
-      )
+      );
 
-      toast.success("Deployment created successfully")
+      toast.success("Deployment created successfully");
 
-      setIsCreateDialogOpen(false)
+      setIsCreateDialogOpen(false);
       setFormData({
         name: "",
         description: "",
         githubUrl: "",
         framework: "",
         envSecrets: [{ key: "", value: "" }],
-      })
-      fetchDeployments()
+      });
+      fetchDeployments();
     } catch (error: unknown) {
-      console.error("Error creating deployment:", error)
-      const errorMessage = error instanceof Error ? error.message : "Failed to create deployment"
-      toast.error(errorMessage)
+      console.error("Error creating deployment:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create deployment";
+      toast.error(errorMessage);
     }
-  }
+  };
 
   const startDeployment = async (deploymentId: string) => {
     try {
@@ -156,14 +199,14 @@ export default function DeploymentsPage() {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         },
-      )
-      toast.success("Deployment started successfully")
-      fetchDeployments()
+      );
+      toast.success("Deployment started successfully");
+      fetchDeployments();
     } catch (error) {
-      console.error("Error starting deployment:", error)
-      toast.error("Failed to start deployment")
+      console.error("Error starting deployment:", error);
+      toast.error("Failed to start deployment");
     }
-  }
+  };
 
   const stopDeployment = async (deploymentId: string) => {
     try {
@@ -175,61 +218,70 @@ export default function DeploymentsPage() {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         },
-      )
-      toast.success("Deployment stopped successfully")
-      fetchDeployments()
+      );
+      toast.success("Deployment stopped successfully");
+      fetchDeployments();
     } catch (error) {
-      console.error("Error stopping deployment:", error)
-      toast.error("Failed to stop deployment")
+      console.error("Error stopping deployment:", error);
+      toast.error("Failed to stop deployment");
     }
-  }
+  };
 
   const getDeploymentStatus = async (deploymentId: string) => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deploymentId}/status`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deploymentId}/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
         },
-      })
-      return response.data.data.status
+      );
+      return response.data.data.status;
     } catch (error) {
-      return "unknown"
+      return "unknown";
     }
-  }
+  };
 
   const addEnvSecret = () => {
     setFormData((prev) => ({
       ...prev,
       envSecrets: [...prev.envSecrets, { key: "", value: "" }],
-    }))
-  }
+    }));
+  };
 
   const removeEnvSecret = (index: number) => {
     setFormData((prev) => ({
       ...prev,
       envSecrets: prev.envSecrets.filter((_, i) => i !== index),
-    }))
-  }
+    }));
+  };
 
-  const updateEnvSecret = (index: number, field: "key" | "value", value: string) => {
+  const updateEnvSecret = (
+    index: number,
+    field: "key" | "value",
+    value: string,
+  ) => {
     setFormData((prev) => ({
       ...prev,
-      envSecrets: prev.envSecrets.map((secret, i) => (i === index ? { ...secret, [field]: value } : secret)),
-    }))
-  }
+      envSecrets: prev.envSecrets.map((secret, i) =>
+        i === index ? { ...secret, [field]: value } : secret,
+      ),
+    }));
+  };
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case "running":
-        return <Badge className="bg-green-100 text-green-800">Running</Badge>
+        return <Badge className="bg-green-100 text-green-800">Running</Badge>;
       case "stopped":
-        return <Badge variant="secondary">Stopped</Badge>
+        return <Badge variant="secondary">Stopped</Badge>;
       case "exited":
-        return <Badge variant="destructive">Exited</Badge>
+        return <Badge variant="destructive">Exited</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">Unknown</Badge>;
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -243,13 +295,19 @@ export default function DeploymentsPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href="/dashboard"
+                      className="hover:text-primary transition-colors"
+                    >
                       Dashboard
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href={`/dashboard/${params.id}`}
+                      className="hover:text-primary transition-colors"
+                    >
                       Repository
                     </BreadcrumbLink>
                   </BreadcrumbItem>
@@ -268,7 +326,7 @@ export default function DeploymentsPage() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-    )
+    );
   }
 
   return (
@@ -282,13 +340,19 @@ export default function DeploymentsPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href="/dashboard"
+                    className="hover:text-primary transition-colors"
+                  >
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href={`/dashboard/${params.id}`}
+                    className="hover:text-primary transition-colors"
+                  >
                     Repository
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -304,10 +368,17 @@ export default function DeploymentsPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Deployments</h1>
-                <p className="text-muted-foreground">Manage your application deployments</p>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Deployments
+                </h1>
+                <p className="text-muted-foreground">
+                  Manage your application deployments
+                </p>
               </div>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <Dialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
@@ -317,7 +388,9 @@ export default function DeploymentsPage() {
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Deployment</DialogTitle>
-                    <DialogDescription>Deploy your application from a GitHub repository</DialogDescription>
+                    <DialogDescription>
+                      Deploy your application from a GitHub repository
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -326,7 +399,12 @@ export default function DeploymentsPage() {
                         <Input
                           id="name"
                           value={formData.name}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
                           placeholder="my-awesome-app"
                         />
                       </div>
@@ -334,7 +412,12 @@ export default function DeploymentsPage() {
                         <Label htmlFor="framework">Framework</Label>
                         <Select
                           value={formData.framework}
-                          onValueChange={(value) => setFormData((prev) => ({ ...prev, framework: value }))}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              framework: value,
+                            }))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select framework" />
@@ -355,15 +438,27 @@ export default function DeploymentsPage() {
                         id="githubUrl"
                         disabled
                         value={formData.githubUrl}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, githubUrl: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            githubUrl: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description">Description (Optional)</Label>
+                      <Label htmlFor="description">
+                        Description (Optional)
+                      </Label>
                       <Textarea
                         id="description"
                         value={formData.description}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
                         placeholder="Brief description of your application"
                       />
                     </div>
@@ -374,13 +469,17 @@ export default function DeploymentsPage() {
                           <Input
                             placeholder="KEY"
                             value={secret.key}
-                            onChange={(e) => updateEnvSecret(index, "key", e.target.value)}
+                            onChange={(e) =>
+                              updateEnvSecret(index, "key", e.target.value)
+                            }
                           />
                           <Input
                             placeholder="VALUE"
                             type="password"
                             value={secret.value}
-                            onChange={(e) => updateEnvSecret(index, "value", e.target.value)}
+                            onChange={(e) =>
+                              updateEnvSecret(index, "value", e.target.value)
+                            }
                           />
                           <Button
                             variant="outline"
@@ -392,15 +491,24 @@ export default function DeploymentsPage() {
                           </Button>
                         </div>
                       ))}
-                      <Button variant="outline" size="sm" onClick={addEnvSecret}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addEnvSecret}
+                      >
                         Add Variable
                       </Button>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsCreateDialogOpen(false)}
+                      >
                         Cancel
                       </Button>
-                      <Button onClick={createDeployment}>Create Deployment</Button>
+                      <Button onClick={createDeployment}>
+                        Create Deployment
+                      </Button>
                     </div>
                   </div>
                 </DialogContent>
@@ -411,7 +519,9 @@ export default function DeploymentsPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Server className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No deployments yet</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    No deployments yet
+                  </h3>
                   <p className="text-muted-foreground text-center mb-4">
                     Get started by creating your first deployment
                   </p>
@@ -424,13 +534,20 @@ export default function DeploymentsPage() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {deployments.map((deployment) => (
-                  <Card key={deployment.id} className="hover:shadow-md transition-shadow">
+                  <Card
+                    key={deployment.id}
+                    className="hover:shadow-md transition-shadow"
+                  >
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{deployment.name}</CardTitle>
+                        <CardTitle className="text-lg">
+                          {deployment.name}
+                        </CardTitle>
                         {getStatusBadge(deployment.status)}
                       </div>
-                      <CardDescription>{deployment.description || "No description"}</CardDescription>
+                      <CardDescription>
+                        {deployment.description || "No description"}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -439,7 +556,10 @@ export default function DeploymentsPage() {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>Updated {new Date(deployment.updatedAt).toLocaleDateString()}</span>
+                        <span>
+                          Updated{" "}
+                          {new Date(deployment.updatedAt).toLocaleDateString()}
+                        </span>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -467,8 +587,17 @@ export default function DeploymentsPage() {
                           </a>
                         </Button>
                       </div>
-                      <Button size="sm" variant="ghost" className="w-full" asChild>
-                        <a href={deployment.githubUrl} target="_blank" rel="noopener noreferrer">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="w-full"
+                        asChild
+                      >
+                        <a
+                          href={deployment.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <ExternalLink className="h-4 w-4 mr-1" />
                           View on GitHub
                         </a>
@@ -482,5 +611,5 @@ export default function DeploymentsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

@@ -65,7 +65,7 @@ export default function ChatWithCodePage() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
         {
           headers: { authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
       setProjectData(response.data.data.project);
     } catch (error) {
@@ -103,7 +103,7 @@ export default function ChatWithCodePage() {
     if (params.id) {
       localStorage.setItem(
         `chat_messages_${params.id}`,
-        JSON.stringify(messages)
+        JSON.stringify(messages),
       );
     }
   }, [messages, params.id]);
@@ -157,7 +157,7 @@ export default function ChatWithCodePage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
 
       // Add assistant response to chat
@@ -295,7 +295,7 @@ export default function ChatWithCodePage() {
                               components={{
                                 code: ({ className, children, ...props }) => {
                                   const match = /language-(\w+)/.exec(
-                                    className || ""
+                                    className || "",
                                   );
                                   return !match ? (
                                     <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">

@@ -36,7 +36,7 @@ export default function TokenPage() {
             headers: {
               Authorization: `Bearer ${requestToken}`,
             },
-          }
+          },
         );
 
         const data: TokenResponse = response.data.data;
@@ -54,7 +54,7 @@ export default function TokenPage() {
         setError(
           error.response?.data?.message ||
             error.message ||
-            "Failed to retrieve access token"
+            "Failed to retrieve access token",
         );
         // Redirect back to signup after 3 seconds
         setTimeout(() => {

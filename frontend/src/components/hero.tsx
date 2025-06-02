@@ -113,7 +113,7 @@ const Hero3 = ({ heading, description, buttons, reviews }: Hero3Props) => {
                         <span key={i} className="text-yellow-400">
                           ★
                         </span>
-                      )
+                      ),
                     )}
                     <span className="text-muted-foreground">
                       {reviews.rating.toFixed(1)}

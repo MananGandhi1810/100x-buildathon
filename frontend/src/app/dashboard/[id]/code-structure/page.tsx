@@ -65,7 +65,7 @@ export default function CodeStructurePage() {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {

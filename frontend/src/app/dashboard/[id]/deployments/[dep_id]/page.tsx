@@ -78,7 +78,7 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       setDeployment(response.data.data.deployment);
     } catch (error) {
@@ -100,10 +100,10 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       setDeployment((prev) =>
-        prev ? { ...prev, status: response.data.data.status } : null
+        prev ? { ...prev, status: response.data.data.status } : null,
       );
     } catch (error) {
       toast.error("Failed to refresh status");
@@ -123,7 +123,7 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       toast.success("Deployment started successfully");
       refreshStatus();
@@ -143,7 +143,7 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       toast.success("Deployment stopped successfully");
       refreshStatus();

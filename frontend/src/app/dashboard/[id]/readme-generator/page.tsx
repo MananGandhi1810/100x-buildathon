@@ -46,7 +46,7 @@ export default function ReadmeGeneratorPage() {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          }
+          },
         );
         console.log("Project data response:", response.data.data);
         setProjectData(response.data.data);
@@ -145,7 +145,7 @@ export default function ReadmeGeneratorPage() {
                             const repoUrl = projectData?.project?.repoUrl || "";
                             // Example: https://github.com/user/repo
                             const match = repoUrl.match(
-                              /^https:\/\/github\.com\/([^/]+)\/([^/]+)/
+                              /^https:\/\/github\.com\/([^/]+)\/([^/]+)/,
                             );
                             if (!match) return <img {...props} />;
 
@@ -191,7 +191,7 @@ export default function ReadmeGeneratorPage() {
                       onClick={() =>
                         handleDownload(
                           projectData?.readme.slice(12) || "",
-                          "README"
+                          "README",
                         )
                       }
                     >
