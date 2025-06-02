@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,41 +10,74 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { MessageSquare, Send, Bot, User, Loader2 } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
-import axios from "axios"
-import { toast } from "sonner"
+} from "@/components/ui/breadcrumb";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { MessageSquare, Send, Bot, User, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
 interface ChatMessage {
-  role: "user" | "assistant"
-  content: string
+  role: "user" | "assistant";
+  content: string;
+}
+
+interface Project {
+  id: string;
+  repoUrl: string;
+  // Add other project properties as needed
 }
 
 export default function ChatWithCodePage() {
-  const params = useParams<{ id: string }>()
+  const params = useParams<{ id: string }>();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
       content:
         "Hello! I'm your AI code assistant. I can help you understand your codebase, explain functions, suggest improvements, and answer questions about your project. What would you like to know?",
     },
-  ])
-  const [inputMessage, setInputMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [projectData, setProjectData] = useState<any>(null)
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [projectData, setProjectData] = useState<Project | null>(null);
+
+  const fetchProjectData = useCallback(async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
+        {
+          headers: { authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setProjectData(response.data.data.project);
+    } catch (error) {
+      console.error("Error fetching project data:", error);
+      toast.error("Failed to fetch project data");
+    }
+  }, [params.id]);
 
   useEffect(() => {
-    fetchProjectData()
-  }, [params.id])
+    fetchProjectData();
+  }, [fetchProjectData]);
+
   useEffect(() => {
     if (!params.id) return;
 
@@ -65,66 +98,58 @@ export default function ChatWithCodePage() {
       ]);
     }
   }, [params.id]);
+
   useEffect(() => {
     if (params.id) {
-      localStorage.setItem(`chat_messages_${params.id}`, JSON.stringify(messages));
+      localStorage.setItem(
+        `chat_messages_${params.id}`,
+        JSON.stringify(messages)
+      );
     }
   }, [messages, params.id]);
 
-  const fetchProjectData = async () => {
-    try {
-      const accessToken = sessionStorage.getItem("accessToken")
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`, {
-        headers: { authorization: `Bearer ${accessToken}` },
-      })
-      setProjectData(response.data.data.project)
-    } catch (error) {
-      console.error("Error fetching project data:", error)
-      toast.error("Failed to fetch project data")
-    }
-  }
-
   const extractRepoInfo = (repoUrl: string) => {
-    const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
+    const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
     if (match) {
       return {
         owner: match[1],
         repo: match[2].replace(/\.git$/, ""), // Remove .git suffix if present
-      }
+      };
     }
-    return null
-  }
+    return null;
+  };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || !projectData) return
+    if (!inputMessage.trim() || isLoading || !projectData) return;
 
     const userMessage: ChatMessage = {
       role: "user",
       content: inputMessage.trim(),
-    }
+    };
 
     // Add user message to chat
-    setMessages((prev) => [...prev, userMessage])
-    setInputMessage("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInputMessage("");
+    setIsLoading(true);
 
     try {
-      const accessToken = sessionStorage.getItem("accessToken")
-      const repoInfo = extractRepoInfo(projectData.repoUrl)
+      const accessToken = sessionStorage.getItem("accessToken");
+      const repoInfo = extractRepoInfo(projectData.repoUrl);
 
       if (!repoInfo) {
-        throw new Error("Invalid repository URL")
+        throw new Error("Invalid repository URL");
       }
 
       // Prepare messages for API (include conversation history)
-      const apiMessages = [...messages, userMessage]
+      const apiMessages = [...messages, userMessage];
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}/chat`,
         {
           owner: repoInfo.owner,
           repo: repoInfo.repo,
-          token: process.env.NEXT_PUBLIC_GITHUB_TOKEN || "your_github_token_here",
+          token:
+            process.env.NEXT_PUBLIC_GITHUB_TOKEN || "your_github_token_here",
           messages: apiMessages,
         },
         {
@@ -132,8 +157,8 @@ export default function ChatWithCodePage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        },
-      )
+        }
+      );
 
       // Add assistant response to chat
       const assistantMessage: ChatMessage = {
@@ -142,33 +167,34 @@ export default function ChatWithCodePage() {
           response.data.data.reply ||
           response.data.message ||
           "I received your message but couldn't generate a response.",
-      }
+      };
 
-      setMessages((prev) => [...prev, assistantMessage])
-    } catch (error: any) {
-      console.error("Error sending message:", error)
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: unknown) {
+      console.error("Error sending message:", error);
 
       // Add error message to chat
-      const errorMessage: ChatMessage = {
+      const errorResponse: ChatMessage = {
         role: "assistant",
-        content: "Sorry, I encountered an error while processing your message. Please try again.",
-      }
+        content:
+          "Sorry, I encountered an error while processing your message. Please try again.",
+      };
 
-      setMessages((prev) => [...prev, errorMessage])
-      toast.error(error.response?.data?.message || "Failed to send message")
+      setMessages((prev) => [...prev, errorResponse]);
+      const errorText =
+        error instanceof Error ? error.message : "Failed to send message";
+      toast.error(errorText);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
-
-    
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
+      e.preventDefault();
+      sendMessage();
     }
-  }
+  };
 
   return (
     <SidebarProvider>
@@ -181,7 +207,10 @@ export default function ChatWithCodePage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href="/dashboard"
+                    className="hover:text-primary transition-colors"
+                  >
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -200,12 +229,15 @@ export default function ChatWithCodePage() {
                 <MessageSquare className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Chat with Code</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Chat with Code
+                </h1>
                 <p className="text-muted-foreground mt-1.5">
                   Interactive AI assistant for your codebase
                   {projectData && (
                     <span className="ml-2 text-sm">
-                      • {extractRepoInfo(projectData.repoUrl)?.owner}/{extractRepoInfo(projectData.repoUrl)?.repo}
+                      • {extractRepoInfo(projectData.repoUrl)?.owner}/
+                      {extractRepoInfo(projectData.repoUrl)?.repo}
                     </span>
                   )}
                 </p>
@@ -216,7 +248,8 @@ export default function ChatWithCodePage() {
               <CardHeader className="border-b pb-4">
                 <CardTitle>Code Assistant</CardTitle>
                 <CardDescription>
-                  Ask questions about your code, get explanations, and receive suggestions
+                  Ask questions about your code, get explanations, and receive
+                  suggestions
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col flex-1 p-4 overflow-y-auto">
@@ -225,39 +258,62 @@ export default function ChatWithCodePage() {
                     {messages.map((message, index) => (
                       <div
                         key={index}
-                        className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                        className={`flex gap-3 ${
+                          message.role === "user"
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
                       >
                         <div
-                          className={`flex gap-3 max-w-[80%] ${message.role === "user" ? "flex-row-reverse" : "flex-row"
-                            }`}
+                          className={`flex gap-3 max-w-[80%] ${
+                            message.role === "user"
+                              ? "flex-row-reverse"
+                              : "flex-row"
+                          }`}
                         >
                           <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                              }`}
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
+                              message.role === "user"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
                           >
-                            {message.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                            {message.role === "user" ? (
+                              <User className="h-4 w-4" />
+                            ) : (
+                              <Bot className="h-4 w-4" />
+                            )}
                           </div>
                           <div
-                            className={`rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                              }`}
+                            className={`rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap ${
+                              message.role === "user"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
                           >
                             <ReactMarkdown
                               components={{
-                                code: ({ node, inline, className, children, ...props }) => {
-                                  const isInline = inline || !className
-                                  return isInline ? (
+                                code: ({ className, children, ...props }) => {
+                                  const match = /language-(\w+)/.exec(
+                                    className || ""
+                                  );
+                                  return !match ? (
                                     <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
                                       {children}
                                     </code>
                                   ) : (
-                                    <pre className="bg-muted p-3 rounded-md overflow-x-auto mb-3">
-                                      <code className="text-sm font-mono">{children}</code>
-                                    </pre>
-                                  )
+                                    <code
+                                      className={`language-${match[1]} bg-muted px-1.5 py-0.5 rounded text-sm font-mono`}
+                                      {...props}
+                                    >
+                                      {children}
+                                    </code>
+                                  );
                                 },
-                              }}>
-                                {message.content || "No response from AI."}
-                              </ReactMarkdown>
+                              }}
+                            >
+                              {message.content || "No response from AI."}
+                            </ReactMarkdown>
                           </div>
                         </div>
                       </div>
@@ -292,7 +348,11 @@ export default function ChatWithCodePage() {
                     onClick={sendMessage}
                     disabled={isLoading || !inputMessage.trim()}
                   >
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -301,5 +361,5 @@ export default function ChatWithCodePage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

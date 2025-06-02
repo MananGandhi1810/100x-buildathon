@@ -1,5 +1,5 @@
 "use client";
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,19 +7,28 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { FileText, Download, Copy } from "lucide-react"
-import { useEffect, useState } from "react"
-import { useParams } from 'next/navigation'
-import axios from "axios"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import rehypeRaw from "rehype-raw";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { FileText, Download, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import axios from "axios";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 export default function ReadmeGeneratorPage() {
   const [projectData, setProjectData] = useState<any>(null);
@@ -31,11 +40,14 @@ export default function ReadmeGeneratorPage() {
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}`, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
-        });
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            },
+          }
+        );
         console.log("Project data response:", response.data.data);
         setProjectData(response.data.data);
         setLoading(false);
@@ -48,6 +60,26 @@ export default function ReadmeGeneratorPage() {
 
     fetchProjectData();
   }, [params.id]);
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Readme copied to clipboard!", {
+      description: "You can now paste the readme anywhere you want.",
+    });
+  };
+
+  const handleDownload = (text: string, chatName: string) => {
+    const element = document.createElement("a");
+    const file = new Blob([text], { type: "text/plain" });
+    element.href = URL.createObjectURL(file);
+    element.download = `${chatName.replace(/\s+/g, "-")}_readme.md`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    toast.success("Markdown downloaded!", {
+      description: "Your markdown have been saved to your device.",
+    });
+  };
 
   return (
     <SidebarProvider>
@@ -75,66 +107,94 @@ export default function ReadmeGeneratorPage() {
             <div className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">README Generator</h1>
-                <p className="text-muted-foreground">Generate comprehensive README files for your projects</p>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  README Generator
+                </h1>
+                <p className="text-muted-foreground">
+                  Generate comprehensive README files for your projects
+                </p>
               </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              
-
-              <Card>
+            <div className="grid gap-6 max-w-6xl">
+              <Card className="w-full">
                 <CardHeader>
                   <CardTitle>Generated README</CardTitle>
-                  <CardDescription>Your generated README will appear here</CardDescription>
+                  <CardDescription>
+                    Your generated README will appear here
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="w-full">
                   <div className="min-h-[400px] rounded-md border bg-muted/50 p-4">
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="prose max-w-none prose-pink prose-invert">
                       <ReactMarkdown
+                        rehypePlugins={[rehypeRaw]}
                         components={{
-                          h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 text-foreground">{children}</h1>,
-                          h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 text-foreground">{children}</h2>,
-                          h3: ({ children }) => <h3 className="text-lg font-medium mb-2 text-foreground">{children}</h3>,
-                          p: ({ children }) => <p className="mb-3 text-foreground leading-relaxed">{children}</p>,
-                          ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>,
-                          ol: ({ children }) => <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>,
-                          li: ({ children }) => <li className="text-foreground">{children}</li>,
-                          code: ({ children, className }) => {
-                            const isInline = !className
-                            if (isInline) {
-                              return <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+                          img: ({ node, ...props }) => {
+                            let src = props.src || "";
+                            if (!src) return <img {...props} />;
+                            // If src is already absolute, return as is
+                            if (
+                              typeof src === "string" &&
+                              /^(https?:)?\/\//.test(src)
+                            ) {
+                              return <img {...props} />;
                             }
-                            return (
-                              <pre className="bg-muted p-3 rounded-md overflow-x-auto mb-3">
-                                <code className="text-sm font-mono">{children}</code>
-                              </pre>
-                            )
+
+                            // Convert GitHub repo URL to raw.githubusercontent.com URL
+                            const repoUrl = projectData?.project?.repoUrl || "";
+                            // Example: https://github.com/user/repo
+                            const match = repoUrl.match(
+                              /^https:\/\/github\.com\/([^/]+)\/([^/]+)/
+                            );
+                            if (!match) return <img {...props} />;
+
+                            const user = match[1];
+                            const repo = match[2];
+
+                            // Try to get branch name from projectData, fallback to 'main'
+                            const branch =
+                              projectData?.project?.defaultBranch || "main";
+
+                            // Remove leading './' or '/' from src
+                            const cleanSrc =
+                              typeof src === "string"
+                                ? src.replace(/^\.?\//, "")
+                                : "";
+
+                            // Compose raw URL
+                            const rawUrl = `https://raw.githubusercontent.com/${user}/${repo}/refs/heads/${branch}/${cleanSrc}`;
+
+                            return <img {...props} src={rawUrl} />;
                           },
-                          blockquote: ({ children }) => (
-                            <blockquote className="border-l-4 border-muted-foreground pl-4 italic mb-3 text-muted-foreground">
-                              {children}
-                            </blockquote>
-                          ),
-                          a: ({ children, href }) => (
-                            <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                              {children}
-                            </a>
-                          ),
-                          strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                          em: ({ children }) => <em className="italic text-foreground">{children}</em>,
                         }}
                       >
-                        {projectData?.readme || "Your README content will be generated here."}
+                        {projectData?.readme.slice(12) ||
+                          "Your README content will be generated here."}
                       </ReactMarkdown>
                     </div>
                   </div>
                   <div className="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleCopy(projectData?.readme.slice(12) || "")
+                      }
+                    >
                       <Copy className="mr-2 h-4 w-4" />
                       Copy
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleDownload(
+                          projectData?.readme.slice(12) || "",
+                          "README"
+                        )
+                      }
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </Button>
@@ -146,5 +206,5 @@ export default function ReadmeGeneratorPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

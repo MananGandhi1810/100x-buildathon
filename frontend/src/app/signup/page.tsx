@@ -49,7 +49,7 @@ export default function SignupPage() {
   return (
     <>
       <Navbar></Navbar>
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="relative z-10 container mx-auto px-4 py-16 flex flex-col items-center justify-center">
         <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
           {/* Left side - Content */}
           <motion.div
@@ -59,7 +59,7 @@ export default function SignupPage() {
             className="space-y-12"
           >
             <div className="space-y-6">
-              <h1 className="text-5xl font-medium tracking-tight text-white">
+              <h1 className="text-5xl font-medium tracking-tight text-white pt-10">
                 Build with CodeAI
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
