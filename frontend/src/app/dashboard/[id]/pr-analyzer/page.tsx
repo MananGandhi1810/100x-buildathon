@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,70 +8,85 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { GitPullRequest, CheckCircle2, Clock } from "lucide-react"
-import { useState, useEffect } from "react"
-import { Badge } from "@/components/ui/badge"
-import { useParams } from "next/navigation"
-import axios from "axios"
+} from "@/components/ui/breadcrumb";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { GitPullRequest, CheckCircle2, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { useParams } from "next/navigation";
+import axios from "axios";
+import ReactMarkdown from "react-markdown";
 
 // Add proper types for PR analysis
 interface PRAnalysis {
-  status: "completed" | "in_progress"
-  summary: string
-  suggestions?: string[]
+  status: "completed" | "in_progress";
+  summary: string;
+  suggestions?: string[];
   security?: {
-    issues: number
-    warnings: number
-  }
+    issues: number;
+    warnings: number;
+  };
   performance?: {
-    impact: "high" | "medium" | "low" | "none"
-    suggestions: string[]
-  }
+    impact: "high" | "medium" | "low" | "none";
+    suggestions: string[];
+  };
 }
 
 interface PR {
-  number: number
-  title: string
-  state: "open" | "merged" | "closed"
-  url: string
-  createdAt: string
-  updatedAt: string
-  aiReview?: string
+  number: number;
+  title: string;
+  state: "open" | "merged" | "closed";
+  url: string;
+  createdAt: string;
+  updatedAt: string;
+  aiReview?: string;
 }
 
 export default function PRAnalyzerPage() {
-  const [pullRequests, setPullRequests] = useState<PR[]>([])
-  const [selectedPR, setSelectedPR] = useState<PR | null>(null)
-  const [loading, setLoading] = useState(true)
-  const params = useParams<{ id: string }>()
+  const [pullRequests, setPullRequests] = useState<PR[]>([]);
+  const [selectedPR, setSelectedPR] = useState<PR | null>(null);
+  const [loading, setLoading] = useState(true);
+  const params = useParams<{ id: string }>();
 
   useEffect(() => {
     const fetchPullRequests = async () => {
       try {
-        setLoading(true)
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        setLoading(true);
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            },
           },
-        });        const prs = response.data.data.pullRequests || []
-        setPullRequests(prs)
+        );
+        const prs = response.data.data.pullRequests || [];
+        setPullRequests(prs);
         if (prs.length > 0) {
-          setSelectedPR(prs[0])
+          setSelectedPR(prs[0]);
         }
       } catch (error) {
-        console.error("Error fetching pull requests:", error)
+        console.error("Error fetching pull requests:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchPullRequests()
-  }, [params.id])
+    fetchPullRequests();
+  }, [params.id]);
 
   return (
     <SidebarProvider>
@@ -84,13 +99,19 @@ export default function PRAnalyzerPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href="/dashboard"
+                    className="hover:text-primary transition-colors"
+                  >
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href={`/dashboard/${params.id}`}
+                    className="hover:text-primary transition-colors"
+                  >
                     Repository
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -109,8 +130,12 @@ export default function PRAnalyzerPage() {
                 <GitPullRequest className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Pull Request Analyzer</h1>
-                <p className="text-muted-foreground mt-1.5">Analyze and review pull requests with AI assistance</p>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Pull Request Analyzer
+                </h1>
+                <p className="text-muted-foreground mt-1.5">
+                  Analyze and review pull requests with AI assistance
+                </p>
               </div>
             </div>
 
@@ -126,11 +151,15 @@ export default function PRAnalyzerPage() {
                     <div className="space-y-2">
                       {loading ? (
                         <div className="flex items-center justify-center p-4">
-                          <p className="text-muted-foreground">Loading pull requests...</p>
+                          <p className="text-muted-foreground">
+                            Loading pull requests...
+                          </p>
                         </div>
                       ) : pullRequests.length === 0 ? (
                         <div className="flex items-center justify-center p-4">
-                          <p className="text-muted-foreground">No pull requests found</p>
+                          <p className="text-muted-foreground">
+                            No pull requests found
+                          </p>
                         </div>
                       ) : (
                         pullRequests.map((pr) => (
@@ -147,7 +176,11 @@ export default function PRAnalyzerPage() {
                               <h3 className="font-medium">{pr.title}</h3>
                               <Badge
                                 variant={
-                                  pr.state === "merged" ? "default" : pr.state === "open" ? "secondary" : "destructive"
+                                  pr.state === "merged"
+                                    ? "default"
+                                    : pr.state === "open"
+                                      ? "secondary"
+                                      : "destructive"
                                 }
                               >
                                 {pr.state}
@@ -156,7 +189,9 @@ export default function PRAnalyzerPage() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span>PR #{pr.number}</span>
                               <span>•</span>
-                              <span>{new Date(pr.updatedAt).toLocaleDateString()}</span>
+                              <span>
+                                {new Date(pr.updatedAt).toLocaleDateString()}
+                              </span>
                             </div>
                           </div>
                         ))
@@ -180,13 +215,17 @@ export default function PRAnalyzerPage() {
                   <ScrollArea className="h-[calc(100vh-300px)]">
                     {!selectedPR ? (
                       <div className="flex items-center justify-center h-full">
-                        <p className="text-muted-foreground">Select a pull request to view analysis</p>
+                        <p className="text-muted-foreground">
+                          Select a pull request to view analysis
+                        </p>
                       </div>
                     ) : !selectedPR.aiReview ? (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center space-y-2">
                           <Clock className="h-8 w-8 text-muted-foreground mx-auto" />
-                          <p className="text-muted-foreground">No analysis available for this pull request</p>
+                          <p className="text-muted-foreground">
+                            No analysis available for this pull request
+                          </p>
                         </div>
                       </div>
                     ) : (
@@ -196,7 +235,31 @@ export default function PRAnalyzerPage() {
                             <CheckCircle2 className="h-5 w-5 text-green-500" />
                             <h3 className="font-medium">AI Review</h3>
                           </div>
-                          <div className="whitespace-pre-line text-muted-foreground">{selectedPR.aiReview}</div>
+                          <div className="whitespace-pre-line text-muted-foreground">
+                            <ReactMarkdown
+                              components={{
+                                code: ({ className, children, ...props }) => {
+                                  const match = /language-(\w+)/.exec(
+                                    className || "",
+                                  );
+                                  return !match ? (
+                                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                                      {children}
+                                    </code>
+                                  ) : (
+                                    <code
+                                      className={`language-${match[1]} bg-muted px-1.5 py-0.5 rounded text-sm font-mono`}
+                                      {...props}
+                                    >
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                              }}
+                            >
+                              {selectedPR.aiReview}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -208,5 +271,5 @@ export default function PRAnalyzerPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
