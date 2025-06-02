@@ -95,12 +95,12 @@ const newDeploymentHandler = async (req, res) => {
                 name,
                 description,
                 framework,
-                githubUrl,
                 webhookId: webhookRequest.data.id.toString(),
                 userId: req.user.id,
                 envSecrets: {
                     create: processedEnvSecrets,
                 },
+                githubUrl: repo,
             },
         });
     } catch (e) {
