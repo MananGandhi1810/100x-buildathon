@@ -1,8 +1,8 @@
-# 100x Buildathon
+# 10000x-devs
 
 ## Overview
 
-The 100x Buildathon project is a comprehensive suite of tools designed to streamline and enhance the software development lifecycle. It integrates AI-powered features to assist developers with various tasks, from code generation and analysis to deployment and environment provisioning.
+The 10000x-devs project is a comprehensive suite of tools designed to streamline and enhance the software development lifecycle. It integrates AI-powered features to assist developers with various tasks, from code generation and analysis to deployment and environment provisioning.
 
 ## Scope of the Project / Features
 
@@ -75,7 +75,7 @@ Follow these steps to get the project up and running on your local machine.
 
 ```bash
 git clone https://github.com/MananGandhi1810/100x-buildathon.git
-cd 100x-buildathon
+cd 10000x-devs
 ```
 
 ### 2. Start Dependent Services (PostgreSQL and Redis)
@@ -181,6 +181,3 @@ Please ensure your code adheres to the project's coding standards and includes t
 
 This project is licensed under the [ISC License](backend/LICENSE) (assuming the backend's LICENSE file applies to the whole project, please verify and update if necessary).
 
----
-
-This README provides a comprehensive guide to understanding, setting up, and contributing to the 100x Buildathon project. If you encounter any issues or have suggestions, please open an issue on the project's repository.
