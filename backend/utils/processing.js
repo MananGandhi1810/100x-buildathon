@@ -1,11 +1,5 @@
 import { set, get, exists } from "./keyvalue-db.js";
-import {
-    getFileTree,
-    getPRDiff,
-    getRepoArchive,
-    getPullRequestsNew,
-    getPullRequestDiff,
-} from "./github-api.js";
+import { getPRDiff, getRepoArchive, getPullRequestsNew } from "./github-api.js";
 import { GoogleGenAI } from "@google/genai";
 import tar from "tar-stream";
 import zlib from "zlib";
@@ -22,7 +16,7 @@ async function generateReadme(owner, repo, ref, fileContents) {
     }
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.0-flash-lite",
         contents: `Generate a README.md file for a project with the following files and their content:\n\n${fileContents
             .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
             .join("")}`,
@@ -55,7 +49,7 @@ async function generateDiagram(
     }
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.0-flash-lite",
         contents: `Generate a Mermaid TD (top-down) graph diagram representing the following system/code.
 The diagram should be suitable for a README file.
 Title the diagram '${title}':
@@ -94,7 +88,7 @@ async function generatePullRequestReview(
         .join("");
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.0-flash-lite",
         contents: `Please provide a detailed code review for this pull request. Analyze both the changes and the overall codebase context.
 
 **Pull Request Diff:**
@@ -278,8 +272,7 @@ const processPullRequest = async (
                     receivedAt: new Date().toISOString(),
                 }),
             );
-        } catch (dbError) {
-        }
+        } catch (dbError) {}
         return null;
     }
 };
