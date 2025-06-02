@@ -1,9 +1,5 @@
 import axios from "axios";
-import { exists, get, set } from "./keyvalue-db.js";
-
-
-const ghRepoRegex =
-    /https?:\/\/(www\.)?github.com\/(?<owner>[\w.-]+)\/(?<name>[\w.-]+)/;
+import { exists, get, set } from "./keyvalue-db.js";   
 
 const getAccessToken = async (code) => {
     return await axios.post(
@@ -48,6 +44,7 @@ const createWebhook = async (
     hooks = false,
     pull = false,
 ) => {
+    console.log(repo);
     return await axios.post(
         `https://api.github.com/repos/${repo}/hooks`,
         {

@@ -5,6 +5,8 @@ import { sendQueueMessage } from "../utils/queue-manager.js";
 
 const prisma = new PrismaClient();
 const docker = new Docker();
+const ghRepoRegex =
+    /https?:\/\/(www\.)?github.com\/(?<owner>[\w.-]+)\/(?<name>[\w.-]+)/;
 
 const frameworks = [
     "Node",
@@ -66,10 +68,12 @@ const newDeploymentHandler = async (req, res) => {
             },
         })
     );
+    const match = githubUrl.match(ghRepoRegex);
+    const repo = `${match.groups.owner}/${match.groups.name}`;
     const webhookRequest = await createWebhook(
         id,
         req.user.ghAccessToken,
-        githubUrl,
+        repo,
         "deployment",
         true,
     );

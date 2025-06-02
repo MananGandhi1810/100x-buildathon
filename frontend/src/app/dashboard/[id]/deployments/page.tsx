@@ -120,7 +120,7 @@ export default function DeploymentsPage() {
   const fetchDeployments = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/deploy`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
