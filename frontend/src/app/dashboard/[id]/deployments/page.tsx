@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Plus, Play, Square, Eye, ExternalLink, GitBranch, Clock, Server } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -68,31 +68,11 @@ export default function DeploymentsPage() {
     envSecrets: [{ key: "", value: "" }],
   })
 
-  useEffect(() => {
-    fetchDeployments()
-    fetchProjectData()
-  }, [])
-
-  const fetchDeployments = async () => {
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/deploy`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      setDeployments(response.data.data.deployments)
-    } catch (error) {
-      toast.error("Failed to fetch deployments")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchProjectData = async () => {
+  const fetchProjectData = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
         },
       })
       const projectData = response.data.data.project
@@ -102,50 +82,48 @@ export default function DeploymentsPage() {
         githubUrl: projectData.repoUrl,
       }))
     } catch (error) {
+      console.error("Error fetching project data:", error)
       toast.error("Failed to fetch project data")
     }
-  }, [params.id]);
+  }, [params.id])
 
   useEffect(() => {
     const init = async () => {
-      await fetchDeployments();
-      await fetchProjectData();
-    };
-    init();
-  }, [fetchProjectData]);
+      await fetchDeployments()
+      await fetchProjectData()
+    }
+    init()
+  }, [fetchProjectData])
 
   const fetchDeployments = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`,
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      setDeployments(response.data.data.deployments);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      })
+      setDeployments(response.data.data.deployments)
     } catch (error) {
-      console.error("Error fetching deployments:", error);
-      toast.error("Failed to fetch deployments");
+      console.error("Error fetching deployments:", error)
+      toast.error("Failed to fetch deployments")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const createDeployment = async () => {
     try {
       const filteredEnvSecrets = formData.envSecrets.filter((secret) => secret.key.trim() && secret.value.trim())
 
       await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/deploy/new`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/new`,
         {
           ...formData,
           envSecrets: filteredEnvSecrets,
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         },
       )
@@ -161,25 +139,28 @@ export default function DeploymentsPage() {
         envSecrets: [{ key: "", value: "" }],
       })
       fetchDeployments()
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to create deployment")
+    } catch (error: unknown) {
+      console.error("Error creating deployment:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to create deployment"
+      toast.error(errorMessage)
     }
   }
 
   const startDeployment = async (deploymentId: string) => {
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/deploy/${deploymentId}/start`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deploymentId}/start`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         },
       )
       toast.success("Deployment started successfully")
       fetchDeployments()
     } catch (error) {
+      console.error("Error starting deployment:", error)
       toast.error("Failed to start deployment")
     }
   }
@@ -187,26 +168,27 @@ export default function DeploymentsPage() {
   const stopDeployment = async (deploymentId: string) => {
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/deploy/${deploymentId}/stop`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deploymentId}/stop`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         },
       )
       toast.success("Deployment stopped successfully")
       fetchDeployments()
     } catch (error) {
+      console.error("Error stopping deployment:", error)
       toast.error("Failed to stop deployment")
     }
   }
 
   const getDeploymentStatus = async (deploymentId: string) => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/deploy/${deploymentId}/status`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deploymentId}/status`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
         },
       })
       return response.data.data.status
@@ -251,11 +233,41 @@ export default function DeploymentsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading deployments...</p>
-        </div>
-      </div>
+      <SidebarProvider>
+        <DevToolsSidebar id={params.id} />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                      Dashboard
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                      Repository
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Deployments</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
+            <div className="flex items-center justify-center h-64">
+              <p className="text-muted-foreground">Loading deployments...</p>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
     )
   }
 
