@@ -12,7 +12,7 @@ The project aims to deliver the following key features:
 2.  **Pull Request Analyzer**: Analyzes pull requests for quality, potential issues, and provides summaries.
 3.  **Vulnerability Scanner**: Scans codebases for known security vulnerabilities.
 4.  **Chat with Code**: Allows developers to interact with their codebase using natural language queries.
-5.  **Deploy with Chat**: Enables project deployment through chat-based commands.
+5.  **Deploy**: Enables project deployment through chat-based commands.
 6.  **Code Structure Visualization**: Provides tools to visualize the architecture and dependencies of a codebase.
 7.  **Automated Testing**: Facilitates the generation and execution of automated tests.
 8.  **Development Environment Provisioning**: Automates the setup of development environments.
@@ -139,30 +139,6 @@ Install dependencies for each part of the project using `pnpm`:
     flask run
     ```
     The Flask AI service will typically start on `http://localhost:5000`.
-
-## Available Scripts
-
-### Backend (`backend/package.json`)
-
-*   `pnpm dev`: Starts the backend server in development mode with Nodemon.
-*   `pnpm start`: Starts the backend server.
-*   `pnpm format`: Formats code using Prettier.
-*   `pnpm docker:build`: Builds a Docker image for the backend application.
-*   `pnpm test`: Runs tests using Vitest.
-*   `pnpm prisma generate`: Generates Prisma Client.
-*   `pnpm prisma migrate dev`: Applies database migrations.
-*   `pnpm prisma studio`: Opens Prisma Studio to view and manage data.
-
-### Frontend (`frontend/package.json`)
-
-*   `pnpm dev`: Starts the Next.js development server with Turbopack.
-*   `pnpm build`: Builds the Next.js application for production.
-*   `pnpm start`: Starts the Next.js production server.
-*   `pnpm lint`: Lints the codebase using Next.js ESLint configuration.
-
-### AI (`ai/`)
-
-*   `flask run`: Starts the Flask development server (ensure `FLASK_APP=app.py` is set in `.env` or environment).
 
 ## Contributing
 
