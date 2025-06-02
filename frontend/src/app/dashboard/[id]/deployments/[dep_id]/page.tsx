@@ -1,14 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Play, Square, RefreshCw, ExternalLink, Server, GitBranch, Clock, Key } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/hooks/use-toast"
-import axios from "axios"
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar"
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Play,
+  Square,
+  RefreshCw,
+  ExternalLink,
+  Server,
+  GitBranch,
+  Clock,
+  Key,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import axios from "axios";
+import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
+import { toast } from "sonner";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,85 +32,88 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 interface EnvSecret {
-  key: string
-  value: string
+  key: string;
+  value: string;
 }
 
 interface Deployment {
-  id: string
-  name: string
-  description?: string
-  framework: string
-  githubUrl: string
-  status?: string
-  createdAt: string
-  updatedAt: string
-  envSecrets?: EnvSecret[]
-  containerId?: string
-  containerPort?: number
+  id: string;
+  name: string;
+  description?: string;
+  framework: string;
+  githubUrl: string;
+  status?: string;
+  createdAt: string;
+  updatedAt: string;
+  envSecrets?: EnvSecret[];
+  containerId?: string;
+  containerPort?: number;
 }
 
 export default function DeploymentDetailPage() {
-  const [deployment, setDeployment] = useState<Deployment | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [statusLoading, setStatusLoading] = useState(false)
-  const params = useParams()
-  const router = useRouter()
-  const { toast } = useToast()
+  const [deployment, setDeployment] = useState<Deployment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const params = useParams();
+  const router = useRouter();
 
   useEffect(() => {
-    fetchDeployment()
-  }, [params.id])
+    fetchDeployment();
+  }, [params.id]);
 
   const fetchDeployment = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/deploy/${params.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      setDeployment(response.data.data.deployment)
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/deploy/${params.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setDeployment(response.data.data.deployment);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch deployment details",
-        variant: "destructive",
-      })
-      router.push("/deployments")
+      toast.error("Failed to fetch deployment details");
+      router.push("/deployments");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const refreshStatus = async () => {
-    if (!deployment) return
+    if (!deployment) return;
 
-    setStatusLoading(true)
+    setStatusLoading(true);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/deploy/${deployment.id}/status`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      setDeployment((prev) => (prev ? { ...prev, status: response.data.data.status } : null))
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/deploy/${deployment.id}/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setDeployment((prev) =>
+        prev ? { ...prev, status: response.data.data.status } : null
+      );
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to refresh status",
-        variant: "destructive",
-      })
+      toast.error("Failed to refresh status");
     } finally {
-      setStatusLoading(false)
+      setStatusLoading(false);
     }
-  }
+  };
 
   const startDeployment = async () => {
-    if (!deployment) return
+    if (!deployment) return;
 
     try {
       await axios.post(
@@ -104,24 +123,17 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        },
-      )
-      toast({
-        title: "Success",
-        description: "Deployment started successfully",
-      })
-      refreshStatus()
+        }
+      );
+      toast.success("Deployment started successfully");
+      refreshStatus();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start deployment",
-        variant: "destructive",
-      })
+      toast.error("Failed to start deployment");
     }
-  }
+  };
 
   const stopDeployment = async () => {
-    if (!deployment) return
+    if (!deployment) return;
 
     try {
       await axios.post(
@@ -131,34 +143,27 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        },
-      )
-      toast({
-        title: "Success",
-        description: "Deployment stopped successfully",
-      })
-      refreshStatus()
+        }
+      );
+      toast.success("Deployment stopped successfully");
+      refreshStatus();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to stop deployment",
-        variant: "destructive",
-      })
+      toast.error("Failed to stop deployment");
     }
-  }
+  };
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case "running":
-        return <Badge className="bg-green-100 text-green-800">Running</Badge>
+        return <Badge className="bg-green-100 text-green-800">Running</Badge>;
       case "stopped":
-        return <Badge variant="secondary">Stopped</Badge>
+        return <Badge variant="secondary">Stopped</Badge>;
       case "exited":
-        return <Badge variant="destructive">Exited</Badge>
+        return <Badge variant="destructive">Exited</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">Unknown</Badge>;
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -172,19 +177,28 @@ export default function DeploymentDetailPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href="/dashboard"
+                      className="hover:text-primary transition-colors"
+                    >
                       Dashboard
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href={`/dashboard/${params.id}`}
+                      className="hover:text-primary transition-colors"
+                    >
                       Repository
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/deployments" className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href="/deployments"
+                      className="hover:text-primary transition-colors"
+                    >
                       Deployments
                     </BreadcrumbLink>
                   </BreadcrumbItem>
@@ -198,12 +212,14 @@ export default function DeploymentDetailPage() {
           </header>
           <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
             <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Loading deployment details...</p>
+              <p className="text-muted-foreground">
+                Loading deployment details...
+              </p>
             </div>
           </div>
         </SidebarInset>
       </SidebarProvider>
-    )
+    );
   }
 
   if (!deployment) {
@@ -218,19 +234,28 @@ export default function DeploymentDetailPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href="/dashboard"
+                      className="hover:text-primary transition-colors"
+                    >
                       Dashboard
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href={`/dashboard/${params.id}`}
+                      className="hover:text-primary transition-colors"
+                    >
                       Repository
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/deployments" className="hover:text-primary transition-colors">
+                    <BreadcrumbLink
+                      href="/deployments"
+                      className="hover:text-primary transition-colors"
+                    >
                       Deployments
                     </BreadcrumbLink>
                   </BreadcrumbItem>
@@ -249,7 +274,7 @@ export default function DeploymentDetailPage() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-    )
+    );
   }
 
   return (
@@ -263,19 +288,28 @@ export default function DeploymentDetailPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href="/dashboard"
+                    className="hover:text-primary transition-colors"
+                  >
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={`/dashboard/${params.id}`} className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href={`/dashboard/${params.id}`}
+                    className="hover:text-primary transition-colors"
+                  >
                     Repository
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/deployments" className="hover:text-primary transition-colors">
+                  <BreadcrumbLink
+                    href="/deployments"
+                    className="hover:text-primary transition-colors"
+                  >
                     Deployments
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -296,10 +330,14 @@ export default function DeploymentDetailPage() {
               </Button>
               <div className="flex-1">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold tracking-tight">{deployment.name}</h1>
+                  <h1 className="text-3xl font-bold tracking-tight">
+                    {deployment.name}
+                  </h1>
                   {getStatusBadge(deployment.status)}
                 </div>
-                <p className="text-muted-foreground">{deployment.description || "No description"}</p>
+                <p className="text-muted-foreground">
+                  {deployment.description || "No description"}
+                </p>
               </div>
             </div>
 
@@ -316,8 +354,17 @@ export default function DeploymentDetailPage() {
                     <span className="text-sm font-medium">Status</span>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(deployment.status)}
-                      <Button size="sm" variant="ghost" onClick={refreshStatus} disabled={statusLoading}>
-                        <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={refreshStatus}
+                        disabled={statusLoading}
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 ${
+                            statusLoading ? "animate-spin" : ""
+                          }`}
+                        />
                       </Button>
                     </div>
                   </div>
@@ -334,20 +381,28 @@ export default function DeploymentDetailPage() {
                     <span className="text-sm font-medium">Created</span>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      <span className="text-sm">{new Date(deployment.createdAt).toLocaleDateString()}</span>
+                      <span className="text-sm">
+                        {new Date(deployment.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Last Updated</span>
-                    <span className="text-sm">{new Date(deployment.updatedAt).toLocaleDateString()}</span>
+                    <span className="text-sm">
+                      {new Date(deployment.updatedAt).toLocaleDateString()}
+                    </span>
                   </div>
                   {deployment.containerPort && (
                     <>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Container Port</span>
-                        <span className="text-sm">{deployment.containerPort}</span>
+                        <span className="text-sm font-medium">
+                          Container Port
+                        </span>
+                        <span className="text-sm">
+                          {deployment.containerPort}
+                        </span>
                       </div>
                     </>
                   )}
@@ -361,7 +416,11 @@ export default function DeploymentDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex gap-2">
-                    <Button onClick={startDeployment} disabled={deployment.status === "running"} className="flex-1">
+                    <Button
+                      onClick={startDeployment}
+                      disabled={deployment.status === "running"}
+                      className="flex-1"
+                    >
                       <Play className="h-4 w-4 mr-2" />
                       Start
                     </Button>
@@ -376,7 +435,11 @@ export default function DeploymentDetailPage() {
                     </Button>
                   </div>
                   <Button variant="outline" className="w-full" asChild>
-                    <a href={deployment.githubUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={deployment.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View on GitHub
                     </a>
@@ -392,14 +455,21 @@ export default function DeploymentDetailPage() {
                     <Key className="h-5 w-5" />
                     Environment Variables
                   </CardTitle>
-                  <CardDescription>Environment variables configured for this deployment</CardDescription>
+                  <CardDescription>
+                    Environment variables configured for this deployment
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     {deployment.envSecrets.map((secret, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      >
                         <span className="font-mono text-sm">{secret.key}</span>
-                        <span className="text-sm text-muted-foreground">••••••••</span>
+                        <span className="text-sm text-muted-foreground">
+                          ••••••••
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -410,5 +480,5 @@ export default function DeploymentDetailPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

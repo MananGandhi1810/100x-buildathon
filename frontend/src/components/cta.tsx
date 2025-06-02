@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 
 interface Cta4Props {
   title?: string;
+  description?: string;
   buttonText?: string;
   buttonUrl?: string;
   items?: string[];
@@ -19,6 +20,7 @@ const defaultItems = [
 
 const Cta4 = ({
   title = "Call to Action",
+  description = "Let's build something amazing together",
   buttonText = "Get Started",
   buttonUrl = "https://shadcnblocks.com",
   items = defaultItems,
@@ -33,9 +35,7 @@ const Cta4 = ({
                 <h4 className="text-3xl font-medium tracking-tight md:text-4xl">
                   {title}
                 </h4>
-                <p className="text-lg text-muted-foreground">
-                  Let&apos;s build something amazing together
-                </p>
+                <p className="text-lg text-muted-foreground">{description}</p>
               </div>
               <Button size="lg" className="group" asChild>
                 <a href={buttonUrl} target="_blank">

@@ -102,32 +102,20 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error fetching projects:", error);
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "Failed to fetch projects",
-        variant: "destructive",
-      });
+      toast.error("Failed to fetch projects");
     }
   };
 
   const handleImportRepository = async () => {
     if (!repoUrl.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a repository URL",
-        variant: "destructive",
-      });
+      toast.error("Please enter a repository URL");
       return;
     }
 
     // Validate GitHub URL format
     const ghRepoRegex = /https?:\/\/(www\.)?github.com\/[\w.-]+\/[\w.-]+/;
     if (!ghRepoRegex.test(repoUrl)) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid GitHub repository URL",
-        variant: "destructive",
-      });
+      toast.error("Please enter a valid GitHub repository URL");
       return;
     }
 
@@ -145,10 +133,7 @@ export default function Dashboard() {
         { headers: { authorization: `Bearer ${accessToken}` } }
       );
 
-      toast({
-        title: "Success",
-        description: "Repository imported successfully!",
-      });
+      toast.success("Repository imported successfully!");
 
       // Refresh the projects list
       await fetchProjects();
@@ -162,11 +147,7 @@ export default function Dashboard() {
       console.error("Error importing repository:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to import repository";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     } finally {
       setIsImporting(false);
     }
