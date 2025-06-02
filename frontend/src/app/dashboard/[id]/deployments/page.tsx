@@ -104,7 +104,34 @@ export default function DeploymentsPage() {
     } catch (error) {
       toast.error("Failed to fetch project data")
     }
-  }
+  }, [params.id]);
+
+  useEffect(() => {
+    const init = async () => {
+      await fetchDeployments();
+      await fetchProjectData();
+    };
+    init();
+  }, [fetchProjectData]);
+
+  const fetchDeployments = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      setDeployments(response.data.data.deployments);
+    } catch (error) {
+      console.error("Error fetching deployments:", error);
+      toast.error("Failed to fetch deployments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const createDeployment = async () => {
     try {
