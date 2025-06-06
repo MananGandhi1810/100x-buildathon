@@ -303,17 +303,30 @@ const processPush = async (owner, repo, ref, githubToken) => {
         token: githubToken,
     };
 
-    const readmePromise = generateReadme(owner, repo, ref, allFileContents);
-    const diagramPromise = generateDiagram(owner, repo, ref, allFileContents);
+    const readmePromise = generateReadme(
+        owner,
+        repo,
+        ref,
+        allFileContents,
+    ).catch((r) => null);
+    const diagramPromise = generateDiagram(
+        owner,
+        repo,
+        ref,
+        allFileContents,
+    ).catch((r) => null);
     const bugDetectPromise = axios
         .post(`${process.env.AI_SERVICE_BASE_URL}/bug_detect`, aiPayload)
-        .then((res) => res.data);
+        .then((res) => res.data)
+        .catch((r) => null);
     const generateMocksPromise = axios
         .post(`${process.env.AI_SERVICE_BASE_URL}/generate_mocks`, aiPayload)
-        .then((res) => res.data);
+        .then((res) => res.data)
+        .catch((r) => null);
     const generateTestsPromise = axios
         .post(`${process.env.AI_SERVICE_BASE_URL}/generate_tests`, aiPayload)
-        .then((res) => res.data);
+        .then((res) => res.data)
+        .catch((r) => null);
     const [readme, diagram, bugDetect, mocks, tests] = await Promise.all([
         readmePromise,
         diagramPromise,
