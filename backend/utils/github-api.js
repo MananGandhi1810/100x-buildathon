@@ -1,5 +1,5 @@
 import axios from "axios";
-import { exists, get, set } from "./keyvalue-db.js";   
+import { exists, get, set } from "./keyvalue-db.js";
 
 const getAccessToken = async (code) => {
     return await axios.post(
@@ -44,7 +44,6 @@ const createWebhook = async (
     hooks = false,
     pull = false,
 ) => {
-    console.log(repo);
     return await axios.post(
         `https://api.github.com/repos/${repo}/hooks`,
         {
@@ -70,14 +69,22 @@ const createWebhook = async (
 };
 
 const getUserRepositories = async (token) => {
-    return await axios.get("https://api.github.com/user/repos?per_page=1000", {
-        headers: {
-            Authorization: "Bearer " + token,
-            "X-OAuth-Scopes": "repo, user",
-            "X-Accepted-OAuth-Scopes": "user",
+    const response = await axios.get(
+        "https://api.github.com/user/repos?per_page=1000",
+        {
+            headers: {
+                Authorization: "Bearer " + token,
+                "X-OAuth-Scopes": "repo, user",
+                "X-Accepted-OAuth-Scopes": "user",
+            },
+            validateStatus: false,
         },
-        validateStatus: false,
-    });
+    );
+    const repositories = response.data.map((r) => ({
+        name: r.full_name,
+        url: r.clone_url,
+    }));
+    return repositories;
 };
 
 const getPRDiff = async (owner, repoName, prNumber, token) => {
