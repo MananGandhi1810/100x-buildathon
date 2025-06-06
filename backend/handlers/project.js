@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { createWebhook, getPullRequests } from "../utils/github-api.js";
+import { createWebhook } from "../utils/github-api.js";
 import {
     processPush,
     processAllPullRequests,
@@ -52,88 +52,38 @@ const getProjectDataHandler = async (req, res) => {
     const repoName = match.groups.name;
     const ghAccessToken = project.user.ghAccessToken;
 
-    const { readme, diagram } =
-        (await processPush(owner, repoName, "main", ghAccessToken)) || {};
-
-    const pullRequests = await processAllPullRequests(
+    const pushPromise = processPush(owner, repoName, "main", ghAccessToken);
+    const pullRequestPromise = processAllPullRequests(
         owner,
         repoName,
         ghAccessToken,
-        projectId,
     );
-
-    let testsData = null;
-    let mocksData = null;
-    let bugsData = null;
-    let aiError = null;
-
-    const aiServiceBaseUrl =
-        process.env.AI_SERVICE_BASE_URL || "http://127.0.0.1:8888";
-    const payload = {
-        owner: owner,
-        repo: repoName,
-        token: ghAccessToken,
-    };
-
-    const [testsResponse, mocksResponse, bugsResponse] = await Promise.all([
-        fetch(`${aiServiceBaseUrl}/generate_tests`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }),
-        fetch(`${aiServiceBaseUrl}/generate_mocks`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }),
-        fetch(`${aiServiceBaseUrl}/bug_detect`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }),
-    ]);
-
-    if (testsResponse.ok) {
-        try {
-            testsData = await testsResponse.json();
-        } catch (e) {
-            console.error("Error parsing JSON for tests:", e);
-        }
-    } else {
-        console.error(
-            "Error fetching tests:",
-            testsResponse.status,
-            await testsResponse.text(),
-        );
+    const projectData = await Promise.all([pushPromise, pullRequestPromise]);
+    if (projectData == null) {
+        return res.status(500).json({
+            success: false,
+            message: "Could not process data",
+            data: null,
+        });
     }
+    const [
+        {
+            data: { readme, diagram, bugDetect, mocks, tests },
+        },
+        pullRequests,
+    ] = projectData;
 
-    if (mocksResponse.ok) {
-        try {
-            mocksData = await mocksResponse.json();
-        } catch (e) {
-            console.error("Error parsing JSON for mocks:", e);
-        }
-    } else {
-        console.error(
-            "Error fetching mocks:",
-            mocksResponse.status,
-            await mocksResponse.text(),
-        );
-    }
-
-    if (bugsResponse.ok) {
-        try {
-            bugsData = await bugsResponse.json();
-        } catch (e) {
-            console.error("Error parsing JSON for bugs:", e);
-        }
-    } else {
-        console.error(
-            "Error fetching bugs:",
-            bugsResponse.status,
-            await bugsResponse.text(),
-        );
-    }
+    console.log({
+        project,
+        readme,
+        diagram,
+        pullRequests,
+        aiAnalysis: {
+            tests: tests,
+            mocks: mocks,
+            bugs: bugDetect,
+        },
+    });
 
     return res.json({
         success: true,
@@ -144,10 +94,9 @@ const getProjectDataHandler = async (req, res) => {
             diagram,
             pullRequests,
             aiAnalysis: {
-                tests: testsData,
-                mocks: mocksData,
-                bugs: bugsData,
-                error: aiError,
+                tests: tests,
+                mocks: mocks,
+                bugs: bugDetect,
             },
         },
     });
@@ -168,23 +117,22 @@ const incomingProjectWebhookHandler = async (req, res) => {
         });
     }
     const match = project.repoUrl.match(ghRepoRegex);
-    const repo = `${match.groups.owner}/${match.groups.name}`;
 
     const githubEvent = req.headers["x-github-event"];
-    const { id: projectIdForLog } = project;
 
     if (githubEvent === "push") {
         const ref = req.body.ref;
-        if (ref) {
-            const branch = ref.split("/").pop();
-            if (branch === "main" || branch === "master") {
-                await processPush(
-                    match.groups.owner,
-                    match.groups.name,
-                    req.body.head_commit.id,
-                    project.user.ghAccessToken,
-                );
-            }
+        if (!ref) {
+            return;
+        }
+        const branch = ref.split("/").pop();
+        if (branch === "main" || branch === "master") {
+            await processPush(
+                match.groups.owner,
+                match.groups.name,
+                req.body.head_commit.id,
+                project.user.ghAccessToken,
+            );
         }
     } else if (githubEvent === "pull_request") {
         const pullRequestAction = req.body.action;
@@ -242,7 +190,7 @@ const projectListHandler = async (req, res) => {
 };
 
 const createProjectHandler = async (req, res) => {
-    const { repo: url } = req.query;
+    const { repo: url, title, description } = req.query;
     const ghAccessToken = req.user.ghAccessToken;
 
     if (!url || url.trim() === "") {
@@ -256,39 +204,48 @@ const createProjectHandler = async (req, res) => {
     const match = url.match(ghRepoRegex);
     const repo = `${match.groups.owner}/${match.groups.name}`;
 
+    const existingProject = await prisma.project.count({
+        where: { repoUrl: url },
+    });
+
+    if (existingProject > 0) {
+        return res.status(400).json({
+            success: false,
+            message: "A project with this repository already exists",
+            data: null,
+        });
+    }
+
     const project = await prisma.project.create({
         data: {
-            title: "",
-            description: "",
-            repoUrl: `https://github.com/${repo}`,
+            title,
+            description,
+            repoUrl: url,
             userId: req.user.id,
         },
     });
 
-    const projectRequest = await createWebhook(
-        project.id,
+    const webhookResponse = await createWebhook(
         ghAccessToken,
         repo,
-        "project",
-        false,
-        true,
+        `project/${project.id}`,
+        ["push", "pull_request"],
     );
-
-    // Process all existing pull requests for the new project
-    const pullRequests = await processAllPullRequests(
-        match.groups.owner,
-        match.groups.name,
-        ghAccessToken,
-        project.id,
-    );
-
+    if (webhookResponse.status != 201) {
+        await prisma.project.delete({
+            where: { id: project.id },
+        });
+        return res.status(400).json({
+            success: false,
+            message: "Repository not found",
+            data: null,
+        });
+    }
     res.json({
         success: true,
         message: "Project created successfully",
         data: {
             project,
-            webhook: projectRequest.data,
-            pullRequests,
         },
     });
 };
@@ -636,5 +593,5 @@ export {
     provisionProjectHandler,
     provisionUseHandler,
     createProjectProxy,
-    projectChatHandler, // Add the new handler here
+    projectChatHandler,
 };

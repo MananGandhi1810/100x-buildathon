@@ -4,10 +4,11 @@ import { GoogleGenAI } from "@google/genai";
 import tar from "tar-stream";
 import zlib from "zlib";
 import { Readable } from "stream";
+import axios from "axios";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-async function generateReadme(owner, repo, ref, fileContents) {
+const generateReadme = async (owner, repo, ref, fileContents) => {
     const redisKey = `readme:${owner}:${repo}:${ref}`;
     const expiry = 24 * 60 * 60;
 
@@ -15,14 +16,39 @@ async function generateReadme(owner, repo, ref, fileContents) {
         return await get(redisKey);
     }
 
+    const repoText = fileContents
+        .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
+        .join("");
+
     const response = await ai.models.generateContent({
         model: "gemini-2.0-flash-lite",
-        contents: `Generate a README.md file for a project with the following files and their content:\n\n${fileContents
-            .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
-            .join("")}`,
+        contents: `Create a comprehensive, professional README.md file for the following project:
+
+Project files and content are provided below. Analyze the codebase to understand:
+- The project's purpose and functionality
+- Main components and their interactions
+- Technologies and dependencies used
+- API endpoints (if applicable)
+
+Structure the README with these sections:
+1. Title and brief description
+2. Installation instructions
+3. Usage examples with code snippets where relevant
+4. API documentation (if applicable)
+5. Key features
+6. Project architecture
+7. Dependencies
+8. Contributing guidelines (simple)
+9. License information (infer from codebase or use MIT as default)
+
+Make the README clear, concise, and helpful for new developers. Use proper markdown formatting including headings, code blocks, lists, and tables where appropriate.
+Directly provide the README Markdown, nothing else.
+
+Project files:
+${repoText}`,
         config: {
-            maxOutputTokens: 1024,
-            temperature: 0.1,
+            maxOutputTokens: 2048,
+            temperature: 0.2,
         },
     });
 
@@ -32,15 +58,9 @@ async function generateReadme(owner, repo, ref, fileContents) {
     }
 
     return readmeContent;
-}
+};
 
-async function generateDiagram(
-    codeDescription,
-    title = "System Diagram",
-    owner,
-    repo,
-    ref,
-) {
+const generateDiagram = async (owner, repo, ref, fileContents) => {
     const diagramRedisKey = `diagram:${owner}:${repo}:${ref}`;
     const expiry = 24 * 60 * 60;
 
@@ -48,38 +68,57 @@ async function generateDiagram(
         return await get(diagramRedisKey);
     }
 
+    const repoText = fileContents
+        .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
+        .join("");
+
     const response = await ai.models.generateContent({
         model: "gemini-2.0-flash-lite",
-        contents: `Generate a Mermaid TD (top-down) graph diagram representing the following system/code.
-The diagram should be suitable for a README file.
-Title the diagram '${title}':
+        contents: `Generate a comprehensive Mermaid TD (top-down) graph diagram representing the architecture of the following codebase. 
+        
+The diagram should:
+1. Identify key files, modules, and components
+2. Show relationships and dependencies between components with proper arrows
+3. Group related functionality together
+4. Include clear labels for all nodes and connections
+5. Focus on the main architectural flow rather than exhaustive details
+6. Use appropriate styling (colors, shapes) to distinguish different types of components
+7. Be simple enough to understand at a glance, but detailed enough to provide value
+8. Be valid Mermaid syntax with no errors
 
-${codeDescription}`,
+Analyze the following code and extract the core architecture:
+
+${repoText}
+
+Return ONLY the Mermaid diagram code enclosed in \`\`\`mermaid and \`\`\` tags.`,
         config: {
             maxOutputTokens: 2048,
             temperature: 0.2,
         },
     });
 
-    const diagramContent = response.text;
+    const diagramContent = response.text
+        .replace("```mermaid\n", "")
+        .replace("```", "");
     if (diagramContent) {
         await set(diagramRedisKey, diagramContent, expiry);
     }
 
     return diagramContent;
-}
+};
 
-async function generatePullRequestReview(
+const generatePullRequestReview = async (
     owner,
     repo,
     prNumber,
     diff,
     codebase,
-) {
+    ignoreCache = false,
+) => {
     const reviewRedisKey = `pr_review:${owner}:${repo}:${prNumber}`;
     const expiry = 24 * 60 * 60;
 
-    if (await exists(reviewRedisKey)) {
+    if ((await exists(reviewRedisKey)) && !ignoreCache) {
         return await get(reviewRedisKey);
     }
 
@@ -109,6 +148,8 @@ Please provide a comprehensive review covering:
 7. **Documentation**: Check if documentation needs updates
 8. **Suggestions**: Provide specific improvement suggestions
 
+Give a strong opinion on whether the Pull Request should be merged, if not, then why not.
+
 Format your response in markdown with clear sections.`,
         config: {
             maxOutputTokens: 4096,
@@ -116,15 +157,15 @@ Format your response in markdown with clear sections.`,
         },
     });
 
-    const reviewContent = response.text;
+    const reviewContent = response.text.replaceAll("```", "");
     if (reviewContent) {
         await set(reviewRedisKey, reviewContent, expiry);
     }
 
     return reviewContent;
-}
+};
 
-async function extractContentsFromArchive(archiveData) {
+const extractContentsFromArchive = (archiveData) => {
     return new Promise((resolve, reject) => {
         const allFileContents = [];
         const extract = tar.extract();
@@ -160,14 +201,9 @@ async function extractContentsFromArchive(archiveData) {
 
         readableStream.pipe(gunzip).pipe(extract);
     });
-}
+};
 
-const processPullRequest = async (
-    projectId,
-    pullRequestPayload,
-    githubToken,
-    ignoreCache = false,
-) => {
+const processPullRequest = async (pullRequestPayload, githubToken) => {
     if (
         !pullRequestPayload ||
         !pullRequestPayload.head ||
@@ -182,236 +218,145 @@ const processPullRequest = async (
 
     const commitHash = pullRequestPayload.head.sha;
     const prNumber = pullRequestPayload.number;
+    const prTitle = pullRequestPayload.title;
+    const prDescription = pullRequestPayload.body || "";
     const repoFullName = pullRequestPayload.base.repo.full_name;
     const [owner, repoName] = repoFullName.split("/");
 
-    try {
-        const diffResponse = await getPRDiff(
-            owner,
-            repoName,
-            prNumber,
-            githubToken,
-        );
+    const repoContentsPromise = await getRepoContents(
+        owner,
+        repoName,
+        commitHash,
+        githubToken,
+    );
+    const prDiffPromise = await getPRDiff(
+        owner,
+        repoName,
+        prNumber,
+        githubToken,
+    ).then((r) => r.data);
 
-        if (diffResponse.status !== 200) {
-            return null;
-        }
-        const diff = diffResponse.data;
-
-        const archiveResponse = await getRepoArchive(
-            owner,
-            repoName,
-            commitHash,
-            githubToken,
-        );
-
-        if (archiveResponse.status !== 200) {
-            return null;
-        }
-
-        const processingKey = `pull_request:${projectId}:${commitHash}`;
-        const processingData = {
-            status: "pending_processing",
-            prNumber: prNumber,
-            repoFullName: repoFullName,
-            commitHash: commitHash,
-            projectId: projectId,
-            receivedAt: new Date().toISOString(),
-            diffData: diff,
-            archiveInfo: {
-                fetched: true,
-                commit: commitHash,
-                size: archiveResponse.data.byteLength,
-            },
-        };
-
-        await set(processingKey, JSON.stringify(processingData));
-
-        const repoContentsKey = `repo_contents:${owner}:${repoName}:${commitHash}`;
-        let allFileContents = [];
-
-        if (await exists(repoContentsKey)) {
-            const cachedContents = await get(repoContentsKey);
-            allFileContents = JSON.parse(cachedContents);
-        } else {
-            const extractedContents = await extractContentsFromArchive(
-                archiveResponse.data,
-            );
-            allFileContents = extractedContents;
-            await set(
-                repoContentsKey,
-                JSON.stringify(allFileContents),
-                24 * 60 * 60,
-            );
-        }
-
-        const aiReview = await generatePullRequestReview(
-            owner,
-            repoName,
-            prNumber,
-            diff,
-            allFileContents,
-        );
-
-        return {
-            title: pullRequestPayload.title,
-            aiReview: aiReview,
-        };
-    } catch (error) {
-        const processingKey = `pull_request:${projectId}:${commitHash || "unknown_commit"}`;
-        try {
-            await set(
-                processingKey,
-                JSON.stringify({
-                    status: "failed_processing",
-                    error: error.message,
-                    prNumber: prNumber,
-                    repoFullName: repoFullName,
-                    commitHash: commitHash,
-                    projectId: projectId,
-                    receivedAt: new Date().toISOString(),
-                }),
-            );
-        } catch (dbError) {}
-        return null;
-    }
-};
-
-async function generateReadmeAndDiagram(owner, repo, ref, allFileContents) {
-    const codeDescriptionForDiagram = allFileContents
-        .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
-        .join("");
-    const diagramTitle = `Code Structure for ${repo}/${ref}`;
-
-    const [generatedReadmeText, generatedDiagramMermaid] = await Promise.all([
-        generateReadme(owner, repo, ref, allFileContents),
-        generateDiagram(
-            codeDescriptionForDiagram,
-            diagramTitle,
-            owner,
-            repo,
-            ref,
-        ),
+    const [repoContents, prDiff] = await Promise.all([
+        repoContentsPromise,
+        prDiffPromise,
     ]);
 
+    const review = await generatePullRequestReview(
+        owner,
+        repoName,
+        prNumber,
+        prDiff,
+        repoContents,
+        prTitle,
+        prDescription,
+    );
     return {
-        readme: generatedReadmeText,
-        diagram: generatedDiagramMermaid,
+        number: pullRequestPayload.number,
+        title: pullRequestPayload.title,
+        state: pullRequestPayload.state,
+        url: pullRequestPayload.html_url,
+        createdAt: pullRequestPayload.created_at,
+        updatedAt: pullRequestPayload.updated_at,
+        aiReview: review,
     };
-}
+};
 
-const processPush = async (owner, repo, ref, githubToken) => {
+const getRepoContents = async (owner, repo, ref, githubToken) => {
     const repoContentsKey = `repo_contents:${owner}:${repo}:${ref}`;
     const expiry = 24 * 60 * 60;
 
+    let allFileContents;
+
     if (await exists(repoContentsKey)) {
         const cachedContents = await get(repoContentsKey);
-        const allFileContents = JSON.parse(cachedContents);
-        return await generateReadmeAndDiagram(
-            owner,
-            repo,
-            ref,
-            allFileContents,
-        );
+        allFileContents = JSON.parse(cachedContents);
+        return allFileContents;
     }
-
     const archiveResponse = await getRepoArchive(owner, repo, ref, githubToken);
 
     if (archiveResponse.status !== 200 || !archiveResponse.data) {
         return null;
     }
 
-    return new Promise((resolve, reject) => {
-        const allFileContents = [];
-        const extract = tar.extract();
-        const gunzip = zlib.createGunzip();
+    allFileContents = await extractContentsFromArchive(archiveResponse.data);
 
-        extract.on("entry", (header, stream, next) => {
-            if (header.type === "file") {
-                let content = "";
-                stream.on("data", (chunk) => {
-                    content += chunk.toString("utf8");
-                });
-                stream.on("end", () => {
-                    allFileContents.push({ name: header.name, content });
-                    next();
-                });
-                stream.resume();
-            } else {
-                stream.resume();
-                next();
-            }
-        });
+    set(repoContentsKey, JSON.stringify(allFileContents), expiry);
 
-        extract.on("finish", async () => {
-            if (allFileContents.length === 0) {
-                resolve(null);
-                return;
-            }
+    return allFileContents;
+};
 
-            await set(repoContentsKey, JSON.stringify(allFileContents), expiry);
+const processPush = async (owner, repo, ref, githubToken) => {
+    const allFileContents = await getRepoContents(
+        owner,
+        repo,
+        ref,
+        githubToken,
+    );
 
-            const result = await generateReadmeAndDiagram(
-                owner,
-                repo,
-                ref,
-                allFileContents,
-            );
-            resolve(result);
-        });
+    if (!allFileContents) {
+        return { data: null };
+    }
 
-        extract.on("error", reject);
+    const aiPayload = {
+        owner,
+        repo,
+        token: githubToken,
+    };
 
-        const readableStream = new Readable();
-        readableStream._read = () => {};
-        readableStream.push(Buffer.from(archiveResponse.data));
-        readableStream.push(null);
+    const readmePromise = generateReadme(owner, repo, ref, allFileContents);
+    const diagramPromise = generateDiagram(owner, repo, ref, allFileContents);
+    const bugDetectPromise = axios
+        .post(`${process.env.AI_SERVICE_BASE_URL}/bug_detect`, aiPayload)
+        .then((res) => res.data);
+    const generateMocksPromise = axios
+        .post(`${process.env.AI_SERVICE_BASE_URL}/generate_mocks`, aiPayload)
+        .then((res) => res.data);
+    const generateTestsPromise = axios
+        .post(`${process.env.AI_SERVICE_BASE_URL}/generate_tests`, aiPayload)
+        .then((res) => res.data);
+    const [readme, diagram, bugDetect, mocks, tests] = await Promise.all([
+        readmePromise,
+        diagramPromise,
+        bugDetectPromise,
+        generateMocksPromise,
+        generateTestsPromise,
+    ]);
 
-        readableStream.pipe(gunzip).pipe(extract);
-    });
+    return { data: { readme, diagram, bugDetect, mocks, tests } };
 };
 
 const processAllPullRequests = async (
     owner,
     repo,
     githubToken,
-    projectId,
     ignoreCache = false,
 ) => {
     const pullRequestsKey = `pull_requests_open:${owner}:${repo}`;
     const expiry = 24 * 60 * 60;
 
     if ((await exists(pullRequestsKey)) && !ignoreCache) {
+        console.log("Cached data");
         const cachedPRs = await get(pullRequestsKey);
         const parsedPRs = JSON.parse(cachedPRs);
         return parsedPRs;
     }
+    console.log("uncachedData", ignoreCache);
 
     const pullRequests = await getPullRequestsNew(owner, repo, githubToken);
-    console.log("Pull Requests:", pullRequests);
 
     if (!pullRequests || pullRequests.length === 0) {
         return [];
     }
 
-    const processedPRs = [];
+    const pullRequestsPromises = [];
 
     for (const pr of pullRequests) {
         if (pr.state === "open") {
-            const prData = await processPullRequest(projectId, pr, githubToken);
-            if (prData) {
-                processedPRs.push({
-                    number: pr.number,
-                    title: pr.title,
-                    state: pr.state,
-                    url: pr.html_url,
-                    createdAt: pr.created_at,
-                    updatedAt: pr.updated_at,
-                    ...prData,
-                });
-            }
+            const prPromise = processPullRequest(pr, githubToken);
+            pullRequestsPromises.push(prPromise);
         }
     }
+    const processedPRs = await Promise.all(pullRequestsPromises);
 
     await set(pullRequestsKey, JSON.stringify(processedPRs), expiry);
 
@@ -429,76 +374,45 @@ const processSinglePullRequest = async (
     const pullRequestsKey = `pull_requests_open:${owner}:${repo}`;
     const expiry = 24 * 60 * 60;
 
-    // Get existing cached pull requests
     let existingPRs = [];
     if (await exists(pullRequestsKey)) {
         const cachedPRs = await get(pullRequestsKey);
         existingPRs = JSON.parse(cachedPRs);
     } else {
-        // If no pull requests exist in cache, recalculate all pull requests
-        return await processAllPullRequests(
-            owner,
-            repo,
-            githubToken,
-            projectId,
-        );
+        return await processAllPullRequests(owner, repo, githubToken);
     }
 
     const prNumber = pullRequestPayload.number;
 
     if (action === "opened" && pullRequestPayload.state === "open") {
-        const prData = await processPullRequest(
-            projectId,
-            pullRequestPayload,
-            githubToken,
-        );
-        if (prData) {
-            const newPR = {
-                number: pullRequestPayload.number,
-                title: pullRequestPayload.title,
-                state: pullRequestPayload.state,
-                url: pullRequestPayload.html_url,
-                createdAt: pullRequestPayload.created_at,
-                updatedAt: pullRequestPayload.updated_at,
-                ...prData,
-            };
-
+        const newPR = await processPullRequest(pullRequestPayload, githubToken);
+        if (newPR) {
             const existingIndex = existingPRs.findIndex(
                 (pr) => pr.number === prNumber,
             );
             if (existingIndex === -1) {
                 existingPRs.push(newPR);
+            } else {
+                existingPRs[existingIndex] = newPR;
             }
         }
     } else if (action === "closed") {
-        // Remove the closed pull request from cache
         existingPRs = existingPRs.filter((pr) => pr.number !== prNumber);
     } else if (action === "synchronize" || action === "edited") {
-        // Update existing pull request
         const existingIndex = existingPRs.findIndex(
             (pr) => pr.number === prNumber,
         );
         if (existingIndex !== -1 && pullRequestPayload.state === "open") {
-            const prData = await processPullRequest(
-                projectId,
+            const prReview = await processPullRequest(
                 pullRequestPayload,
                 githubToken,
             );
-            if (prData) {
-                existingPRs[existingIndex] = {
-                    number: pullRequestPayload.number,
-                    title: pullRequestPayload.title,
-                    state: pullRequestPayload.state,
-                    url: pullRequestPayload.html_url,
-                    createdAt: pullRequestPayload.created_at,
-                    updatedAt: pullRequestPayload.updated_at,
-                    ...prData,
-                };
+            if (prReview) {
+                existingPRs[existingIndex] = prReview;
             }
         }
     }
 
-    // Update the cache with the modified pull requests
     await set(pullRequestsKey, JSON.stringify(existingPRs), expiry);
 
     return existingPRs;

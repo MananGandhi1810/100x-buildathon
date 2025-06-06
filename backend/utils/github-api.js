@@ -36,22 +36,15 @@ const getUserEmails = async (token) => {
     });
 };
 
-const createWebhook = async (
-    id,
-    token,
-    repo,
-    path,
-    hooks = false,
-    pull = false,
-) => {
-    return await axios.post(
+const createWebhook = async (token, repo, path, events = ["push"]) => {
+    const response = await axios.post(
         `https://api.github.com/repos/${repo}/hooks`,
         {
             name: "web",
             active: true,
-            events: ["push", ...(pull ? ["pull_request"] : [])],
+            events: events,
             config: {
-                url: `${process.env.BACKEND_URL}/${path}/${id}/${hooks ? "hooks" : ""}`,
+                url: `${process.env.BACKEND_URL}/${path}`,
                 content_type: "json",
                 insecure_ssl: "0",
             },
@@ -66,6 +59,8 @@ const createWebhook = async (
             validateStatus: false,
         },
     );
+    console.log(response.status);
+    return response;
 };
 
 const getUserRepositories = async (token) => {
@@ -146,19 +141,7 @@ const getFileTree = async (owner, repoName, treeSha, token) => {
     return JSON.stringify(tree);
 };
 
-const getPullRequests = async (owner, repoName, token, state = "all") => {
-    const url = `https://api.github.com/repos/${owner}/${repoName}/pulls?state=${state}&per_page=100`;
-    return await axios.get(url, {
-        headers: {
-            Accept: "application/vnd.github.v3+json",
-            Authorization: `Bearer ${token}`,
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        validateStatus: false,
-    });
-};
-
-async function getPullRequestsNew(owner, repo, token = null) {
+const getPullRequestsNew = async (owner, repo, token = null) => {
     let allPullRequests = [];
     let page = 1;
     const perPage = 100;
@@ -199,9 +182,9 @@ async function getPullRequestsNew(owner, repo, token = null) {
     } catch (error) {
         return [];
     }
-}
+};
 
-async function getPullRequestDiff(owner, repo, prNumber) {
+const getPullRequestDiff = async (owner, repo, prNumber) => {
     try {
         const response = await fetch(
             `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}`,
@@ -221,7 +204,7 @@ async function getPullRequestDiff(owner, repo, prNumber) {
     } catch (error) {
         return null;
     }
-}
+};
 
 export {
     getAccessToken,
@@ -232,7 +215,6 @@ export {
     getPRDiff,
     getRepoArchive,
     getFileTree,
-    getPullRequests,
     getPullRequestsNew,
     getPullRequestDiff,
 };

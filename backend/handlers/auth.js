@@ -145,4 +145,19 @@ const userHandler = (req, res) => {
     });
 };
 
-export { githubCallbackHandler, accessTokenHandler, userHandler };
+const getUserRepositoriesHandler = async (req, res) => {
+    const repositories = await getUserRepositories(req.user.ghAccessToken);
+    console.log(repositories);
+    res.json({
+        success: true,
+        message: "Fetched repositories succesfully",
+        data: { repositories },
+    });
+};
+
+export {
+    githubCallbackHandler,
+    accessTokenHandler,
+    userHandler,
+    getUserRepositoriesHandler,
+};
