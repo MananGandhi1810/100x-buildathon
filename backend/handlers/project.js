@@ -310,7 +310,7 @@ const provisionProjectHandler = async (req, res) => {
     try {
         const containerName = `code-server-${projectId}-${Date.now()}`;
         const container = await docker.createContainer({
-            Image: "manangandhi1810/10000x-devs-code-server:latest",
+            Image: "ghcr.io/manangandhi1810/10000x-devs-code-server:latest",
             Cmd: [
                 "--auth",
                 "none",
