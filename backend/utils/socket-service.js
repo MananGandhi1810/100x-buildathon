@@ -12,7 +12,7 @@ const sendMessage = (channel, event, message) => {
     // pusher.trigger(channel, event, {
     //     message: message,
     // });
-    console.log(`${channel}: ${event} - ${message}`);
+    console.log(`${channel}: ${event} - ${JSON.stringify(message)}`);
 };
 
 export { sendMessage };

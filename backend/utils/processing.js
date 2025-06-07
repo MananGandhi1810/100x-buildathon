@@ -348,13 +348,10 @@ const processAllPullRequests = async (
     const expiry = 24 * 60 * 60;
 
     if ((await exists(pullRequestsKey)) && !ignoreCache) {
-        console.log("Cached data");
         const cachedPRs = await get(pullRequestsKey);
         const parsedPRs = JSON.parse(cachedPRs);
         return parsedPRs;
     }
-    console.log("uncachedData", ignoreCache);
-
     const pullRequests = await getPullRequestsNew(owner, repo, githubToken);
 
     if (!pullRequests || pullRequests.length === 0) {

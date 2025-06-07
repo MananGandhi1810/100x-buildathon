@@ -13,6 +13,7 @@ import http from "http";
 import https from "https";
 import { onQueueMessage } from "../utils/queue-manager.js";
 import { buildContainer } from "../deploy/deploy.js";
+import { logAllContainers } from "../utils/container-logs.js";
 
 /**
  * Get port from environment and store in Express.
@@ -46,6 +47,7 @@ server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 onQueueMessage("deploy", (data, topic) => buildContainer(JSON.parse(data)));
+logAllContainers();
 
 /**
  * Normalize a port into a number, string, or false.

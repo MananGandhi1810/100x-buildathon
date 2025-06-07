@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { createWebhook } from "../utils/github-api.js";
 import Docker from "dockerode";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import { createWebhook } from "../utils/github-api.js";
 import { sendQueueMessage } from "../utils/queue-manager.js";
 
 const prisma = new PrismaClient();
@@ -71,11 +72,10 @@ const newDeploymentHandler = async (req, res) => {
     const match = githubUrl.match(ghRepoRegex);
     const repo = `${match.groups.owner}/${match.groups.name}`;
     const webhookRequest = await createWebhook(
-        id,
         req.user.ghAccessToken,
         repo,
-        "deployment",
-        true,
+        "deployment/" + id + "/hooks/",
+        ["push"]
     );
     console.log(webhookRequest.data);
 
@@ -477,6 +477,54 @@ const incomingWebhookHandler = async (req, res) => {
     });
 };
 
+const proxyDeploymentHandler = async (req, res) => {
+    const { deploymentId } = req.params;
+    const deployment = await prisma.deployment.findUnique({
+        where: {
+            id: deploymentId,
+        },
+        select: {
+            containerPort: true,
+            status: true,
+        },
+    });
+
+    if (!deployment) {
+        return res.status(404).json({
+            success: false,
+            message: "Deployment not found",
+        });
+    }
+
+    if (deployment.status !== "running") {
+        return res.status(400).json({
+            success: false,
+            message: "Deployment not running",
+        });
+    }
+
+    const containerPort = deployment.containerPort;
+    if (!containerPort) {
+        return res.status(404).json({
+            success: false,
+            message: "Container port not found",
+        });
+    }
+
+    const proxy = createProxyMiddleware({
+        target: `http://localhost:${containerPort}`,
+        pathRewrite: (path, req) => {
+            return req.originalUrl.replace(
+                `/deployment/${deploymentId}/proxy`,
+                ""
+            );
+        },
+        changeOrigin: true,
+    });
+
+    proxy(req, res);
+};
+
 export {
     newDeploymentHandler,
     getAllDeploymentsHandler,
@@ -486,4 +534,5 @@ export {
     getDeploymentStatusHandler,
     getContainerPortHandler,
     incomingWebhookHandler,
+    proxyDeploymentHandler,
 };

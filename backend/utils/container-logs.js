@@ -5,44 +5,53 @@ import Docker from "dockerode";
 const prisma = new PrismaClient();
 const docker = new Docker();
 
-const stripAnsi = (str) => str.replace(/\x1b\[[0-9;]*m/g, "");
-
 const logContainerData = async (containerId, projectId) => {
+    console.log(`Logging data for container: ${containerId}`);
     const container = docker.getContainer(containerId);
     if (!container) return;
 
-    container.logs(
-        { stdout: true, stderr: true, follow: true },
-        function (err, stream) {
-            if (!stream) return;
+    const logs = await container.logs({ stdout: true, stderr: true });
+    sendMessage(projectId, "containerLogs", logs.toString());
+};
 
-            stream.on("data", async (data) => {
-                const cleanData = stripAnsi(data.toString());
-                sendMessage(projectId, "log", cleanData);
-            });
-            stream.on("error", (e) => {
-                console.error(e);
-            });
-            stream.on("end", () => {
-                console.log("Process Ended");
-            });
-        },
-    );
+const updateContainerStatus = async (containerId, projectId) => {
+    console.log(`Updating status for container: ${containerId}`);
+    const container = docker.getContainer(containerId);
+    if (!container) return;
+
+    try {
+        const data = await container.inspect();
+        const status = data.State.Status;
+
+        await prisma.deployment.update({
+            where: { id: projectId },
+            data: {
+                status: status,
+            },
+        });
+    } catch (error) {
+        console.error(
+            `Error updating status for container ${containerId}:`,
+            error
+        );
+    }
 };
 
 const logAllContainers = async () => {
-    const projects = await prisma.deployment.findMany({
-        where: {
-            containerId: { not: null },
-        },
-        select: {
-            id: true,
-            containerId: true,
-        },
-    });
-    projects.map((project) =>
-        logContainerData(project.containerId, project.id),
-    );
+    setInterval(async () => {
+        const projects = await prisma.deployment.findMany({
+            where: {
+                containerId: { not: null },
+            },
+            select: {
+                id: true,
+                containerId: true,
+            },
+        });
+        projects.map((project) =>
+            updateContainerStatus(project.containerId, project.id)
+        );
+    }, 2000);
 };
 
 export { logContainerData, logAllContainers };

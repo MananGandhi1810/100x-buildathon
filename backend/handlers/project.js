@@ -73,18 +73,6 @@ const getProjectDataHandler = async (req, res) => {
         pullRequests,
     ] = projectData;
 
-    console.log({
-        project,
-        readme,
-        diagram,
-        pullRequests,
-        aiAnalysis: {
-            tests: tests,
-            mocks: mocks,
-            bugs: bugDetect,
-        },
-    });
-
     return res.json({
         success: true,
         message: "Project found",
@@ -403,8 +391,14 @@ const createProjectProxy = (projectId, port) => {
         ws: true,
         timeout: 60000,
         proxyTimeout: 60000,
-        pathRewrite: {
-            [`^/project/${projectId}/provision/use`]: "",
+        pathRewrite: (path, req) => {
+            if (req.originalUrl) {
+                return req.originalUrl.replace(
+                    `/project/${projectId}/provision/use`,
+                    "",
+                );
+            }
+            return path.replace(`/project/${projectId}/provision/use`, "");
         },
         onProxyReq: (proxyReq, req, res) => {
             proxyReq.setHeader("Host", `localhost:${port}`);
@@ -457,7 +451,7 @@ const createProjectProxy = (projectId, port) => {
     });
 };
 
-const provisionUseHandler = async (req, res, next) => {
+const provisionUseHandler = async (req, res) => {
     const { projectId } = req.params;
 
     try {
@@ -484,7 +478,7 @@ const provisionUseHandler = async (req, res, next) => {
         }
 
         const proxy = createProjectProxy(projectId, port);
-        proxy(req, res, next);
+        proxy(req, res);
     } catch (error) {
         console.error("Error in proxy handler:", error);
         return res.status(500).json({

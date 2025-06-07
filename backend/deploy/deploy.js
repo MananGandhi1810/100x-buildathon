@@ -92,7 +92,7 @@ ${e}
             PortBindings: {
                 "3000/tcp": [
                     {
-                        HostPort: "0", //Map container to a random unused port.
+                        HostPort: "0",
                     },
                 ],
             },
