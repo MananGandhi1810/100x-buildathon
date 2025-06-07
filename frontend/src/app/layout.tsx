@@ -1,7 +1,11 @@
-import { Inter } from "next/font/google";
+import { Inter, Playfair } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+const playfair = Playfair({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
 
 export const metadata = {
   title: "10000x Devs",
@@ -15,7 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${inter.className} ${playfair.variable}`}>
+        {children}
+      </body>
     </html>
   );
 }

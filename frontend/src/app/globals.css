@@ -5,55 +5,65 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.1822 0 0);
-  --foreground: oklch(0.9288 0.0126 255.5078);
-  --card: oklch(0.2046 0 0);
-  --card-foreground: oklch(0.9288 0.0126 255.5078);
-  --popover: oklch(0.2603 0 0);
-  --popover-foreground: oklch(0.7348 0 0);
-  --primary: oklch(0.4365 0.1044 156.7556);
-  --primary-foreground: oklch(0.9213 0.0135 167.1556);
-  --secondary: oklch(0.2603 0 0);
-  --secondary-foreground: oklch(0.9851 0 0);
-  --muted: oklch(0.2393 0 0);
-  --muted-foreground: oklch(0.7122 0 0);
-  --accent: oklch(0.3132 0 0);
-  --accent-foreground: oklch(0.9851 0 0);
-  --destructive: oklch(0.3123 0.0852 29.7877);
-  --destructive-foreground: oklch(0.9368 0.0045 34.3092);
-  --border: oklch(0.2809 0 0);
-  --input: oklch(0.2603 0 0);
-  --ring: oklch(0.8003 0.1821 151.711);
-  --chart-1: oklch(0.8003 0.1821 151.711);
-  --chart-2: oklch(0.7137 0.1434 254.624);
-  --chart-3: oklch(0.709 0.1592 293.5412);
-  --chart-4: oklch(0.8369 0.1644 84.4286);
-  --chart-5: oklch(0.7845 0.1325 181.912);
-  --sidebar: oklch(0.1822 0 0);
-  --sidebar-foreground: oklch(0.6301 0 0);
-  --sidebar-primary: oklch(0.4365 0.1044 156.7556);
-  --sidebar-primary-foreground: oklch(0.9213 0.0135 167.1556);
-  --sidebar-accent: oklch(0.3132 0 0);
-  --sidebar-accent-foreground: oklch(0.9851 0 0);
-  --sidebar-border: oklch(0.2809 0 0);
-  --sidebar-ring: oklch(0.8003 0.1821 151.711);
-  --font-sans: Outfit, sans-serif;
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: monospace;
-  --radius: 0.5rem;
-  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
-  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
-  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17),
-    0px 1px 2px -1px hsl(0 0% 0% / 0.17);
-  --shadow: 0px 1px 3px 0px hsl(0 0% 0% / 0.17),
-    0px 1px 2px -1px hsl(0 0% 0% / 0.17);
-  --shadow-md: 0px 1px 3px 0px hsl(0 0% 0% / 0.17),
-    0px 2px 4px -1px hsl(0 0% 0% / 0.17);
-  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.17),
-    0px 4px 6px -1px hsl(0 0% 0% / 0.17);
-  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.17),
-    0px 8px 10px -1px hsl(0 0% 0% / 0.17);
-  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
+  /* === Base === */
+  --background: #0f1013; /* black2 */
+  --foreground: #ffffff; /* white1 */
+
+  --card: #0f1013e8; /* black4 */
+  --card-foreground: #ffffff;
+
+  --popover: #1a1b1f; /* black3 */
+  --popover-foreground: #ffffff;
+
+  /* === Primary / Secondary === */
+  --primary: #3f4042; /* black6 */
+  --primary-foreground: #ffffff;
+
+  --secondary: #3f6d68; /* green2 */
+  --secondary-foreground: #ffffff;
+
+  /* === Accent / Muted === */
+  --accent: #8197a2; /* blue2 */
+  --accent-foreground: #000000;
+
+  --muted: #1c1f26; /* black4 (same as card) */
+  --muted-foreground: #858585; /* medium-gray text */
+
+  /* === Destructive === */
+  --destructive: #c8433f; /* a warm dark red/orange if needed */
+  --destructive-foreground: #ffffff;
+
+  /* === Border / Input / Ring === */
+  --border: #3f4042; /* black6 */
+  --input: #0f1013; /* black2 */
+  --ring: #7ed6c3; /* green3 */
+
+  /* === Sidebar Theme (if used) === */
+  --sidebar: #0f1013;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #3f4042;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #8197a2;
+  --sidebar-accent-foreground: #0f1013;
+  --sidebar-border: #3f4042;
+  --sidebar-ring: #7ed6c3;
+
+  /* === Chart / Custom Utility Colors (Optional) === */
+  --chart-1: #6195e8; /* soft blue */
+  --chart-2: #c47ccf; /* purple2 */
+  --chart-3: #dda355; /* orange2 */
+  --chart-4: #7ed6c3; /* green3 */
+  --chart-5: #e0c873; /* orange4 */
+
+  /* === Typography (keep defaults or set custom fonts) === */
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "Fira Code", monospace;
+  --font-serif: "Playfair", serif;
+
+  /* === Radius / Shadows / Tracking (keep defaults or tweak slightly) === */
+  --radius: 0.75rem;
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --tracking-normal: 0em;
 }
 
 @theme inline {
@@ -114,6 +124,18 @@
   --tracking-wide: calc(var(--tracking-normal) + 0.025em);
   --tracking-wider: calc(var(--tracking-normal) + 0.05em);
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+  --animate-shine: shine var(--duration) infinite linear;
+  @keyframes shine {
+  0% {
+    background-position: 0% 0%;
+    }
+  50% {
+    background-position: 100% 100%;
+    }
+  to {
+    background-position: 0% 0%;
+    }
+  }
 }
 
 body {
@@ -138,4 +160,13 @@ body {
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+.bgg {
+  background-size: 16.2px 16.2px;
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    #3f4042 0,
+    #3f4042 0.9px,
+    #0f1013 0.9px
+  );
 }

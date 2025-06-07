@@ -2,18 +2,19 @@
 import { Github, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { Separator } from "@/components/ui/separator";
 import Navbar from "@/components/navbar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { MagicCard } from "@/components/magicui/magic-card";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -43,82 +44,76 @@ export default function SignupPage() {
     checkAuth();
   }, [router]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="relative z-10 flex min-h-[80vh] max-w-6xl mx-auto rounded-3xl overflow-hidden shadow-xl">
+          {/* Left side - Image skeleton */}
+          <div className="hidden lg:block lg:w-1/2">
+            <Skeleton className="w-full h-full rounded-l-3xl" />
+          </div>
+
+          {/* Right side - Auth Card skeleton */}
+          <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+            <div className="w-full max-w-md space-y-6">
+              <Skeleton className="h-12 w-3/4" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-px w-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (error) return <p>{error}</p>;
 
   return (
     <>
-      <Navbar></Navbar>
-      <div className="relative z-10 container mx-auto px-4 py-16 flex flex-col items-center justify-center">
-        <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
-          {/* Left side - Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-12"
-          >
-            <div className="space-y-6">
-              <h1 className="text-5xl font-medium tracking-tight text-white pt-10">
-                Build with CodeAI
-              </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed">
-                Enterprise-grade AI platform for secure, efficient, and
-                intelligent code development.
-              </p>
-            </div>
+      <Navbar />
+      <div className="relative z-10 flex min-h-[100vh] w-screen mx-auto rounded-3xl overflow-hidden shadow-xl bgg">
+        {/* Left side - Image */}
+        <div
+          className="hidden lg:block lg:w-1/2 bg-cover bg-center "
+          style={{ backgroundImage: "url('/bg.png')" }}
+        />
 
-            <div className="space-y-6">
-              {[
-                "AI-Powered PR Analysis",
-                "Automated Code Testing",
-                "Instant Vulnerability Scanning",
-                "One-Click Deployments from GitHub",
-                "AI-Generated README Files",
-                "Natural Language Chat with Codebase",
-                "Visual Code Structure Mapping",
-                "Instant Dev Environment Provisioning",
-              ].map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="flex items-start space-x-4 group"
-                >
-                  <div className="flex-shrink-0 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center mt-0.5 transition-colors duration-300 group-hover:bg-primary/20">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <h3 className="text-lg text-muted-foreground group-hover:text-foreground transition-colors duration-300">
-                    {feature}
-                  </h3>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Right side - Signup Form */}
+        {/* Right side - Auth Card */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
+            className="w-full max-w-md"
           >
-            <Card className="w-full max-w-md bg-card/50 border-border/20 backdrop-blur-sm">
-              <CardHeader className="space-y-4">
-                <CardTitle className="text-3xl font-medium tracking-tight">
+            <MagicCard
+              gradientFrom="#A07CFE"
+              gradientTo="#FE8FB5"
+              gradientOpacity={0.9}
+              className="backdrop-blur-xl border border-white/10 w-full shadow-xl rounded-2xl p-10"
+            >
+              <CardHeader className="space-y-4 py-10">
+                <CardTitle className="text-3xl font-bold tracking-tight text-white">
                   Create an account
                 </CardTitle>
-                <CardDescription className="text-lg text-muted-foreground">
+                <CardDescription className="text-base text-white/80">
                   Sign up with GitHub to get started in seconds
                 </CardDescription>
               </CardHeader>
+
               <CardContent className="space-y-8">
                 <a
                   href={`https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GH_CLIENT_ID}&scope=user%20repo`}
                   className="block"
                 >
                   <Button
-                    className="w-full h-14 bg-white text-black hover:bg-slate-100 transition-all duration-300 group"
+                    className="w-full h-14 bg-white text-black hover:bg-white/90 border border-black/10 shadow-md group"
                     size="lg"
                   >
                     <Github className="mr-3 h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
@@ -127,29 +122,29 @@ export default function SignupPage() {
                   </Button>
                 </a>
 
-                <Separator className="my-6" />
+                <Separator className="my-6 bg-white/20" />
 
-                <div className="space-y-4 text-center text-sm text-muted-foreground">
+                <div className="space-y-4 text-left text-sm text-white/70">
                   <p>
                     By creating an account, you agree to our{" "}
-                    <a href="/terms" className="text-primary hover:underline">
+                    <a href="/terms" className="text-white hover:underline">
                       Terms of Service
                     </a>{" "}
                     and{" "}
-                    <a href="/privacy" className="text-primary hover:underline">
+                    <a href="/privacy" className="text-white hover:underline">
                       Privacy Policy
                     </a>
                     .
                   </p>
                   <p>
                     Already have an account?{" "}
-                    <a href="/signup" className="text-primary hover:underline">
+                    <a href="/signup" className="text-white hover:underline">
                       Sign in
                     </a>
                   </p>
                 </div>
               </CardContent>
-            </Card>
+            </MagicCard>
           </motion.div>
         </div>
       </div>
