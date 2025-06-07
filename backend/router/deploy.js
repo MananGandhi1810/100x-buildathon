@@ -10,11 +10,13 @@ import {
     getContainerPortHandler,
     incomingWebhookHandler,
     proxyDeploymentHandler,
+    getContainerLogsHandler,
 } from "../handlers/deploy.js";
 const router = Router();
 
 router.post("/:deploymentId/hooks/", incomingWebhookHandler);
 router.all("/:deploymentId/proxy/*", proxyDeploymentHandler);
+router.get("/:deploymentId/logs", getContainerLogsHandler);
 
 router.use(checkAuth);
 router.get("/", getAllDeploymentsHandler);

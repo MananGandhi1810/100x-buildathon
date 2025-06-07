@@ -525,6 +525,76 @@ const proxyDeploymentHandler = async (req, res) => {
     proxy(req, res);
 };
 
+const getContainerLogsHandler = async (req, res) => {
+    const { deploymentId } = req.params;
+    if (!deploymentId) {
+        return res.status(400).json({
+            success: false,
+            message: "Deployment Id is required",
+            data: null,
+        });
+    }
+
+    const deployment = await prisma.deployment.findUnique({
+        where: {
+            id: deploymentId,
+        },
+        select: {
+            containerId: true,
+        },
+    });
+
+    if (!deployment) {
+        return res.status(404).json({
+            success: false,
+            message: "Deployment not found",
+            data: null,
+        });
+    }
+
+    const container = docker.getContainer(deployment.containerId);
+    if (!container) {
+        return res.status(404).json({
+            success: false,
+            message: "Container not found",
+            data: null,
+        });
+    }
+
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Transfer-Encoding", "chunked");
+
+    container.logs(
+        {
+            follow: true,
+            stdout: true,
+            stderr: true,
+        },
+        (err, stream) => {
+            if (err) {
+                return res
+                    .writeHead(500, {
+                        "Content-Type": "application/json",
+                    })
+                    .end(
+                        JSON.stringify({
+                            success: false,
+                            message: "Error fetching logs",
+                            data: null,
+                        })
+                    );
+            }
+            stream.on("data", (data) => {
+                res.write(data.toString());
+            });
+            stream.on("end", () => {
+                res.end();
+            });
+        }
+    );
+};
+
+
 export {
     newDeploymentHandler,
     getAllDeploymentsHandler,
@@ -535,4 +605,5 @@ export {
     getContainerPortHandler,
     incomingWebhookHandler,
     proxyDeploymentHandler,
+    getContainerLogsHandler
 };
