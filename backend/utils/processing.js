@@ -13,12 +13,15 @@ const generateReadme = async (owner, repo, ref, fileContents) => {
     const expiry = 24 * 60 * 60;
 
     if (await exists(redisKey)) {
+        console.log(`[CACHE] Getting README for ${owner}/${repo}/${ref}`);
         return await get(redisKey);
     }
 
     const repoText = fileContents
         .map((file) => `File: ${file.name}\nContent:\n${file.content}\n\n`)
         .join("");
+
+    console.log(repoText.length);
 
     const response = await ai.models.generateContent({
         model: "gemini-2.0-flash-lite",
@@ -65,6 +68,7 @@ const generateDiagram = async (owner, repo, ref, fileContents) => {
     const expiry = 24 * 60 * 60;
 
     if (await exists(diagramRedisKey)) {
+        console.log(`[CACHE] Getting diagram for ${owner}/${repo}/${ref}`);
         return await get(diagramRedisKey);
     }
 
@@ -113,12 +117,15 @@ const generatePullRequestReview = async (
     prNumber,
     diff,
     codebase,
-    ignoreCache = false,
+    ignoreCache = false
 ) => {
     const reviewRedisKey = `pr_review:${owner}:${repo}:${prNumber}`;
     const expiry = 24 * 60 * 60;
 
     if ((await exists(reviewRedisKey)) && !ignoreCache) {
+        console.log(
+            `[CACHE] Getting PR review for ${owner}/${repo}#${prNumber}`
+        );
         return await get(reviewRedisKey);
     }
 
@@ -173,15 +180,48 @@ const extractContentsFromArchive = (archiveData) => {
 
         extract.on("entry", (header, stream, next) => {
             if (header.type === "file") {
-                let content = "";
-                stream.on("data", (chunk) => {
-                    content += chunk.toString("utf8");
-                });
-                stream.on("end", () => {
-                    allFileContents.push({ name: header.name, content });
+                const textFileExtensions = [
+                    ".txt",
+                    ".md",
+                    ".js",
+                    ".jsx",
+                    ".ts",
+                    ".tsx",
+                    ".html",
+                    ".css",
+                    ".json",
+                    ".yaml",
+                    ".yml",
+                    ".xml",
+                    ".csv",
+                    ".py",
+                    ".java",
+                    ".c",
+                    ".cpp",
+                    ".h",
+                    ".rb",
+                    ".php",
+                    ".go",
+                ];
+                const fileName = header.name.toLowerCase();
+                const isTextFile = textFileExtensions.some((ext) =>
+                    fileName.endsWith(ext)
+                );
+
+                if (isTextFile) {
+                    let content = "";
+                    stream.on("data", (chunk) => {
+                        content += chunk.toString("utf8");
+                    });
+                    stream.on("end", () => {
+                        allFileContents.push({ name: header.name, content });
+                        next();
+                    });
+                    stream.resume();
+                } else {
+                    stream.resume();
                     next();
-                });
-                stream.resume();
+                }
             } else {
                 stream.resume();
                 next();
@@ -227,13 +267,13 @@ const processPullRequest = async (pullRequestPayload, githubToken) => {
         owner,
         repoName,
         commitHash,
-        githubToken,
+        githubToken
     );
     const prDiffPromise = await getPRDiff(
         owner,
         repoName,
         prNumber,
-        githubToken,
+        githubToken
     ).then((r) => r.data);
 
     const [repoContents, prDiff] = await Promise.all([
@@ -248,7 +288,7 @@ const processPullRequest = async (pullRequestPayload, githubToken) => {
         prDiff,
         repoContents,
         prTitle,
-        prDescription,
+        prDescription
     );
     return {
         number: pullRequestPayload.number,
@@ -268,6 +308,9 @@ const getRepoContents = async (owner, repo, ref, githubToken) => {
     let allFileContents;
 
     if (await exists(repoContentsKey)) {
+        console.log(
+            `[CACHE] Getting repo contents for ${owner}/${repo}/${ref}`
+        );
         const cachedContents = await get(repoContentsKey);
         allFileContents = JSON.parse(cachedContents);
         return allFileContents;
@@ -290,7 +333,7 @@ const processPush = async (owner, repo, ref, githubToken) => {
         owner,
         repo,
         ref,
-        githubToken,
+        githubToken
     );
 
     if (!allFileContents) {
@@ -307,26 +350,41 @@ const processPush = async (owner, repo, ref, githubToken) => {
         owner,
         repo,
         ref,
-        allFileContents,
-    ).catch((r) => null);
+        allFileContents
+    ).catch((r) => {
+        console.log("Error generating README:", r);
+        return null;
+    });
     const diagramPromise = generateDiagram(
         owner,
         repo,
         ref,
-        allFileContents,
-    ).catch((r) => null);
+        allFileContents
+    ).catch((r) => {
+        console.log("Error generating diagram:", r);
+        return null;
+    });
     const bugDetectPromise = axios
         .post(`${process.env.AI_SERVICE_BASE_URL}/bug_detect`, aiPayload)
         .then((res) => res.data)
-        .catch((r) => null);
+        .catch((r) => {
+            console.log("Error detecting bugs:", r);
+            return null;
+        });
     const generateMocksPromise = axios
         .post(`${process.env.AI_SERVICE_BASE_URL}/generate_mocks`, aiPayload)
         .then((res) => res.data)
-        .catch((r) => null);
+        .catch((r) => {
+            console.log("Error generating mocks:", r);
+            return null;
+        });
     const generateTestsPromise = axios
         .post(`${process.env.AI_SERVICE_BASE_URL}/generate_tests`, aiPayload)
         .then((res) => res.data)
-        .catch((r) => null);
+        .catch((r) => {
+            console.log("Error generating tests:", r);
+            return null;
+        });
     const [readme, diagram, bugDetect, mocks, tests] = await Promise.all([
         readmePromise,
         diagramPromise,
@@ -342,12 +400,13 @@ const processAllPullRequests = async (
     owner,
     repo,
     githubToken,
-    ignoreCache = false,
+    ignoreCache = false
 ) => {
     const pullRequestsKey = `pull_requests_open:${owner}:${repo}`;
     const expiry = 24 * 60 * 60;
 
     if ((await exists(pullRequestsKey)) && !ignoreCache) {
+        console.log(`[CACHE] Getting all pull requests for ${owner}/${repo}`);
         const cachedPRs = await get(pullRequestsKey);
         const parsedPRs = JSON.parse(cachedPRs);
         return parsedPRs;
@@ -379,13 +438,16 @@ const processSinglePullRequest = async (
     githubToken,
     projectId,
     pullRequestPayload,
-    action,
+    action
 ) => {
     const pullRequestsKey = `pull_requests_open:${owner}:${repo}`;
     const expiry = 24 * 60 * 60;
 
     let existingPRs = [];
     if (await exists(pullRequestsKey)) {
+        console.log(
+            `[CACHE] Getting single pull request from cached list for ${owner}/${repo}`
+        );
         const cachedPRs = await get(pullRequestsKey);
         existingPRs = JSON.parse(cachedPRs);
     } else {
@@ -398,7 +460,7 @@ const processSinglePullRequest = async (
         const newPR = await processPullRequest(pullRequestPayload, githubToken);
         if (newPR) {
             const existingIndex = existingPRs.findIndex(
-                (pr) => pr.number === prNumber,
+                (pr) => pr.number === prNumber
             );
             if (existingIndex === -1) {
                 existingPRs.push(newPR);
@@ -410,12 +472,12 @@ const processSinglePullRequest = async (
         existingPRs = existingPRs.filter((pr) => pr.number !== prNumber);
     } else if (action === "synchronize" || action === "edited") {
         const existingIndex = existingPRs.findIndex(
-            (pr) => pr.number === prNumber,
+            (pr) => pr.number === prNumber
         );
         if (existingIndex !== -1 && pullRequestPayload.state === "open") {
             const prReview = await processPullRequest(
                 pullRequestPayload,
-                githubToken,
+                githubToken
             );
             if (prReview) {
                 existingPRs[existingIndex] = prReview;

@@ -299,23 +299,17 @@ const provisionProjectHandler = async (req, res) => {
         const containerName = `code-server-${projectId}-${Date.now()}`;
         const container = await docker.createContainer({
             Image: "ghcr.io/manangandhi1810/10000x-devs-code-server:latest",
-            Cmd: [
-                "--auth",
-                "none",
-                "--bind-addr",
-                "0.0.0.0:8080",
-                "/home/coder/workspace",
-            ],
+            Cmd: ["/home/coder/workspace"],
             name: containerName,
             Tty: true,
             WorkingDir: "/home/coder",
             ExposedPorts: {
-                "8080/tcp": {},
+                "3000/tcp": {},
             },
             HostConfig: {
                 AutoRemove: true,
                 PortBindings: {
-                    "8080/tcp": [
+                    "3000/tcp": [
                         {
                             HostPort: "0",
                         },
@@ -348,7 +342,7 @@ const provisionProjectHandler = async (req, res) => {
 
         const containerInfo = await container.inspect();
         const hostPort =
-            containerInfo.NetworkSettings.Ports["8080/tcp"]?.[0]?.HostPort;
+            containerInfo.NetworkSettings.Ports["3000/tcp"]?.[0]?.HostPort;
 
         await set(
             containerKey,
