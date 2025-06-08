@@ -1,4 +1,4 @@
-FROM linuxserver/code-server:latest
+FROM codercom/code-server:latest
 ENV DEBIAN_FRONTEND=noninteractive
 USER root
 RUN apt-get update \

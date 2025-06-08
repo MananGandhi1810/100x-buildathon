@@ -15,7 +15,6 @@ const logContainerData = async (containerId, projectId) => {
 };
 
 const updateContainerStatus = async (containerId, projectId) => {
-    console.log(`Updating status for container: ${containerId}`);
     const container = docker.getContainer(containerId);
     if (!container) return;
 
@@ -30,10 +29,12 @@ const updateContainerStatus = async (containerId, projectId) => {
             },
         });
     } catch (error) {
-        console.error(
-            `Error updating status for container ${containerId}:`,
-            error
-        );
+        await prisma.deployment.update({
+            where: { id: projectId },
+            data: {
+                status: "error",
+            },
+        });
     }
 };
 
