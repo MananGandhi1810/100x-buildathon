@@ -337,7 +337,15 @@ const processPush = async (owner, repo, ref, githubToken) => {
     );
 
     if (!allFileContents) {
-        return { data: null };
+        return {
+            data: {
+                readme: null,
+                diagram: null,
+                bugDetect: null,
+                mocks: null,
+                tests: null,
+            },
+        };
     }
 
     const aiPayload = {
