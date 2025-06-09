@@ -325,7 +325,7 @@ const getRepoContents = async (owner, repo, ref, githubToken) => {
 
     allFileContents = await extractContentsFromArchive(archiveResponse.data);
 
-    set(repoContentsKey, JSON.stringify(allFileContents), expiry);
+    await set(repoContentsKey, JSON.stringify(allFileContents), expiry);
 
     return allFileContents;
 };
@@ -370,6 +370,7 @@ const processPush = async (
         owner,
         repo,
         token: githubToken,
+        codeCacheKey: `repo_contents:${owner}:${repo}:${ref}`,
     };
 
     let readmePromise = null;
@@ -399,7 +400,7 @@ const processPush = async (
             return null;
         });
     }
-    if (!requirements.bugDetect) {
+    if (requirements.bugDetect) {
         bugDetectPromise = axios
             .post(`${process.env.AI_SERVICE_BASE_URL}/bug_detect`, aiPayload)
             .then((res) => res.data)
@@ -420,7 +421,7 @@ const processPush = async (
                 return null;
             });
     }
-    if (!requirements.tests) {
+    if (requirements.tests) {
         generateTestsPromise = axios
             .post(
                 `${process.env.AI_SERVICE_BASE_URL}/generate_tests`,
