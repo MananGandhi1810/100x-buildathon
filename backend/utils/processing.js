@@ -47,6 +47,7 @@ Structure the README with these sections:
 
 Make the README clear, concise, and helpful for new developers. Use proper markdown formatting including headings, code blocks, lists, and tables where appropriate.
 Directly provide the README Markdown, nothing else.
+Update the title to match the project name and ensure it is professional and descriptive.
 
 Project files:
 ${repoText}`,
