@@ -18,7 +18,7 @@ const getProjectDataHandler = async (req, res) => {
     const { projectId } = req.params;
 
     const project = await prisma.project.findUnique({
-        where: { id: projectId },
+        where: { id: projectId, userId: req.user.id },
         include: { user: true },
     });
 
@@ -26,15 +26,6 @@ const getProjectDataHandler = async (req, res) => {
         return res.status(404).json({
             success: false,
             message: "Project not found",
-            data: null,
-        });
-    }
-
-    if (project.userId !== req.user.id) {
-        return res.status(403).json({
-            success: false,
-            message:
-                "Access denied: You don't have permission to access this project",
             data: null,
         });
     }
@@ -229,14 +220,10 @@ const createProjectHandler = async (req, res) => {
             data: null,
         });
     }
-    processPush(
-        match.groups.owner,
-        match.groups.name,
-        "HEAD",
-        ghAccessToken,
-        true,
-        req.user.email
-    );
+    processPush(match.groups.owner, match.groups.name, "HEAD", ghAccessToken, {
+        initial: true,
+        userEmail: req.user.email,
+    });
     res.json({
         success: true,
         message: "Project created successfully",
@@ -250,7 +237,7 @@ const provisionProjectHandler = async (req, res) => {
     const { projectId } = req.params;
 
     const project = await prisma.project.findUnique({
-        where: { id: projectId },
+        where: { id: projectId, userId: req.user.id },
         include: { user: true },
     });
 
@@ -258,15 +245,6 @@ const provisionProjectHandler = async (req, res) => {
         return res.status(404).json({
             success: false,
             message: "Project not found",
-            data: null,
-        });
-    }
-
-    if (project.userId !== req.user.id) {
-        return res.status(403).json({
-            success: false,
-            message:
-                "Access denied: You don't have permission to access this project",
             data: null,
         });
     }
@@ -511,27 +489,18 @@ const projectChatHandler = async (req, res) => {
         });
     }
 
-    try {
-        const project = await prisma.project.findUnique({
-            where: { id: projectId },
+    const project = await prisma.project.findUnique({
+        where: { id: projectId, userId: req.user.id },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
         });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                message: "Project not found",
-                data: null,
-            });
-        }
-
-        if (project.userId !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message:
-                    "Access denied: You don't have permission to access this project's chat.",
-                data: null,
-            });
-        }
+    }
+    try {
 
         const aiServiceBaseUrl =
             process.env.AI_SERVICE_BASE_URL || "http://127.0.0.1:8888";
@@ -581,6 +550,236 @@ const projectChatHandler = async (req, res) => {
     }
 };
 
+const getProjectReadmeHandler = async (req, res) => {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({
+        where: { id: projectId, userId: req.user.id },
+        include: { user: true },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+
+    const match = project.repoUrl.match(ghRepoRegex);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid repository URL",
+            data: null,
+        });
+    }
+
+    const owner = match.groups.owner;
+    const repoName = match.groups.name;
+    const ghAccessToken = project.user.ghAccessToken;
+
+    const {
+        data: { readme },
+    } = await processPush(
+        owner,
+        repoName,
+        "main",
+        ghAccessToken,
+        {},
+        { readme: true }
+    );
+
+    return res.json({
+        success: true,
+        message: "Project readme found",
+        data: { readme },
+    });
+};
+
+const getProjectDiagramHandler = async (req, res) => {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({
+        where: { id: projectId, userId: req.user.id },
+        include: { user: true },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+
+    const match = project.repoUrl.match(ghRepoRegex);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid repository URL",
+            data: null,
+        });
+    }
+
+    const owner = match.groups.owner;
+    const repoName = match.groups.name;
+    const ghAccessToken = project.user.ghAccessToken;
+
+    const {
+        data: { diagram },
+    } = await processPush(
+        owner,
+        repoName,
+        "main",
+        ghAccessToken,
+        {},
+        { diagram: true }
+    );
+
+    return res.json({
+        success: true,
+        message: "Project diagram found",
+        data: { diagram },
+    });
+};
+
+const getProjectBugDetectHandler = async (req, res) => {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({
+        where: { id: projectId, userId: req.user.id },
+        include: { user: true },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+
+    const match = project.repoUrl.match(ghRepoRegex);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid repository URL",
+            data: null,
+        });
+    }
+
+    const owner = match.groups.owner;
+    const repoName = match.groups.name;
+    const ghAccessToken = project.user.ghAccessToken;
+
+    const {
+        data: { bugDetect },
+    } = await processPush(
+        owner,
+        repoName,
+        "main",
+        ghAccessToken,
+        {},
+        { bugDetect: true }
+    );
+
+    return res.json({
+        success: true,
+        message: "Project bug detection results found",
+        data: { bugDetect },
+    });
+};
+
+const getProjectMocksHandler = async (req, res) => {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({
+        where: { id: projectId, userId: req.user.id },
+        include: { user: true },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+
+    const match = project.repoUrl.match(ghRepoRegex);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid repository URL",
+            data: null,
+        });
+    }
+
+    const owner = match.groups.owner;
+    const repoName = match.groups.name;
+    const ghAccessToken = project.user.ghAccessToken;
+
+    const {
+        data: { mocks },
+    } = await processPush(
+        owner,
+        repoName,
+        "main",
+        ghAccessToken,
+        {},
+        { mocks: true }
+    );
+
+    return res.json({
+        success: true,
+        message: "Project mocks found",
+        data: { mocks },
+    });
+};
+
+const getProjectTestsHandler = async (req, res) => {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({
+        where: { id: projectId, userId: req.user.id },
+        include: { user: true },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+
+    const match = project.repoUrl.match(ghRepoRegex);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid repository URL",
+            data: null,
+        });
+    }
+
+    const owner = match.groups.owner;
+    const repoName = match.groups.name;
+    const ghAccessToken = project.user.ghAccessToken;
+
+    const {
+        data: { tests },
+    } = await processPush(
+        owner,
+        repoName,
+        "main",
+        ghAccessToken,
+        { initial: false, userEmail: "" },
+        { tests: true }
+    );
+
+    return res.json({
+        success: true,
+        message: "Project tests found",
+        data: { tests },
+    });
+};
+
 export {
     getProjectDataHandler,
     incomingProjectWebhookHandler,
@@ -590,4 +789,9 @@ export {
     provisionUseHandler,
     createProjectProxy,
     projectChatHandler,
+    getProjectReadmeHandler,
+    getProjectDiagramHandler,
+    getProjectBugDetectHandler,
+    getProjectMocksHandler,
+    getProjectTestsHandler,
 };

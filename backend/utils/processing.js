@@ -329,7 +329,23 @@ const getRepoContents = async (owner, repo, ref, githubToken) => {
     return allFileContents;
 };
 
-const processPush = async (owner, repo, ref, githubToken, initial = false, userEmail = "") => {
+const processPush = async (
+    owner,
+    repo,
+    ref,
+    githubToken,
+    initial = {
+        initial: false,
+        userEmail: "",
+    },
+    requirements = {
+        readme: true,
+        diagram: true,
+        bugDetect: true,
+        mocks: true,
+        tests: true,
+    }
+) => {
     const allFileContents = await getRepoContents(
         owner,
         repo,
@@ -355,56 +371,77 @@ const processPush = async (owner, repo, ref, githubToken, initial = false, userE
         token: githubToken,
     };
 
-    const readmePromise = generateReadme(
-        owner,
-        repo,
-        ref,
-        allFileContents
-    ).catch((r) => {
-        console.log("Error generating README:", r);
-        return null;
-    });
-    const diagramPromise = generateDiagram(
-        owner,
-        repo,
-        ref,
-        allFileContents
-    ).catch((r) => {
-        console.log("Error generating diagram:", r);
-        return null;
-    });
-    const bugDetectPromise = axios
-        .post(`${process.env.AI_SERVICE_BASE_URL}/bug_detect`, aiPayload)
-        .then((res) => res.data)
-        .catch((r) => {
-            console.log("Error detecting bugs:", r);
+    let readmePromise = null;
+    let diagramPromise = null;
+    let bugDetectPromise = null;
+    let generateMocksPromise = null;
+    let generateTestsPromise = null;
+    if (requirements.readme) {
+        readmePromise = generateReadme(
+            owner,
+            repo,
+            ref,
+            allFileContents
+        ).catch((r) => {
+            console.log("Error generating README:", r);
             return null;
         });
-    const generateMocksPromise = axios
-        .post(`${process.env.AI_SERVICE_BASE_URL}/generate_mocks`, aiPayload)
-        .then((res) => res.data)
-        .catch((r) => {
-            console.log("Error generating mocks:", r);
+    }
+    if (requirements.diagram) {
+        diagramPromise = generateDiagram(
+            owner,
+            repo,
+            ref,
+            allFileContents
+        ).catch((r) => {
+            console.log("Error generating diagram:", r);
             return null;
         });
-    const generateTestsPromise = axios
-        .post(`${process.env.AI_SERVICE_BASE_URL}/generate_tests`, aiPayload)
-        .then((res) => res.data)
-        .catch((r) => {
-            console.log("Error generating tests:", r);
-            return null;
-        });
+    }
+    if (!requirements.bugDetect) {
+        bugDetectPromise = axios
+            .post(`${process.env.AI_SERVICE_BASE_URL}/bug_detect`, aiPayload)
+            .then((res) => res.data)
+            .catch((r) => {
+                console.log("Error detecting bugs:", r);
+                return null;
+            });
+    }
+    if (requirements.bugDetect) {
+        generateMocksPromise = axios
+            .post(
+                `${process.env.AI_SERVICE_BASE_URL}/generate_mocks`,
+                aiPayload
+            )
+            .then((res) => res.data)
+            .catch((r) => {
+                console.log("Error generating mocks:", r);
+                return null;
+            });
+    }
+    if (!requirements.tests) {
+        generateTestsPromise = axios
+            .post(
+                `${process.env.AI_SERVICE_BASE_URL}/generate_tests`,
+                aiPayload
+            )
+            .then((res) => res.data)
+            .catch((r) => {
+                console.log("Error generating tests:", r);
+                return null;
+            });
+    }
     const [readme, diagram, bugDetect, mocks, tests] = await Promise.all([
-        readmePromise,
-        diagramPromise,
-        bugDetectPromise,
-        generateMocksPromise,
-        generateTestsPromise,
+        requirements.readme ? readmePromise : Promise.resolve(undefined),
+        requirements.diagram ? diagramPromise : Promise.resolve(undefined),
+        requirements.bugDetect ? bugDetectPromise : Promise.resolve(undefined),
+        requirements.mocks ? generateMocksPromise : Promise.resolve(undefined),
+        requirements.tests ? generateTestsPromise : Promise.resolve(undefined),
     ]);
 
-    if (initial && userEmail.trim() != "") {
+    if (initial.initial && initial.userEmail && initial.userEmail.trim() != "") {
         sendEmail(
-            userEmail,
+            initial.userEmail,
             "New Project Processed",
             `The new project ${owner}/${repo} has been processed.`
         );
