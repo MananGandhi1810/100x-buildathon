@@ -128,13 +128,19 @@ def get_github_tree(owner: str, repo: str, tree_sha: str, headers: dict):
 def fetch_file_content(
     owner: str, repo: str, path: str, branch: str, headers: dict
 ) -> str:
+    cache_key = f"{owner}:{repo}:{branch}:{path}:file_contents"
+    cached = redis_client.get(cache_key)
+    if cached is not None:
+        return cached
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
     resp = requests.get(url, headers=headers, params={"ref": branch})
     resp.raise_for_status()
     data = resp.json()
-    if data.get("encoding") == "base64" and "content" in data:
-        return base64.b64decode(data["content"]).decode("utf-8", errors="ignore")
-    return ""
+    if data.get("encoding") != "base64" or "content" not in data:
+        return ""
+    result = base64.b64decode(data["content"]).decode("utf-8", errors="ignore")
+    redis_client.setex(cache_key, CACHE_TTL, result)
+    return result
 
 
 # ─────────────────────────────────────────
@@ -197,6 +203,11 @@ def list_all_files(owner: str, repo: str, token: str, single_file: str = None):
     tree_sha = get_tree_sha_for_branch(owner, repo, branch, headers)
     tree = get_github_tree(owner, repo, tree_sha, headers)
 
+    cache_key = get_cache_key(owner, repo, tree_sha, "file_tree")
+    cached = redis_client.get(cache_key)
+    if cached is not None:
+        return json.loads(cached)
+
     files = []
     for element in tree:
         if element["type"] != "blob":
@@ -210,6 +221,8 @@ def list_all_files(owner: str, repo: str, token: str, single_file: str = None):
             if p == single_file:
                 return [(p, lang)]
         return []
+    
+    redis_client.setex(cache_key, CACHE_TTL, json.dumps(files))
     return files
 
 
