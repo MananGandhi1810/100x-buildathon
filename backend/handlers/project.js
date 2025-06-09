@@ -229,6 +229,14 @@ const createProjectHandler = async (req, res) => {
             data: null,
         });
     }
+    processPush(
+        match.groups.owner,
+        match.groups.name,
+        "HEAD",
+        ghAccessToken,
+        true,
+        req.user.email
+    );
     res.json({
         success: true,
         message: "Project created successfully",

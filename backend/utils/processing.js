@@ -5,6 +5,7 @@ import tar from "tar-stream";
 import zlib from "zlib";
 import { Readable } from "stream";
 import axios from "axios";
+import sendEmail from "./email.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -328,7 +329,7 @@ const getRepoContents = async (owner, repo, ref, githubToken) => {
     return allFileContents;
 };
 
-const processPush = async (owner, repo, ref, githubToken) => {
+const processPush = async (owner, repo, ref, githubToken, initial = false, userEmail = "") => {
     const allFileContents = await getRepoContents(
         owner,
         repo,
@@ -401,6 +402,13 @@ const processPush = async (owner, repo, ref, githubToken) => {
         generateTestsPromise,
     ]);
 
+    if (initial && userEmail.trim() != "") {
+        sendEmail(
+            userEmail,
+            "New Project Processed",
+            `The new project ${owner}/${repo} has been processed.`
+        );
+    }
     return { data: { readme, diagram, bugDetect, mocks, tests } };
 };
 
