@@ -30,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -269,17 +270,63 @@ function ImportRepositoryDialog({
   onImport: (data: { url: string; title: string; description: string }) => void;
   isImporting: boolean;
 }) {
+  const [repositories, setRepositories] = useState<
+    { url: string; title: string; description: string }[]
+  >([]);
   const [repoUrl, setRepoUrl] = useState("");
   const [repoTitle, setRepoTitle] = useState("");
   const [repoDescription, setRepoDescription] = useState("");
+  const [loadingRepos, setLoadingRepos] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      setLoadingRepos(true);
+
+      axios
+        .get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/repositories`, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        })
+        .then((res) => {
+          const repositories = res.data?.data?.repositories;
+          console.log("Fetched repositories:", repositories);
+
+          if (Array.isArray(repositories)) {
+            const repos = repositories.map((repo: { name: string; url: string }) => ({
+              url: repo.url.replace(/\.git$/, ""),
+              title: repo.name,
+              description: "",
+            }));
+            setRepositories(repos);
+          } else {
+            toast.error("Unexpected response from server.");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Failed to fetch repositories");
+        })
+        .finally(() => {
+          setLoadingRepos(false);
+        });
+    }
+  }, [isOpen]);
+
+  const handleSelect = (url: string) => {
+    const repo = repositories.find((r) => r.url === url);
+    if (repo) {
+      setRepoUrl(repo.url);
+      setRepoTitle(repo.title);
+      setRepoDescription(repo.description);
+    }
+  };
 
   const handleSubmit = () => {
     if (!repoUrl.trim()) {
-      toast.error("Please enter a repository URL");
+      toast.error("Please select or enter a repository URL");
       return;
     }
 
-    // Validate GitHub URL format
     const ghRepoRegex = /https?:\/\/(www\.)?github.com\/[\w.-]+\/[\w.-]+/;
     if (!ghRepoRegex.test(repoUrl)) {
       toast.error("Please enter a valid GitHub repository URL");
@@ -305,30 +352,37 @@ function ImportRepositoryDialog({
             Import GitHub Repository
           </DialogTitle>
           <DialogDescription>
-            Enter the GitHub repository URL you want to import and analyze.
+            Select or enter a GitHub repository to import and analyze.
           </DialogDescription>
         </DialogHeader>
+
         <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="repo-url" className="text-sm font-medium">
-              Repository URL <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="repo-url"
-              placeholder="https://github.com/username/repository"
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Make sure the repository is public or you have access to it.
-            </p>
-          </div>
+          {loadingRepos ? (
+            <p className="text-sm text-muted-foreground">Loading repositories...</p>
+          ) : repositories.length > 0 ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Choose from your repositories</label>
+              <Select onValueChange={handleSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a repository" />
+                </SelectTrigger>
+                <SelectContent>
+                  {repositories.map((repo, index) => (
+                    <SelectItem key={index} value={repo.url}>
+                      {repo.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No repositories found.</p>
+          )}
+
+
 
           <div className="space-y-2">
-            <label htmlFor="repo-title" className="text-sm font-medium">
-              Title
-            </label>
+            <label htmlFor="repo-title" className="text-sm font-medium">Title</label>
             <Input
               id="repo-title"
               placeholder="My Awesome Project"
@@ -339,9 +393,7 @@ function ImportRepositoryDialog({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="repo-description" className="text-sm font-medium">
-              Description
-            </label>
+            <label htmlFor="repo-description" className="text-sm font-medium">Description</label>
             <Input
               id="repo-description"
               placeholder="A brief description of your project"
@@ -351,12 +403,9 @@ function ImportRepositoryDialog({
             />
           </div>
         </div>
+
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isImporting}
-          >
+          <Button variant="outline" onClick={handleClose} disabled={isImporting}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isImporting}>
@@ -377,6 +426,7 @@ function ImportRepositoryDialog({
     </Dialog>
   );
 }
+
 
 // Search Bar Component
 function SearchBar({
@@ -571,8 +621,7 @@ export default function Dashboard() {
     try {
       const accessToken = sessionStorage.getItem("accessToken");
       const response = await axios.post(
-        `${
-          process.env.NEXT_PUBLIC_SERVER_URL
+        `${process.env.NEXT_PUBLIC_SERVER_URL
         }/project/create?repo=${encodeURIComponent(
           data.url
         )}&title=${encodeURIComponent(
@@ -813,7 +862,7 @@ export default function Dashboard() {
             >
               <DialogTrigger asChild>
                 <MagicCard className="cursor-pointer rounded-lg p-2">
-                  <Button className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent">
+                  <Button className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent cursor-pointer" onClick={() => setIsImportDialogOpen(true)}>
                     <Plus className="h-4 w-4" />
                     Import Repository
                   </Button>
