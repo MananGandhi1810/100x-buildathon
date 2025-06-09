@@ -147,11 +147,13 @@ const userHandler = (req, res) => {
 
 const getUserRepositoriesHandler = async (req, res) => {
     const repositories = await getUserRepositories(req.user.ghAccessToken);
-    console.log(repositories);
+    const userRepos = repositories.filter(
+        (repo) => repo.name.split("/")[0] === req.user.ghUsername
+    );
     res.json({
         success: true,
         message: "Fetched repositories succesfully",
-        data: { repositories },
+        data: { repositories: userRepos },
     });
 };
 
