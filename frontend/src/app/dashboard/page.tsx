@@ -9,6 +9,8 @@ import {
   Github,
   LayoutDashboard,
   Rocket,
+  CheckIcon,
+  ChevronsUpDownIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -30,7 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,6 +50,21 @@ import { AnimatePresence, motion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import Image from "next/image";
 import { MagicCard } from "@/components/magicui/magic-card";
+
+// Add Command and Popover imports
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Types
 interface Project {
@@ -73,191 +89,6 @@ interface Links {
   icon: React.JSX.Element | React.ReactNode;
 }
 
-interface SidebarContextProps {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  animate: boolean;
-}
-
-// Sidebar Context
-const SidebarContext = createContext<SidebarContextProps | undefined>(
-  undefined
-);
-
-export const useSidebar = () => {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider");
-  }
-  return context;
-};
-
-export const SidebarProvider = ({
-  children,
-  open: openProp,
-  setOpen: setOpenProp,
-  animate = true,
-}: {
-  children: React.ReactNode;
-  open?: boolean;
-  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
-  animate?: boolean;
-}) => {
-  const [openState, setOpenState] = useState(false);
-
-  const open = openProp !== undefined ? openProp : openState;
-  const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
-
-  return (
-    <SidebarContext.Provider value={{ open, setOpen, animate: animate }}>
-      {children}
-    </SidebarContext.Provider>
-  );
-};
-
-export const Sidebar = ({
-  children,
-  open,
-  setOpen,
-  animate,
-}: {
-  children: React.ReactNode;
-  open?: boolean;
-  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
-  animate?: boolean;
-}) => {
-  return (
-    <SidebarProvider open={open} setOpen={setOpen} animate={animate}>
-      {children}
-    </SidebarProvider>
-  );
-};
-
-export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
-  return (
-    <>
-      <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<"div">)} />
-    </>
-  );
-};
-
-export const DesktopSidebar = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof motion.div>) => {
-  const { open, setOpen, animate } = useSidebar();
-  return (
-    <>
-      <motion.div
-        className={cn(
-          "h-full px-4 py-4 hidden md:flex md:flex-col bg-transparent w-[60px] shrink-0 items-center mr-4",
-          className
-        )}
-        animate={{
-          width: animate ? (open ? "300px" : "100px") : "100px",
-        }}
-        transition={{
-          duration: 0.3,
-          ease: "easeInOut",
-        }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    </>
-  );
-};
-
-export const MobileSidebar = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) => {
-  const { open, setOpen } = useSidebar();
-  return (
-    <>
-      <div
-        className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-background w-full border-b border-border"
-        )}
-        {...props}
-      >
-        <div className="flex justify-end z-20 w-full">
-          <IconMenu2
-            className="text-foreground"
-            onClick={() => setOpen(!open)}
-          />
-        </div>
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ x: "-100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "-100%", opacity: 0 }}
-              transition={{
-                duration: 0.3,
-                ease: "easeInOut",
-              }}
-              className={cn(
-                "fixed h-full w-full inset-0 bg-background p-10 z-[100] flex flex-col justify-between",
-                className
-              )}
-            >
-              <div
-                className="absolute right-10 top-10 z-50 text-foreground"
-                onClick={() => setOpen(!open)}
-              >
-                <IconX />
-              </div>
-              {children}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </>
-  );
-};
-
-export const SidebarLink = ({
-  link,
-  className,
-  ...props
-}: {
-  link: Links;
-  className?: string;
-}) => {
-  const { open, animate } = useSidebar();
-  return (
-    <a
-      href={link.href}
-      className={cn(
-        "flex items-center justify-start gap-2 group/sidebar py-2 px-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
-        className
-      )}
-      {...props}
-    >
-      {link.icon}
-      <motion.span
-        animate={{
-          display: animate ? (open ? "inline-block" : "none") : "none",
-          opacity: animate ? (open ? 1 : 0) : 0,
-        }}
-        transition={{
-          duration: 0.3,
-          ease: "easeInOut",
-        }}
-        className="text-foreground text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
-      >
-        {link.label}
-      </motion.span>
-    </a>
-  );
-};
-
 // Import Repository Dialog Component
 function ImportRepositoryDialog({
   isOpen,
@@ -277,6 +108,8 @@ function ImportRepositoryDialog({
   const [repoTitle, setRepoTitle] = useState("");
   const [repoDescription, setRepoDescription] = useState("");
   const [loadingRepos, setLoadingRepos] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false); // New state for Combobox
+
   useEffect(() => {
     if (isOpen) {
       setLoadingRepos(true);
@@ -292,11 +125,13 @@ function ImportRepositoryDialog({
           console.log("Fetched repositories:", repositories);
 
           if (Array.isArray(repositories)) {
-            const repos = repositories.map((repo: { name: string; url: string }) => ({
-              url: repo.url.replace(/\.git$/, ""),
-              title: repo.name,
-              description: "",
-            }));
+            const repos = repositories.map(
+              (repo: { name: string; url: string }) => ({
+                url: repo.url.replace(/\.git$/, ""),
+                title: repo.name,
+                description: "",
+              })
+            );
             setRepositories(repos);
           } else {
             toast.error("Unexpected response from server.");
@@ -311,15 +146,6 @@ function ImportRepositoryDialog({
         });
     }
   }, [isOpen]);
-
-  const handleSelect = (url: string) => {
-    const repo = repositories.find((r) => r.url === url);
-    if (repo) {
-      setRepoUrl(repo.url);
-      setRepoTitle(repo.title);
-      setRepoDescription(repo.description);
-    }
-  };
 
   const handleSubmit = () => {
     if (!repoUrl.trim()) {
@@ -358,31 +184,87 @@ function ImportRepositoryDialog({
 
         <div className="grid gap-4 py-4">
           {loadingRepos ? (
-            <p className="text-sm text-muted-foreground">Loading repositories...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading repositories...
+            </p>
           ) : repositories.length > 0 ? (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Choose from your repositories</label>
-              <Select onValueChange={handleSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a repository" />
-                </SelectTrigger>
-                <SelectContent>
-                  {repositories.map((repo, index) => (
-                    <SelectItem key={index} value={repo.url}>
-                      {repo.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">
+                Choose from your repositories
+              </label>
+              {/* Replace Select with Combobox */}
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between"
+                  >
+                    {repoUrl
+                      ? repositories.find((repo) => repo.url === repoUrl)?.title
+                      : "Select a repository..."}
+                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search repository..." />
+                    <CommandList>
+                      <CommandEmpty>No repository found.</CommandEmpty>
+                      <CommandGroup>
+                        {repositories.map((repo) => (
+                          <CommandItem
+                            key={repo.url}
+                            value={repo.url}
+                            onSelect={(currentValue) => {
+                              if (currentValue === repoUrl) {
+                                // Deselecting the current item
+                                setRepoUrl("");
+                                setRepoTitle("");
+                                setRepoDescription("");
+                              } else {
+                                const selectedRepo = repositories.find(
+                                  (r) => r.url === currentValue
+                                );
+                                if (selectedRepo) {
+                                  setRepoUrl(selectedRepo.url);
+                                  setRepoTitle(selectedRepo.title);
+                                  setRepoDescription(
+                                    selectedRepo.description || ""
+                                  );
+                                }
+                              }
+                              setComboboxOpen(false);
+                            }}
+                          >
+                            <CheckIcon
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                repoUrl === repo.url
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {repo.title}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No repositories found.</p>
+            <p className="text-sm text-muted-foreground">
+              No repositories found.
+            </p>
           )}
 
-
-
           <div className="space-y-2">
-            <label htmlFor="repo-title" className="text-sm font-medium">Title</label>
+            <label htmlFor="repo-title" className="text-sm font-medium">
+              Title
+            </label>
             <Input
               id="repo-title"
               placeholder="My Awesome Project"
@@ -393,7 +275,9 @@ function ImportRepositoryDialog({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="repo-description" className="text-sm font-medium">Description</label>
+            <label htmlFor="repo-description" className="text-sm font-medium">
+              Description
+            </label>
             <Input
               id="repo-description"
               placeholder="A brief description of your project"
@@ -405,7 +289,11 @@ function ImportRepositoryDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isImporting}>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isImporting}
+          >
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isImporting}>
@@ -426,7 +314,6 @@ function ImportRepositoryDialog({
     </Dialog>
   );
 }
-
 
 // Search Bar Component
 function SearchBar({
@@ -621,7 +508,8 @@ export default function Dashboard() {
     try {
       const accessToken = sessionStorage.getItem("accessToken");
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URL
+        `${
+          process.env.NEXT_PUBLIC_SERVER_URL
         }/project/create?repo=${encodeURIComponent(
           data.url
         )}&title=${encodeURIComponent(
@@ -664,62 +552,7 @@ export default function Dashboard() {
           "h-screen"
         )}
       >
-        <Sidebar open={open} setOpen={setOpen}>
-          <SidebarBody className="justify-between gap-10 bg-transparent rounded-2xl w-full max-h-[98vh] max-w-[90vw] m-auto">
-            <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden items-center">
-              {/* Logo */}
-              <div className="flex items-center justify-center py-4 border-b border-border mb-4 w-full">
-                <motion.div
-                  className="flex items-center justify-center"
-                  animate={{ opacity: 1 }}
-                >
-                  <Image
-                    src="/adeon.png"
-                    alt="Aedon Logo"
-                    width={open ? 120 : 32}
-                    height={open ? 32 : 32}
-                    className="transition-all duration-200"
-                  />
-                </motion.div>
-              </div>
-
-              {/* Navigation Links */}
-              <div className="mt-8 flex flex-col gap-2 w-full">
-                {[
-                  {
-                    label: "Dashboard",
-                    href: "/dashboard",
-                    icon: (
-                      <LayoutDashboard className="text-foreground h-5 w-5 flex-shrink-0" />
-                    ),
-                  },
-                  {
-                    label: "Deployments",
-                    href: "/deployments",
-                    icon: (
-                      <Rocket className="text-foreground h-5 w-5 flex-shrink-0" />
-                    ),
-                  },
-                ].map((link, idx) => (
-                  <SidebarLink key={idx} link={link} />
-                ))}
-              </div>
-            </div>
-
-            {/* User Profile at Bottom */}
-            <div className="border-t border-border pt-4 w-full">
-              <div className="flex items-center justify-center gap-2 p-2">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-24 mb-1" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-              </div>
-            </div>
-          </SidebarBody>
-        </Sidebar>
-
-        <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full max-h-[97vh] max-w-[90vw] m-auto ml-4">
+        <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto ml-4">
           <DashboardSkeleton />
         </div>
       </div>
@@ -733,115 +566,12 @@ export default function Dashboard() {
         "h-screen"
       )}
     >
-      <Sidebar open={open} setOpen={setOpen}>
-        <SidebarBody className="justify-between gap-10  rounded-2xl w-full max-h-[98vh] max-w-[90vw] m-auto">
-          <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden items-center">
-            {/* Logo */}
-            <div className="flex items-center justify-center py-4 border-b border-border mb-4 w-full">
-              <motion.div
-                className="flex items-center justify-center"
-                animate={{ opacity: 1 }}
-              >
-                <Image
-                  src="/adeon.png"
-                  alt="Aedon Logo"
-                  width={open ? 120 : 32}
-                  height={open ? 32 : 32}
-                  className="transition-all duration-200"
-                />
-              </motion.div>
-            </div>
-
-            {/* Navigation Links */}
-            <div className="mt-8 flex flex-col gap-2 w-full">
-              {[
-                {
-                  label: "Dashboard",
-                  href: "/dashboard",
-                  icon: (
-                    <LayoutDashboard className="text-foreground h-5 w-5 flex-shrink-0" />
-                  ),
-                },
-                {
-                  label: "Deployments",
-                  href: "/deployments",
-                  icon: (
-                    <Rocket className="text-foreground h-5 w-5 flex-shrink-0" />
-                  ),
-                },
-              ].map((link, idx) => (
-                <SidebarLink key={idx} link={link} />
-              ))}
-            </div>
-          </div>
-
-          {/* User Profile at Bottom */}
-          <div className="border-t border-border pt-4 w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center justify-center gap-2 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                  <Avatar className="h-8 w-8 ring-2 ring-primary/10 flex-shrink-0">
-                    <AvatarImage
-                      src={user?.avatarUrl || "/placeholder.svg"}
-                      alt={user?.name}
-                    />
-                    <AvatarFallback className="bg-primary/10">
-                      {user?.name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <motion.div
-                    animate={{
-                      display: open ? "block" : "none",
-                      opacity: open ? 1 : 0,
-                    }}
-                    className="text-sm text-foreground"
-                  >
-                    <p className="font-medium">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </motion.div>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="start" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user?.name}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/profile")}
-                  className="cursor-pointer"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </SidebarBody>
-      </Sidebar>
-
-      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full max-h-[97vh] max-w-[90vw] m-auto ml-4">
+      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto ml-4">
         <div className="space-y-8 p-6 container mx-auto py-6 bg-transparent overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between gap-4 ">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              <h1 className="text-xl font-bold tracking-tight">
                 Your Repositories
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -862,7 +592,10 @@ export default function Dashboard() {
             >
               <DialogTrigger asChild>
                 <MagicCard className="cursor-pointer rounded-lg p-2">
-                  <Button className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent cursor-pointer" onClick={() => setIsImportDialogOpen(true)}>
+                  <Button
+                    className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent cursor-pointer"
+                    onClick={() => setIsImportDialogOpen(true)}
+                  >
                     <Plus className="h-4 w-4" />
                     Import Repository
                   </Button>

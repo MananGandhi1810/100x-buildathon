@@ -23,11 +23,11 @@
   --secondary-foreground: #ffffff;
 
   /* === Accent / Muted === */
-  --accent: #8197a2; /* blue2 */
+  --accent: #6f8591; /* blue2 */
   --accent-foreground: #000000;
 
-  --muted: #1c1f26; /* black4 (same as card) */
-  --muted-foreground: #858585; /* medium-gray text */
+  --muted: #121316; /* near-black */
+  --muted-foreground: #5c5c5c; /* very low-contrast gray */
 
   /* === Destructive === */
   --destructive: #c8433f; /* a warm dark red/orange if needed */
@@ -43,8 +43,8 @@
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #3f4042;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #8197a2;
-  --sidebar-accent-foreground: #0f1013;
+  --sidebar-accent: #6f8591;
+  --sidebar-accent-foreground: #5c5c5c;
   --sidebar-border: #3f4042;
   --sidebar-ring: #7ed6c3;
 
@@ -126,14 +126,14 @@
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
   --animate-shine: shine var(--duration) infinite linear;
   @keyframes shine {
-  0% {
-    background-position: 0% 0%;
+    0% {
+      background-position: 0% 0%;
     }
-  50% {
-    background-position: 100% 100%;
+    50% {
+      background-position: 100% 100%;
     }
-  to {
-    background-position: 0% 0%;
+    to {
+      background-position: 0% 0%;
     }
   }
 }

@@ -266,7 +266,7 @@ export function RepositorySelector() {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="font-medium truncate">{repo.name}</span>
-                  <span className="text-xs text-muted-foreground truncate">
+                  <span className="text-xs text-muted-foreground truncate ">
                     {repo.owner}
                   </span>
                 </div>

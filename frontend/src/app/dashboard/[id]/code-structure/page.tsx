@@ -60,12 +60,12 @@ export default function CodeStructurePage() {
       setError(null);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}/diagram`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          },
+          }
         );
 
         if (!response.ok) {
@@ -73,7 +73,7 @@ export default function CodeStructurePage() {
         }
 
         const data = await response.json();
-        console.log("datataa ", data.data.diagram);
+        console.log("datataa ", data.data);
 
         // Clean the data by removing markdown code block syntax and everything after 'end'
         let cleanedData = data.data.diagram || "";

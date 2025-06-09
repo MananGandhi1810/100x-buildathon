@@ -41,14 +41,14 @@ export default function ReadmeGeneratorPage() {
     const fetchProjectData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}`,
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}/readme`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          },
+          }
         );
-        console.log("Project data response:", response.data.data);
+        console.log("Project data response:", response.data);
         setProjectData(response.data.data);
         setLoading(false);
       } catch (err) {
@@ -145,7 +145,7 @@ export default function ReadmeGeneratorPage() {
                             const repoUrl = projectData?.project?.repoUrl || "";
                             // Example: https://github.com/user/repo
                             const match = repoUrl.match(
-                              /^https:\/\/github\.com\/([^/]+)\/([^/]+)/,
+                              /^https:\/\/github\.com\/([^/]+)\/([^/]+)/
                             );
                             if (!match) return <img {...props} />;
 
@@ -191,7 +191,7 @@ export default function ReadmeGeneratorPage() {
                       onClick={() =>
                         handleDownload(
                           projectData?.readme.slice(12) || "",
-                          "README",
+                          "README"
                         )
                       }
                     >
