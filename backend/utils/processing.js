@@ -409,7 +409,7 @@ const processPush = async (
                 return null;
             });
     }
-    if (requirements.bugDetect) {
+    if (requirements.mocks) {
         generateMocksPromise = axios
             .post(
                 `${process.env.AI_SERVICE_BASE_URL}/generate_mocks`,

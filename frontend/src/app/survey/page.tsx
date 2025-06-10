@@ -64,7 +64,7 @@ export default function TallyFormWithBackground() {
             frameBorder="0"
             marginHeight={0}
             marginWidth={0}
-            title="Autoshow Registeration"
+            title="Survey"
             style={{ border: "none", maxWidth: "100%", maxHeight: "100vh" }}
           ></iframe>
         </div>
