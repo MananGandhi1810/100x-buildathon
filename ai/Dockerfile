@@ -6,4 +6,4 @@ COPY app.py .
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 EXPOSE 8888
-CMD ["flask", "run"]
+CMD ["gunicorn", "-w", "4", "'app:app'"]
