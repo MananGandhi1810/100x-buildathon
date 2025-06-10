@@ -187,7 +187,7 @@ function FeaturesSection({
 function DescriptionBlock() {
   return (
     <motion.div
-      className="flex flex-col md:flex-row items-start justify-between w-full gap-8 mb-16"
+      className="flex flex-col md:flex-row items-start justify-between w-full gap-8 mb-24"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeInOut" }}
@@ -202,7 +202,7 @@ function DescriptionBlock() {
           viewport={{ once: true }}
         >
           <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-mono">
-            {"//"} SOLUTION_FEATURES
+            {"// SOLUTION_FEATURES"}
           </span>
         </motion.div>
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-6 tracking-tighter leading-tight">
@@ -245,7 +245,7 @@ function ProblemSection({
 
         <div className="max-w-4xl">
           <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-mono">
-            {"//"} DEVELOPER_PROBLEMS
+            {"// DEVELOPER_PROBLEMS"}
           </span>
           <motion.h2
             className="text-3xl md:text-4xl lg:text-5xl font-semibold my-8 tracking-tight text-white leading-[1.1]"
@@ -453,7 +453,7 @@ function SocialProofSection() {
           viewport={{ once: true }}
         >
           <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-mono">
-            {"//"} PRODUCTION_METRICS
+            {"// PRODUCTION_METRICS"}
           </span>
         </motion.div>
         <motion.h2
@@ -612,7 +612,7 @@ function SocialProofSection() {
       >
         <div className="mb-6">
           <span className="text-xs text-white/60 font-mono tracking-[0.2em] uppercase">
-            {"//"} ACTIVE_INTEGRATIONS
+            {"// ACTIVE_INTEGRATIONS"}
           </span>
         </div>
 
@@ -732,10 +732,10 @@ function PricingSection() {
   ];
 
   return (
-    <div className="relative z-10 my-24 max-w-[1400px] mx-auto px-5 md:px-10 hidden md:block"> 
+    <div className="relative z-10 my-32 max-w-[1400px] mx-auto px-4 md:px-10">
       {/* Section Header */}
       <motion.div
-        className="mb-16 text-center"
+        className="mb-12 md:mb-16 text-center"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
@@ -749,11 +749,11 @@ function PricingSection() {
           viewport={{ once: true }}
         >
           <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-mono">
-            {"//"} PRICING_MODULES
+            {"// PRICING_MODULES"}
           </span>
         </motion.div>
         <motion.h2
-          className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-5 tracking-tighter leading-tight text-white"
+          className="text-2xl md:text-4xl lg:text-5xl font-semibold mb-4 md:mb-5 tracking-tighter leading-tight text-white"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: "easeInOut" }}
@@ -762,7 +762,7 @@ function PricingSection() {
           Scale with your codebase
         </motion.h2>
         <motion.p
-          className="text-white/70 text-sm max-w-2xl mx-auto font-mono"
+          className="text-white/70 text-sm md:text-base max-w-2xl mx-auto font-mono px-4 md:px-0"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: "easeInOut" }}
@@ -774,7 +774,7 @@ function PricingSection() {
 
       {/* Pricing Cards */}
       <motion.div
-        className="grid md:grid-cols-3 gap-6"
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3, ease: "easeInOut" }}
@@ -783,14 +783,14 @@ function PricingSection() {
         {plans.map((plan, index) => (
           <MagicCard
             key={plan.id}
-            className="group relative overflow-hidden rounded-2xl shadow-xl"
+            className="group relative overflow-hidden rounded-xl md:rounded-2xl shadow-xl"
             gradientFrom={plan.gradientFrom}
             gradientTo={plan.gradientTo}
             gradientOpacity={0.8}
             gradientSize={300}
           >
             <motion.div
-              className="p-6 h-full flex flex-col"
+              className="p-4 md:p-6 h-full flex flex-col min-h-[320px] md:min-h-[400px]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{
@@ -802,24 +802,24 @@ function PricingSection() {
             >
               {/* Popular badge */}
               {plan.popular && (
-                <div className="absolute top-4 right-4 bg-white text-black text-xs font-semibold rounded-full px-3 py-1 shadow-md">
+                <div className="absolute top-3 md:top-4 right-3 md:right-4 bg-white text-black text-xs font-semibold rounded-full px-2 md:px-3 py-1 shadow-md">
                   Most Popular
                 </div>
               )}
 
               {/* Plan Name and Price */}
-              <div className="flex flex-col gap-2 mb-6">
-                <div className="text-2xl font-extrabold text-white">
+              <div className="flex flex-col gap-2 mb-4 md:mb-6">
+                <div className="text-xl md:text-2xl font-extrabold text-white">
                   {plan.name}
                 </div>
-                <div className="text-lg font-mono text-white/80">
+                <div className="text-base md:text-lg font-mono text-white/80">
                   {plan.price}
                 </div>
               </div>
 
               {/* Features List */}
               <div className="flex-1">
-                <ul className="space-y-2 mb-6">
+                <ul className="space-y-2 mb-4 md:mb-6">
                   {plan.features.map((feature, index) => (
                     <motion.li
                       key={index}
@@ -835,7 +835,7 @@ function PricingSection() {
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-5 h-5 text-green-400"
+                        className="w-4 h-4 md:w-5 md:h-5 text-green-400 flex-shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         strokeWidth={2}
@@ -855,7 +855,7 @@ function PricingSection() {
 
               {/* Action Button */}
               <motion.button
-                className="mt-auto px-8 py-3 rounded-full bg-white text-black text-base font-semibold shadow-md transition hover:bg-gray-100"
+                className="mt-auto px-6 md:px-8 py-2 md:py-3 rounded-full bg-white text-black text-sm md:text-base font-semibold shadow-md transition hover:bg-gray-100 w-full"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.7, ease: "easeInOut" }}
@@ -870,15 +870,15 @@ function PricingSection() {
 
       {/* Call to Action */}
       <motion.div
-        className="mt-12 text-center"
+        className="mt-8 md:mt-12 text-center px-4"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.7, ease: "easeInOut" }}
         viewport={{ once: true }}
       >
-        <div className="inline-flex items-center gap-3 bg-white/5 rounded-lg p-4 border border-white/10">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <p className="text-sm text-white/80 font-mono">
+        <div className="inline-flex items-center gap-3 bg-white/5 rounded-lg p-3 md:p-4 border border-white/10 max-w-full">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0"></div>
+          <p className="text-xs md:text-sm text-white/80 font-mono">
             Start with the plan that fits your team. Upgrade or downgrade any
             time.
           </p>
@@ -964,29 +964,29 @@ function Footer() {
         />
       </div>
 
-      <div className="relative max-w-[1400px] mx-auto px-5 md:px-10 py-16">
+      <div className="relative max-w-[1400px] mx-auto px-4 md:px-10 py-12 md:py-16">
         {/* Main Footer Content */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8 mb-8 md:mb-12">
           {/* Brand Section */}
           <motion.div
-            className="lg:col-span-2"
+            className="col-span-2 lg:col-span-2"
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.1, ease: "easeInOut" }}
             viewport={{ once: true }}
           >
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
+            <div className="mb-4 md:mb-6">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 tracking-tight">
                 Zen.
               </h3>
-              <p className="text-white/70 text-base font-mono leading-relaxed max-w-xs">
+              <p className="text-white/70 text-sm md:text-base font-mono leading-relaxed max-w-xs">
                 The developer experience platform that brings clarity to chaos.
                 Ship faster, break less, sleep better.
               </p>
             </div>
 
             {/* Terminal-style status */}
-            <div className="bg-[#0f1013] rounded-lg p-4 border border-[#3f4042] font-mono text-xs">
+            <div className="bg-[#0f1013] rounded-lg p-3 md:p-4 border border-[#3f4042] font-mono text-xs">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-green-400">$ system_status</span>
@@ -1007,15 +1007,16 @@ function Footer() {
 
           {/* Product Links */}
           <motion.div
+            className="col-span-1"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: "easeInOut" }}
             viewport={{ once: true }}
           >
-            <h4 className="text-white font-medium mb-4 text-sm uppercase tracking-wide">
+            <h4 className="text-white font-medium mb-3 md:mb-4 text-xs md:text-sm uppercase tracking-wide">
               Product
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.product.map((link, index) => (
                 <motion.li
                   key={link.name}
@@ -1030,7 +1031,7 @@ function Footer() {
                 >
                   <a
                     href={link.href}
-                    className="text-white/60 hover:text-white text-sm transition-colors font-mono"
+                    className="text-white/60 hover:text-white text-xs md:text-sm transition-colors font-mono"
                   >
                     {link.name}
                   </a>
@@ -1041,15 +1042,16 @@ function Footer() {
 
           {/* Company Links */}
           <motion.div
+            className="col-span-1"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3, ease: "easeInOut" }}
             viewport={{ once: true }}
           >
-            <h4 className="text-white font-medium mb-4 text-sm uppercase tracking-wide">
+            <h4 className="text-white font-medium mb-3 md:mb-4 text-xs md:text-sm uppercase tracking-wide">
               Company
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.company.map((link, index) => (
                 <motion.li
                   key={link.name}
@@ -1064,7 +1066,7 @@ function Footer() {
                 >
                   <a
                     href={link.href}
-                    className="text-white/60 hover:text-white text-sm transition-colors font-mono"
+                    className="text-white/60 hover:text-white text-xs md:text-sm transition-colors font-mono"
                   >
                     {link.name}
                   </a>
@@ -1075,15 +1077,16 @@ function Footer() {
 
           {/* Developers Links */}
           <motion.div
+            className="col-span-1"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4, ease: "easeInOut" }}
             viewport={{ once: true }}
           >
-            <h4 className="text-white font-medium mb-4 text-sm uppercase tracking-wide">
+            <h4 className="text-white font-medium mb-3 md:mb-4 text-xs md:text-sm uppercase tracking-wide">
               Developers
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.developers.map((link, index) => (
                 <motion.li
                   key={link.name}
@@ -1098,7 +1101,7 @@ function Footer() {
                 >
                   <a
                     href={link.href}
-                    className="text-white/60 hover:text-white text-sm transition-colors font-mono"
+                    className="text-white/60 hover:text-white text-xs md:text-sm transition-colors font-mono"
                   >
                     {link.name}
                   </a>
@@ -1109,15 +1112,16 @@ function Footer() {
 
           {/* Legal Links */}
           <motion.div
+            className="col-span-1"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5, ease: "easeInOut" }}
             viewport={{ once: true }}
           >
-            <h4 className="text-white font-medium mb-4 text-sm uppercase tracking-wide">
+            <h4 className="text-white font-medium mb-3 md:mb-4 text-xs md:text-sm uppercase tracking-wide">
               Legal
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.legal.map((link, index) => (
                 <motion.li
                   key={link.name}
@@ -1132,7 +1136,7 @@ function Footer() {
                 >
                   <a
                     href={link.href}
-                    className="text-white/60 hover:text-white text-sm transition-colors font-mono"
+                    className="text-white/60 hover:text-white text-xs md:text-sm transition-colors font-mono"
                   >
                     {link.name}
                   </a>
@@ -1144,28 +1148,28 @@ function Footer() {
 
         {/* Newsletter Section */}
         <motion.div
-          className="border-t border-[#3f4042] pt-8 mb-8"
+          className="border-t border-[#3f4042] pt-6 md:pt-8 mb-6 md:mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6, ease: "easeInOut" }}
           viewport={{ once: true }}
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <h4 className="text-white font-semibold mb-2">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+            <div className="text-center md:text-left">
+              <h4 className="text-white font-semibold mb-2 text-sm md:text-base">
                 Stay in the loop
               </h4>
-              <p className="text-white/60 text-base font-mono">
+              <p className="text-white/60 text-xs md:text-base font-mono">
                 Get updates on new features, releases, and developer content.
               </p>
             </div>
-            <div className="flex gap-3 max-w-md w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-3 w-full md:max-w-md">
               <input
                 type="email"
                 placeholder="your@email.com"
-                className="flex-1 px-4 py-3 bg-[#1a1b1f] border border-[#3f4042] rounded-lg text-white placeholder-white/40 text-base focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                className="flex-1 px-3 md:px-4 py-2 md:py-3 bg-[#1a1b1f] border border-[#3f4042] rounded-lg text-white placeholder-white/40 text-sm md:text-base focus:outline-none focus:border-blue-500 transition-colors font-mono"
               />
-              <button className="px-8 py-3 bg-white text-black text-base font-semibold rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap">
+              <button className="px-4 md:px-8 py-2 md:py-3 bg-white text-black text-sm md:text-base font-semibold rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap">
                 Subscribe
               </button>
             </div>
@@ -1174,19 +1178,19 @@ function Footer() {
 
         {/* Bottom Section */}
         <motion.div
-          className="border-t border-[#3f4042] pt-8"
+          className="border-t border-[#3f4042] pt-6 md:pt-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.7, ease: "easeInOut" }}
           viewport={{ once: true }}
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
             {/* Copyright */}
-            <div className="flex items-center gap-4">
-              <p className="text-white/60 text-base font-mono">
+            <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
+              <p className="text-white/60 text-xs md:text-base font-mono">
                 © 2024 Zen. All rights reserved.
               </p>
-              <div className="hidden md:flex items-center gap-2 text-sm text-white/40 font-mono">
+              <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
                 <span>Built with</span>
                 <motion.span
                   animate={{ scale: [1, 1.2, 1] }}
@@ -1204,12 +1208,12 @@ function Footer() {
             </div>
 
             {/* Social Links */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4">
               {socialLinks.map((social, index) => (
                 <motion.a
                   key={social.name}
                   href={social.href}
-                  className="w-10 h-10 bg-[#1a1b1f] border border-[#3f4042] rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:border-white/20 transition-all duration-300"
+                  className="w-8 h-8 md:w-10 md:h-10 bg-[#1a1b1f] border border-[#3f4042] rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:border-white/20 transition-all duration-300"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{
@@ -1221,7 +1225,7 @@ function Footer() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <span className="text-sm">{social.icon}</span>
+                  <span className="text-xs md:text-sm">{social.icon}</span>
                 </motion.a>
               ))}
             </div>
@@ -1291,95 +1295,99 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <section className="min-h-screen bgg w-full px-4 md:px-10 pt-16 overflow-hidden space-y-24">
-        <HeroParallaxSection
-          refObj={ref}
-          parallaxX={parallaxX}
-          parallaxY={parallaxY}
-          handleMouseMove={handleMouseMove}
-          handleMouseLeave={handleMouseLeave}
-        />
-        <ProblemSection
-          parallaxX={parallaxX}
-          parallaxY={parallaxY}
-          handleMouseMove={handleMouseMove}
-          handleMouseLeave={handleMouseLeave}
-        />
-        <SocialProofSection />
-
-        <motion.div
-          className="relative z-10 flex flex-col gap-8 text-left h-full max-h-[800px] max-w-[1400px] mx-auto px-5 md:px-10"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-          viewport={{ once: true }}
-        >
-          <DescriptionBlock />
-          <FeaturesSection features={features} />
-        </motion.div>
-
-        <PricingSection />
-
-        <motion.div
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="relative z-10 my-24 rounded-2xl md:rounded-[2rem] overflow-hidden w-full bg-black py-16 px-8 md:px-12 text-white text-center flex flex-col items-center justify-center max-w-[1400px] mx-auto"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-          viewport={{ once: true }}
-        >
-          <motion.img
-            src="/cta.png"
-            className="absolute inset-0 object-cover w-full h-full -z-20"
-            style={{ x: parallaxX, y: parallaxY, scale: 1.1 }}
-            alt="CTA Background"
+      <section className="min-h-screen bgg w-full px-4 md:px-10 pt-16 overflow-hidden">
+        <div className="space-y-32">
+          <HeroParallaxSection
+            refObj={ref}
+            parallaxX={parallaxX}
+            parallaxY={parallaxY}
+            handleMouseMove={handleMouseMove}
+            handleMouseLeave={handleMouseLeave}
           />
-          <div className="absolute inset-0 bg-black/60 -z-10" />
+
+          <ProblemSection
+            parallaxX={parallaxX}
+            parallaxY={parallaxY}
+            handleMouseMove={handleMouseMove}
+            handleMouseLeave={handleMouseLeave}
+          />
+
+          <SocialProofSection />
 
           <motion.div
-            className="inline-block mb-4"
-            initial={{ opacity: 0, y: 20 }}
+            className="relative z-10 flex flex-col gap-8 text-left max-w-[1400px] mx-auto px-5 md:px-10"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
             viewport={{ once: true }}
           >
-            <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-mono">
-              {"//"} GET_STARTED
-            </span>
+            <DescriptionBlock />
+            <FeaturesSection features={features} />
           </motion.div>
 
-          <motion.h2
-            className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-6 tracking-tighter"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: "easeInOut" }}
-            viewport={{ once: true }}
-          >
-            We're developers. We get you.
-          </motion.h2>
-          <motion.p
-            className="text-base md:text-lg mb-8 max-w-2xl font-mono leading-relaxed text-white/70"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: "easeInOut" }}
-            viewport={{ once: true }}
-          >
-            Got questions? Need help with your dev workflow? Don't hesitate —
-            reach out and we'll get you started.
-          </motion.p>
-          <motion.button
-            className="mt-4 px-8 py-3 rounded-full bg-white text-black text-base font-semibold shadow-lg transition hover:bg-gray-100"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: "easeInOut" }}
-            viewport={{ once: true }}
-          >
-            Contact Us
-          </motion.button>
-        </motion.div>
+          <PricingSection />
 
-        <Footer />
+          <motion.div
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="relative z-10 rounded-xl md:rounded-[2rem] overflow-hidden w-full bg-black py-12 md:py-16 px-6 md:px-12 text-white text-center flex flex-col items-center justify-center max-w-[1400px] mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            viewport={{ once: true }}
+          >
+            <motion.img
+              src="/cta.png"
+              className="absolute inset-0 object-cover w-full h-full -z-20"
+              style={{ x: parallaxX, y: parallaxY, scale: 1.1 }}
+              alt="CTA Background"
+            />
+            <div className="absolute inset-0 bg-black/60 -z-10" />
+
+            <motion.div
+              className="inline-block mb-3 md:mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+              viewport={{ once: true }}
+            >
+              <span className="text-xs uppercase tracking-[0.2em] text-white/60 font-mono">
+                {"// GET_STARTED"}
+              </span>
+            </motion.div>
+
+            <motion.h2
+              className="text-2xl md:text-4xl lg:text-5xl font-semibold mb-4 md:mb-6 tracking-tighter leading-tight px-4"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: "easeInOut" }}
+              viewport={{ once: true }}
+            >
+              We're developers. We get you.
+            </motion.h2>
+            <motion.p
+              className="text-sm md:text-lg mb-6 md:mb-8 max-w-2xl font-mono leading-relaxed text-white/70 px-4"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: "easeInOut" }}
+              viewport={{ once: true }}
+            >
+              Got questions? Need help with your dev workflow? Don't hesitate —
+              reach out and we'll get you started.
+            </motion.p>
+            <motion.button
+              className="mt-2 md:mt-4 px-6 md:px-8 py-2 md:py-3 rounded-full bg-white text-black text-sm md:text-base font-semibold shadow-lg transition hover:bg-gray-100 w-auto min-w-[160px]"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: "easeInOut" }}
+              viewport={{ once: true }}
+            >
+              Contact Us
+            </motion.button>
+          </motion.div>
+
+          <Footer />
+        </div>
       </section>
     </>
   );
