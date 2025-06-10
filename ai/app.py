@@ -27,7 +27,7 @@ if not GEMINI_API_KEY:
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 CACHE_TTL = 24 * 3600  # 24 hours in seconds
-redis_client.flushdb()
+# redis_client.flushdb() uncomment to clear Redis cache on every run
 
 # ─────────────────────────────────────────
 # LLM (Gemini) Setup
