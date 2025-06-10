@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import posthog from "posthog-js"; // 👈 import posthog
 
 // Add interface for the response data
 interface TokenResponse {
@@ -27,7 +28,7 @@ export default function TokenPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchAccessToken = async (requestToken: string) => {
+    const fetchAccessTokenAndUser = async (requestToken: string) => {
       try {
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/get-access-token`,
@@ -36,27 +37,45 @@ export default function TokenPage() {
             headers: {
               Authorization: `Bearer ${requestToken}`,
             },
-          },
+          }
         );
 
         const data: TokenResponse = response.data.data;
 
-        if (data.accessToken) {
-          const token = data.accessToken;
-          sessionStorage.setItem("accessToken", token);
-          router.push("/dashboard");
-        } else {
-          throw new Error("No access token in response");
-        }
+        if (!data.accessToken) throw new Error("No access token in response");
+
+        const token = data.accessToken;
+        sessionStorage.setItem("accessToken", token);
+        console.log("Access token retrieved successfully:", data);
+
+        const userResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("User data response:", userResponse);
+        const user = userResponse.data.data.user; 
+        console.log("User data retrieved successfully:", user);
+
+        posthog.identify(user.id, {
+          email: user.email,
+          name: user.name,
+        });
+        console.log("User identified in PostHog:", user.id);
+
+     
+        router.push("/dashboard");
       } catch (err: unknown) {
         const error = err as ApiError;
-        console.error("Error retrieving access token:", error);
+        console.error("Error during login process:", error);
         setError(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to retrieve access token",
+          error.message ||
+          "Login process failed"
         );
-        // Redirect back to signup after 3 seconds
         setTimeout(() => {
           router.push("/signup");
         }, 3000);
@@ -69,11 +88,10 @@ export default function TokenPage() {
     const token = params.get("requestToken");
 
     if (token) {
-      fetchAccessToken(token);
+      fetchAccessTokenAndUser(token);
     } else {
       setError("Missing requestToken in URL");
       setIsLoading(false);
-      // Redirect back to signup after 3 seconds
       setTimeout(() => {
         router.push("/signup");
       }, 3000);

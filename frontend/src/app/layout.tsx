@@ -1,5 +1,6 @@
 import { Inter, Playfair } from "next/font/google";
 import "./globals.css";
+import { PostHogProvider } from './providers'
 
 const inter = Inter({ subsets: ["latin"] });
 const playfair = Playfair({
@@ -9,7 +10,7 @@ const playfair = Playfair({
 
 export const metadata = {
   title: "Adeon",
-  description: "For Developers, by Developers", 
+  description: "For Developers, by Developers",
 };
 
 export default function RootLayout({
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${playfair.variable}`}>
-        {children}
+        <PostHogProvider>
+          {children}
+        </PostHogProvider>
       </body>
     </html>
   );

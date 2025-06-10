@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { MagicCard } from "@/components/magicui/magic-card";
+import posthog from "posthog-js";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -31,6 +32,12 @@ export default function SignupPage() {
             { headers: { authorization: `Bearer ${accessToken}` } },
           );
           if (response.data.data.user) {
+            const user = response.data.data.user;
+            console.log("User is authenticated:", user);
+            posthog.identify(user.id, {
+              email: user.email,
+              name: user.name,
+            })
             router.replace("/dashboard");
           }
         }

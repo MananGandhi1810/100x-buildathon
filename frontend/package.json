@@ -41,6 +41,7 @@
     "next": "15.3.3",
     "next-themes": "^0.4.6",
     "npm": "^11.4.1",
+    "posthog-js": "^1.249.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
