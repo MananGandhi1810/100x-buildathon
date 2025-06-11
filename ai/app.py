@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 
 import requests
 import google.generativeai as genai
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 # ─────────────────────────────────────────
 # Load only GEMINI_API_KEY from .env
@@ -34,6 +36,25 @@ CACHE_TTL = 24 * 3600  # 24 hours in seconds
 # ─────────────────────────────────────────
 genai.configure(api_key=GEMINI_API_KEY)
 LLM_MODEL = genai.GenerativeModel("gemini-2.0-flash-lite")
+
+# Documentation sources mapping
+DOCS_SOURCES = {
+    "django":    "https://docs.djangoproject.com/en/stable/",
+    "flask":     "https://flask.palletsprojects.com/en/latest/",
+    "react":     "https://reactjs.org/docs/getting-started.html",
+    "python":    "https://docs.python.org/3/",
+    "javascript":"https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+    "java":      "https://docs.oracle.com/javase/8/docs/api/",
+    "c++":       "https://en.cppreference.com/w/",
+    "c#":        "https://docs.microsoft.com/en-us/dotnet/csharp/",
+    "go":        "https://pkg.go.dev/",
+    "ruby":      "https://ruby-doc.org/",
+    "php":       "https://www.php.net/docs.php",
+    "rust":      "https://doc.rust-lang.org/",
+    "typescript":"https://www.typescriptlang.org/docs/",
+    "html":      "https://developer.mozilla.org/en-US/docs/Web/HTML",
+    "css":       "https://developer.mozilla.org/en-US/docs/Web/CSS",
+}
 
 # ─────────────────────────────────────────
 # Supported file extensions → language
@@ -268,6 +289,35 @@ def detect_bugs(owner: str, repo: str, token: str, single_file: str = None):
         bugs = call_gemini(prompt, expect_json=True)
         results[rel_path] = {"language": language, "bug_report": bugs}
     return results
+
+def fetch_latest_docs(name: str):
+    url = DOCS_SOURCES.get(name) or f"https://{name}.readthedocs.io/en/latest/"
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    main = soup.find("main") or soup
+    items = []
+    for tag in main.find_all(["h1","h2","h3","p"], limit=50):
+        text = tag.get_text(strip=True)
+        if text:
+            items.append({"tag": tag.name, "text": text})
+    links = []
+    nav_container = soup.find("nav") or soup.find("aside")
+    if nav_container:
+        for a in nav_container.find_all("a", href=True, limit=20):
+            txt, href = a.get_text(strip=True), a["href"]
+            if txt and href:
+                full = urljoin(url, href)
+                links.append({"text": txt, "href": full})
+            if len(links) >= 10:
+                break
+    return {"url": url, "content": items, "links": links}
+
+def get_repo_languages(owner: str, repo: str, headers: dict):
+    url = f"https://api.github.com/repos/{owner}/{repo}/languages"
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+    return list(resp.json().keys())
 
 
 # ─────────────────────────────────────────
@@ -536,6 +586,36 @@ def endpoint_chat():
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         print(f"[ERROR] chat: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/mcp_repo", methods=["POST"])
+def mcp_repo():
+    data = request.get_json(force=True)
+    owner = data.get("owner", "").strip()
+    repo = data.get("repo", "").strip()
+    token = data.get("token", "").strip()
+    if not (owner and repo and token):
+        return jsonify({"error": "Missing 'owner', 'repo', or 'token'"}), 400
+    headers = github_headers(token)
+    branch = get_default_branch(owner, repo, headers)
+    commit_sha = get_commit_sha_for_branch(owner, repo, branch, headers)
+    cache_key = f"{owner}/{repo}/{commit_sha}/mcp_repo_docs"
+    if (cached := redis_client.get(cache_key)):
+        result = json.loads(cached)
+        redis_client.expire(cache_key, CACHE_TTL)
+        return jsonify(result)
+    try:
+        langs = get_repo_languages(owner, repo, headers)
+        docs = {}
+        for lang in langs:
+            key = lang.lower()
+            docs[lang] = fetch_latest_docs(key)
+        result = {"owner": owner, "repo": repo, "languages": docs}
+        redis_client.setex(cache_key, CACHE_TTL, json.dumps(result))
+        return jsonify(result)
+    except requests.HTTPError as e:
+        return jsonify({"error": f"GitHub/docs fetch failed: {e}"}), 502
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
