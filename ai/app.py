@@ -3,7 +3,10 @@ import re
 import json
 import base64
 import redis
+import numpy as np
 from pathlib import Path
+import binascii
+from typing import Optional
 
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
@@ -29,6 +32,7 @@ if not GEMINI_API_KEY:
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 CACHE_TTL = 24 * 3600  # 24 hours in seconds
+VECTOR_PREFIX = "semvec:"           # namespace for embeddings
 # redis_client.flushdb() uncomment to clear Redis cache on every run
 
 # ─────────────────────────────────────────
@@ -36,6 +40,8 @@ CACHE_TTL = 24 * 3600  # 24 hours in seconds
 # ─────────────────────────────────────────
 genai.configure(api_key=GEMINI_API_KEY)
 LLM_MODEL = genai.GenerativeModel("gemini-2.0-flash-lite")
+EMBED_MODEL = "gemini-embedding-001"  # or "gemini-embedding-exp-03-07"
+# ─────────────────────────────────────────
 
 # Documentation sources mapping
 DOCS_SOURCES = {
@@ -83,6 +89,10 @@ def clean_code_block(s: str) -> str:
     s = re.sub(r"```$", "", s.strip(), flags=re.MULTILINE)
     return s.strip()
 
+def _as_str(val) -> str:
+    """Return `val` as a normal str whether it is bytes or already str."""
+    return val.decode() if isinstance(val, (bytes, bytearray)) else val
+
 
 # ─────────────────────────────────────────
 # Gemini call helper
@@ -104,14 +114,120 @@ def call_gemini(prompt: str, expect_json: bool = False):
         print(f"LLM error: {e}")
         return [] if expect_json else ""
 
+def embed_text(text: str) -> np.ndarray:
+    """
+    Returns a float32 numpy vector for `text`.
+    """
+    if not text:
+        return np.zeros(768, dtype=np.float32)  # or whatever dim you expect
+
+    resp = genai.embed_content(
+        model="models/embedding-001",
+        content=text,
+        task_type="retrieval_query",
+    )
+    return np.asarray(resp["embedding"], dtype=np.float32)
+
+
+def store_vector(key: str, vector: np.ndarray, meta: dict):
+    """
+    Persist a vector and its metadata into Redis.
+    """
+    # raw bytes for the vector
+    redis_client.set(f"{VECTOR_PREFIX}data:{key}", vector.tobytes())
+    # JSON‐encoded metadata
+    redis_client.hset(
+        f"{VECTOR_PREFIX}meta:{key}",
+        mapping={k: json.dumps(v) for k, v in meta.items()}
+    )
+
+def load_vector(path: str) -> Optional[np.ndarray]:
+    """
+    Fetch a Base-64 encoded vector from Redis and return it as a NumPy array.
+    Returns None if the key does not exist or is corrupt.
+    """
+    raw = redis_client.get(f"{VECTOR_PREFIX}data:{path}")
+    if raw is None:
+        return None
+
+    # redis-py returns str when decode_responses=True
+    if isinstance(raw, str):
+        raw = raw.encode()
+
+    # Base-64 decode; guard against corrupt entries
+    try:
+        raw = base64.b64decode(raw)
+    except binascii.Error:
+        return None
+
+    return np.frombuffer(raw, dtype=np.float32)
+
+def load_meta(key: str) -> dict:
+    raw = redis_client.hgetall(f"{VECTOR_PREFIX}meta:{key}")
+    return {k.decode().split("meta:")[1]: json.loads(v) for k, v in raw.items()}
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return float(a.dot(b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
 
 # ─────────────────────────────────────────
 # GitHub API helper functions
 # ─────────────────────────────────────────
-def github_headers(token: str):
+# def github_headers(raw_token):
+    # Accept either a string or a dict-like payload
+    if isinstance(raw_token, dict):
+        # most common keys people stuff the token under
+        for key in ("token", "Authorization", "authorization"):
+            if key in raw_token:
+                raw_token = raw_token[key]
+                break
+        else:
+            raise ValueError("Unable to extract token from dict payload")
+
+    if not isinstance(raw_token, str):
+        raise TypeError(f"token must be str, got {type(raw_token).__name__}")
+
+    # normalise: strip \r, \n and any leading scheme
+    token = raw_token.replace("\r", "").strip()
+    for prefix in ("token ", "bearer ", "Bearer "):
+        if token.lower().startswith(prefix):
+            token = token[len(prefix):]
+            
+
+    scheme = "Bearer" if token.startswith("github_pat_") else "token"
+
     return {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"Bearer {token}",
+        "Authorization": f"{scheme} {token}",
+
+    }
+def github_headers(raw_token: str) -> dict:
+    """
+    Build the header GitHub expects.
+
+    Accepts either a bare PAT or a string that already starts with
+    ``token …`` or ``Bearer …``. Works for classic PATs (ghp_/gho_)
+    and fine-grained tokens (github_pat_…).
+    """
+    if isinstance(raw_token, dict):
+        raise TypeError("Expected a string, not a dict, for GitHub token")
+
+    # Strip stray CR/LF and any surrounding whitespace
+    token = raw_token.replace("\r", "").strip()
+
+    # Remove a scheme that the caller may have added
+    for prefix in ("token ", "bearer ", "Bearer "):
+        if token.lower().startswith(prefix):
+            token = token[len(prefix):]
+            break
+
+    # Choose scheme: classic PAT → "token", fine-grained → "Bearer"
+    scheme = "Bearer" if token.startswith("github_pat_") else "token"
+
+    return {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"{scheme} {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
     }
 
 
@@ -162,6 +278,61 @@ def fetch_file_content(
     result = base64.b64decode(data["content"]).decode("utf-8", errors="ignore")
     redis_client.setex(cache_key, CACHE_TTL, result)
     return result
+
+def get_repo_license(owner: str, repo: str, headers: dict):
+    """
+    Try common LICENSE filenames first; otherwise fall back to GitHub's repo license field.
+    Returns either:
+      {"file": "<LICENSE filename>", "content": "<first 10 lines>"} 
+    or
+      {"spdx_id": "...", "name": "..."}
+    """
+    branch = get_default_branch(owner, repo, headers)
+    for name in ("LICENSE", "LICENSE.md", "LICENSE.txt"):
+        try:
+            content = fetch_file_content(owner, repo, name, branch, headers)
+            snippet = "\n".join(content.splitlines()[:10])
+            return {"file": name, "content": snippet}
+        except requests.HTTPError:
+            continue
+
+    # Fallback to API
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+    lic = resp.json().get("license", {}) or {}
+
+    return {"spdx_id": lic.get("spdx_id"), "name": lic.get("name")}
+
+
+def get_file_license_header(owner: str, repo: str, path: str, branch: str, headers: dict):
+    """
+    Grabs the first 10 lines of `path` and looks for SPDX-License-Identifier or Copyright.
+    Returns the matching line or None.
+    """
+    content = fetch_file_content(owner, repo, path, branch, headers)
+    for line in content.splitlines()[:10]:
+        if "SPDX-License-Identifier:" in line:
+            return line.strip()
+        m = re.search(r"(Copyright\s.*)", line)
+        if m:
+            return m.group(1).strip()
+    return None
+
+
+def get_repo_contributors(owner: str, repo: str, headers: dict):
+    """
+    Uses GitHub's Contributors API to pull up to 100 contributors
+    (login + commit count).
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/contributors?per_page=100"
+    resp = requests.get(url, headers=headers, timeout=10)
+    resp.raise_for_status()
+    return [
+        {"login": u["login"], "contributions": u["contributions"]}
+        for u in resp.json()
+    ]
+
 
 
 # ─────────────────────────────────────────
@@ -318,6 +489,8 @@ def get_repo_languages(owner: str, repo: str, headers: dict):
     resp = requests.get(url, headers=headers, timeout=10)
     resp.raise_for_status()
     return list(resp.json().keys())
+
+
 
 
 # ─────────────────────────────────────────
@@ -615,6 +788,189 @@ def mcp_repo():
         return jsonify(result)
     except requests.HTTPError as e:
         return jsonify({"error": f"GitHub/docs fetch failed: {e}"}), 502
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# @app.route("/index_embeddings", methods=["POST"])
+# def index_embeddings():
+#     """
+#     Walk the repo, embed each file’s content with Gemini, and store in Redis.
+#     POST  { owner, repo, token }
+#     """
+#     data  = request.get_json(force=True)
+#     owner = data.get("owner", "").strip()
+#     repo  = data.get("repo",  "").strip()
+#     token = data.get("token", "").strip()
+#     if not (owner and repo and token):
+#         return jsonify({"error": "Missing 'owner', 'repo', or 'token'"}), 400
+
+#     # 1) Build GitHub auth headers once
+#     headers = github_headers(token)
+
+#     # 2) Resolve default branch
+#     try:
+#         branch = get_default_branch(owner, repo, headers)
+#     except Exception as e:
+#         app.logger.error(f"Failed to get default branch: {e}")
+#         return jsonify({"error": str(e)}), 500
+
+#     # 3) Get list of code files in the repo
+#     try:
+#         files = [p for p, _ in list_all_files(owner, repo, token)]
+#     except Exception as e:
+#         app.logger.error(f"Failed to list files: {e}")
+#         return jsonify({"error": str(e)}), 500
+
+#     indexed = 0
+#     # 4) Embed & store each file
+#     for path in files:
+#         try:
+#             content = fetch_file_content(owner, repo, path, branch, headers)
+#             if not content:                 # skip empty files
+#                 continue
+
+#             # Gemini embedding call  (SDK v0.3+)
+#             resp = genai.embed_content(
+#                 model="models/embedding-001",
+#                 content=content,
+#                 task_type="retrieval_document",
+#             )
+#             vec = np.asarray(resp["embedding"], dtype=np.float32)
+
+#             # store vector & quick-view snippet in Redis
+#             redis_client.set(
+#                 f"semvec:data:{path}",
+#                 base64.b64encode(vec.tobytes()).decode("ascii"),
+#             )
+#             redis_client.hset(
+#                 f"semvec:meta:{path}",
+#                 mapping={"path": path, "snippet": content[:200]},
+#             )
+#             indexed += 1
+
+#         except Exception as e:
+#             app.logger.error(f"Error indexing {path}: {e}")
+
+#     return jsonify(
+#         {
+#             "status":        "indexed",
+#             "files_indexed": indexed,
+#             "total_files":   len(files),
+#         }
+#     )
+
+
+def _as_str(val) -> str:
+    """Return `val` as a normal str whether it is bytes or already str."""
+    return val.decode() if isinstance(val, (bytes, bytearray)) else val
+
+
+# @app.route("/semantic_search", methods=["POST"])
+# def semantic_search():
+    """
+    POST { query: str, top_n: int (optional) }
+    Returns the top-N code snippets most semantically similar to `query`.
+    """
+    data  = request.get_json(force=True)
+    query = data.get("query", "").strip()
+    top_n = int(data.get("top_n", 5))
+    if not query:
+        return jsonify({"error": "Missing 'query'"}), 400
+
+    # 1) Embed the user’s query
+    try:
+        q_vec = embed_text(query)
+    except Exception as e:
+        app.logger.error(f"Embedding failed: {e}")
+        return jsonify({"error": str(e)}), 502
+
+    # 2) Compare against all stored vectors
+    results = []
+    for raw_key in redis_client.keys(f"{VECTOR_PREFIX}data:*"):
+        key_str = raw_key if isinstance(raw_key, str) else raw_key.decode()
+        path    = key_str.split("data:", 1)[1]
+
+
+        vec = load_vector(path)
+        if vec is None:
+            continue                                # skip missing / corrupt
+
+        score = cosine_similarity(q_vec, vec)
+        meta  = load_meta(path)
+        results.append(
+            {"path": meta["path"], "snippet": meta["snippet"], "score": score}
+        )
+
+    # 3) Return the top-N matches
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return jsonify(results[:top_n])
+
+
+@app.route("/license_scan", methods=["POST"])
+def license_scan():
+    """
+    POST { owner, repo, token }
+    Returns:
+      {
+        repo_license: {...},
+        contributors: [...],
+        files: {
+          "path/to/file.py": {
+             detected_license: "<SPDX or copyright>",
+             license_header: "<the full header text>",
+             authors: ["alice", "bob", ...]
+          },
+          ...
+        }
+      }
+    """
+    data = request.get_json(force=True)
+    owner, repo, token = data.get("owner",""), data.get("repo",""), data.get("token","")
+    if not (owner and repo and token):
+        return jsonify({"error": "Missing 'owner', 'repo', or 'token'"}), 400
+
+    headers    = github_headers(token)
+    branch     = get_default_branch(owner, repo, headers)
+    commit_sha = get_commit_sha_for_branch(owner, repo, branch, headers)
+    cache_key  = f"{owner}/{repo}/{commit_sha}/license_scan"
+
+    # Try cache
+    if (cached := redis_client.get(cache_key)):
+        result = json.loads(cached)
+        redis_client.expire(cache_key, CACHE_TTL)
+        return jsonify(result)
+
+    try:
+        # 1) Repo-level license
+        repo_license = get_repo_license(owner, repo, headers)
+
+        # 2) Contributors list
+        contributors = get_repo_contributors(owner, repo, headers)
+        contributor_logins = [c["login"] for c in contributors]
+
+        # 3) Per-file headers
+        files = [p for p, _ in list_all_files(owner, repo, token)]
+        files_info = {}
+        for f in files:
+            header = get_file_license_header(owner, repo, f, branch, headers)
+            files_info[f] = {
+                "detected_license": header is not None,
+                "license_header": header,
+                "authors": contributor_logins
+            }
+
+        result = {
+            "repo_license": repo_license,
+            "contributors": contributors,
+            "files": files_info
+        }
+
+        # Cache & return
+        redis_client.setex(cache_key, CACHE_TTL, json.dumps(result))
+        return jsonify(result)
+
+    except requests.HTTPError as e:
+        return jsonify({"error": f"GitHub/API error: {e}"}), 502
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
