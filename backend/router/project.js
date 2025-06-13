@@ -5,7 +5,6 @@ import {
     projectListHandler,
     createProjectHandler,
     provisionProjectHandler,
-    provisionUseHandler,
     projectChatHandler,
     getProjectReadmeHandler,
     getProjectDiagramHandler,
@@ -21,7 +20,6 @@ router.post("/create", checkAuth, createProjectHandler);
 router.get("/list", checkAuth, projectListHandler);
 router.get("/:projectId", checkAuth, getProjectDataHandler);
 router.post("/:projectId/provision", checkAuth, provisionProjectHandler);
-router.use("/:projectId/provision/use/*", provisionUseHandler);
 router.post("/:projectId/chat", checkAuth, projectChatHandler);
 router.get("/:projectId/readme", checkAuth, getProjectReadmeHandler);
 router.get("/:projectId/diagram", checkAuth, getProjectDiagramHandler);

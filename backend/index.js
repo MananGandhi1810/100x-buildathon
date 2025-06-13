@@ -4,6 +4,7 @@ import authRouter from "./router/auth.js";
 import logger from "morgan";
 import deployRouter from "./router/deploy.js";
 import projectRouter from "./router/project.js";
+import codeEnvRouter from "./router/code-env.js";
 
 const app = express();
 
@@ -19,6 +20,21 @@ app.use(
 app.use("/auth", authRouter);
 app.use("/deployment", deployRouter);
 app.use("/project", projectRouter);
+
+app.use(
+    "/",
+    (req, res, next) => {
+        if (req.subdomains.length < 1 || req.subdomains[0] == "api") {
+            return res.status(404).json({
+                success: false,
+                message: "This route could not be found",
+                data: null,
+            });
+        }
+        next();
+    },
+    codeEnvRouter
+);
 
 app.use(function (req, res, next) {
     res.status(404).json({
