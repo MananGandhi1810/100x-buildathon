@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const pathname = usePathname();
-  const isHomeOrSignup = pathname === "/" || pathname === "/signup";
+  const isHomeOrSignup = pathname === "/" || pathname === "/waitlist";
 
   if (!isHomeOrSignup) return null;
 
@@ -35,15 +35,15 @@ const Navbar = () => {
               )}
             </Link>
             <Link
-              href="/signup"
+              href="/waitlist"
               className={`relative text-sm font-medium transition-all duration-300 group ${
-                pathname === "/signup"
+                pathname === "/waitlist"
                   ? "text-white"
                   : "text-white/70 hover:text-white"
               }`}
             >
-              Sign Up
-              {pathname === "/signup" && (
+              Join Waitlist
+              {pathname === "/waitlist" && (
                 <div className="absolute -bottom-1 left-0 w-full h-[2px] bg-gradient-to-r from-[#6195e8] via-[#c47ccf] to-[#dda355] rounded-full"></div>
               )}
             </Link>
@@ -51,7 +51,7 @@ const Navbar = () => {
 
           <div className="flex items-center">
             <Link
-              href="/signup"
+              href="/waitlist"
               className="group relative inline-flex items-center text-sm font-medium text-white rounded-full 
               p-[1px] bg-gradient-to-r from-[#7c3aed] via-[#06b6d4] to-[#fbbf24]
               hover:from-[#6366f1] hover:via-[#06b6d4] hover:to-[#fbbf24]
