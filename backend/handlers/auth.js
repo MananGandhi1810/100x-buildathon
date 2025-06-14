@@ -148,7 +148,7 @@ const userHandler = (req, res) => {
 const getUserRepositoriesHandler = async (req, res) => {
     const repositories = await getUserRepositories(req.user.ghAccessToken);
     const userRepos = repositories.filter(
-        (repo) => repo.name.split("/")[0] === req.user.ghUsername
+        (repo) => repo.name.split("/")[0] === req.user.ghUsername,
     );
     res.json({
         success: true,

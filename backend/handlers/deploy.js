@@ -75,7 +75,7 @@ const newDeploymentHandler = async (req, res) => {
         req.user.ghAccessToken,
         repo,
         "deployment/" + id + "/hooks/",
-        ["push"]
+        ["push"],
     );
     console.log(webhookRequest.data);
 
@@ -516,7 +516,7 @@ const proxyDeploymentHandler = async (req, res) => {
         pathRewrite: (path, req) => {
             return req.originalUrl.replace(
                 `/deployment/${deploymentId}/proxy`,
-                ""
+                "",
             );
         },
         changeOrigin: true,
@@ -581,7 +581,7 @@ const getContainerLogsHandler = async (req, res) => {
                             success: false,
                             message: "Error fetching logs",
                             data: null,
-                        })
+                        }),
                     );
             }
             stream.on("data", (data) => {
@@ -590,10 +590,9 @@ const getContainerLogsHandler = async (req, res) => {
             stream.on("end", () => {
                 res.end();
             });
-        }
+        },
     );
 };
-
 
 export {
     newDeploymentHandler,
@@ -605,5 +604,5 @@ export {
     getContainerPortHandler,
     incomingWebhookHandler,
     proxyDeploymentHandler,
-    getContainerLogsHandler
+    getContainerLogsHandler,
 };

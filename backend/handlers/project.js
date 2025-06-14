@@ -395,7 +395,6 @@ const projectChatHandler = async (req, res) => {
         });
     }
     try {
-
         const aiServiceBaseUrl =
             process.env.AI_SERVICE_BASE_URL || "http://127.0.0.1:8888";
         const payloadToAiService = {
@@ -480,7 +479,7 @@ const getProjectReadmeHandler = async (req, res) => {
         "main",
         ghAccessToken,
         {},
-        { readme: true }
+        { readme: true },
     );
 
     return res.json({
@@ -526,7 +525,7 @@ const getProjectDiagramHandler = async (req, res) => {
         "main",
         ghAccessToken,
         {},
-        { diagram: true }
+        { diagram: true },
     );
 
     return res.json({
@@ -572,7 +571,7 @@ const getProjectBugDetectHandler = async (req, res) => {
         "main",
         ghAccessToken,
         {},
-        { bugDetect: true }
+        { bugDetect: true },
     );
 
     return res.json({
@@ -618,7 +617,7 @@ const getProjectMocksHandler = async (req, res) => {
         "main",
         ghAccessToken,
         {},
-        { mocks: true }
+        { mocks: true },
     );
 
     return res.json({
@@ -664,7 +663,7 @@ const getProjectTestsHandler = async (req, res) => {
         "main",
         ghAccessToken,
         { initial: false, userEmail: "" },
-        { tests: true }
+        { tests: true },
     );
 
     return res.json({

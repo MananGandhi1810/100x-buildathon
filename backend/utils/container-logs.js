@@ -50,7 +50,7 @@ const logAllContainers = async () => {
             },
         });
         projects.map((project) =>
-            updateContainerStatus(project.containerId, project.id)
+            updateContainerStatus(project.containerId, project.id),
         );
     }, 2000);
 };

@@ -73,7 +73,7 @@ const getUserRepositories = async (token) => {
                 "X-Accepted-OAuth-Scopes": "user",
             },
             validateStatus: false,
-        }
+        },
     );
     if (response.status >= 400 || !response.data) {
         return [];

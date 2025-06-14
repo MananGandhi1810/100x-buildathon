@@ -33,7 +33,7 @@ app.use(
         }
         next();
     },
-    codeEnvRouter
+    codeEnvRouter,
 );
 
 app.use(function (req, res, next) {
