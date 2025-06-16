@@ -115,7 +115,6 @@ const subdomainHandler = async (req, res) => {
             });
         }
 
-
         if (!port) {
             return res.status(400).json({
                 success: false,
