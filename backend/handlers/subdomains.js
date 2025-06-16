@@ -94,8 +94,8 @@ const subdomainHandler = async (req, res) => {
 
         if (!deploymentData) {
             containerData = codeEnvData;
-            container = JSON.parse(containerData);
-            port = container.containerPort;
+            const container = JSON.parse(containerData);
+            port = container.port;
             if (!containerData) {
                 return res.status(404).json({
                     success: false,
