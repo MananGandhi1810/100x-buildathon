@@ -1,5 +1,8 @@
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { get } from "../utils/keyvalue-db.js";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const createProjectProxy = (projectId, port) => {
     return createProxyMiddleware({
@@ -12,7 +15,7 @@ const createProjectProxy = (projectId, port) => {
             proxyReq.setHeader("Host", `localhost:${port}`);
             proxyReq.setHeader(
                 "X-Forwarded-For",
-                req.ip || req.connection.remoteAddress,
+                req.ip || req.connection.remoteAddress
             );
             proxyReq.setHeader("X-Forwarded-Proto", req.protocol);
             proxyReq.setHeader("X-Forwarded-Host", req.get("Host"));
@@ -59,7 +62,7 @@ const createProjectProxy = (projectId, port) => {
     });
 };
 
-const provisionUseHandler = async (req, res) => {
+const subdomainHandler = async (req, res) => {
     const projectId = req.subdomains[0];
     if (!projectId) {
         return res.status(400).json({
@@ -70,19 +73,48 @@ const provisionUseHandler = async (req, res) => {
     }
 
     try {
-        const containerKey = `project:${projectId}:container`;
-        const containerData = await get(containerKey);
+        const codeEnvKey = `project:${projectId}:container`;
+        const codeEnvDataPromise = get(codeEnvKey);
+        const deploymentDataPromise = prisma.deployment.findUnique({
+            where: { id: projectId },
+            select: {
+                id: true,
+                containerPort: true,
+            },
+        });
 
-        if (!containerData) {
-            return res.status(404).json({
+        const [codeEnvData, deploymentData] = await Promise.all([
+            codeEnvDataPromise,
+            deploymentDataPromise,
+        ]);
+        console.log(codeEnvData, deploymentData);
+
+        let containerData = null;
+        let port = null;
+
+        if (!deploymentData) {
+            containerData = codeEnvData;
+            container = JSON.parse(containerData);
+            port = container.containerPort;
+            if (!containerData) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Project container not found or expired",
+                    data: null,
+                });
+            }
+        }
+        else if (!codeEnvData) {
+            port = deploymentData.containerPort;
+        }
+        else {
+            res.status(404).json({
                 success: false,
-                message: "Project container not found or expired",
+                message: "404",
                 data: null,
             });
         }
 
-        const container = JSON.parse(containerData);
-        const { port } = container;
 
         if (!port) {
             return res.status(400).json({
@@ -104,4 +136,4 @@ const provisionUseHandler = async (req, res) => {
     }
 };
 
-export { provisionUseHandler };
+export { subdomainHandler };

@@ -13,8 +13,11 @@ const ghRepoRegex =
 
 const buildContainer = async ({ projectId, branchName, commitHash }) => {
     console.log(`Received build request for ${projectId}`);
-    const deployment = await prisma.deployment.findUnique({
+    const deployment = await prisma.deployment.update({
         where: { id: projectId },
+        data: {
+            status: "building",
+        },
         include: {
             user: {
                 select: {

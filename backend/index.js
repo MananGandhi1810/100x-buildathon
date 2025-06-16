@@ -4,7 +4,7 @@ import authRouter from "./router/auth.js";
 import logger from "morgan";
 import deployRouter from "./router/deploy.js";
 import projectRouter from "./router/project.js";
-import codeEnvRouter from "./router/code-env.js";
+import codeEnvRouter from "./router/subdomains.js";
 
 const app = express();
 

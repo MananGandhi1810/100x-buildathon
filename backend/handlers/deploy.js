@@ -162,7 +162,7 @@ const getDeploymentByIdHandler = async (req, res) => {
     }
     res.json({
         success: true,
-        message: "deployment found",
+        message: "Deployment found",
         data: { deployment },
     });
 };
@@ -172,7 +172,7 @@ const startDeploymentHandler = async (req, res) => {
     if (!deploymentId) {
         return res.status(400).json({
             success: false,
-            message: "deployment Id is required",
+            message: "Deployment Id is required",
             data: null,
         });
     }
