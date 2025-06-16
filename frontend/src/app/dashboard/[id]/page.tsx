@@ -70,13 +70,7 @@ const tools = [
     href: (repoSlug: string) => `/dashboard/${repoSlug}/chat-with-code`,
     color: "text-purple-600",
   },
-  {
-    title: "Deploy",
-    description: "Deploy application",
-    icon: Rocket,
-    href: (repoSlug: string) => `/dashboard/${repoSlug}/deployments`,
-    color: "text-orange-600",
-  },
+
   {
     title: "Code Structure Visualization",
     description: "Visualize your project's architecture and dependencies",
@@ -148,7 +142,7 @@ export default function DashboardPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                    <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -189,7 +183,7 @@ export default function DashboardPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                  <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -283,17 +277,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Usage indicator bar */}
-                        <div className="mt-3 flex items-center gap-2">
-                          <div className="flex-1 h-1 bg-muted/50 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-primary/60 to-primary/30 rounded-full transition-all duration-500 group-hover:from-primary/80 group-hover:to-primary/50"
-                              style={{ width: `${Math.random() * 60 + 20}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground/60">
-                            {Math.floor(Math.random() * 50 + 10)}% used
-                          </span>
-                        </div>
+
                       </div>
                     </div>
 
