@@ -334,7 +334,6 @@ def get_repo_contributors(owner: str, repo: str, headers: dict):
     ]
 
 
-
 # ─────────────────────────────────────────
 # AI Prompt Templates
 # ─────────────────────────────────────────
@@ -489,8 +488,6 @@ def get_repo_languages(owner: str, repo: str, headers: dict):
     resp = requests.get(url, headers=headers, timeout=10)
     resp.raise_for_status()
     return list(resp.json().keys())
-
-
 
 
 # ─────────────────────────────────────────
