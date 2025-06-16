@@ -60,11 +60,7 @@ export function DevToolsSidebar({ id, ...props }: DevToolsSidebarProps) {
             url: `/dashboard/${id}/chat-with-code`,
             icon: MessageSquare,
         },
-        {
-            title: "Deploy",
-            url: `/dashboard/${id}/deployments`,
-            icon: Rocket,
-        },
+
         {
             title: "Code Structure Visualization",
             url: `/dashboard/${id}/code-structure`,
