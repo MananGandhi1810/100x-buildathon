@@ -116,9 +116,9 @@ function ImportRepositoryDialog({
 
       axios
         .get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/repositories`, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            },
         })
         .then((res) => {
           const repositories = res.data?.data?.repositories;
