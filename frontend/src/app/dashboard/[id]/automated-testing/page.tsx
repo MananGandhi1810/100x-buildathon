@@ -121,7 +121,7 @@ export default function AutomatedTestingPage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Automated Testing</BreadcrumbPage>
+                  <BreadcrumbPage>Test Case Generation</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -137,7 +137,7 @@ export default function AutomatedTestingPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">
-                    Automated Testing
+                    Test Case Generation
                   </h1>
                   <p className="text-muted-foreground mt-1.5">
                     View generated automated tests for your code

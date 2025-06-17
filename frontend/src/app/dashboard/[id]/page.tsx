@@ -79,7 +79,7 @@ const tools = [
     color: "text-cyan-600",
   },
   {
-    title: "Automated Testing",
+    title: "Test Case Generation",
     description: "Generate and run automated tests for your code",
     icon: TestTube,
     href: (repoSlug: string) => `/dashboard/${repoSlug}/automated-testing`,

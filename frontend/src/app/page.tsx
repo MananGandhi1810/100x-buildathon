@@ -14,7 +14,7 @@ import {
 const features = [
   {
     id: 7,
-    title: "Automated Testing",
+    title: "Test Case Generation",
     description:
       "AI-generated test suites with edge case detection, performance testing, and coverage optimization.",
     gradientFrom: "#A07CFE",
@@ -98,7 +98,7 @@ function HeroParallaxSection({
       >
         <p className="font-mono text-white/80 text-base leading-relaxed drop-shadow-md">
           Our product helps developers write, review, and ship better code with
-          AI-powered tools. Get instant code reviews, automated testing, and
+          AI-powered tools. Get instant code reviews, Test Case Generation, and
           intelligent suggestions.
         </p>
         <button className="mt-6 px-8 py-3 rounded-full bg-white text-black text-base font-semibold shadow-lg transition hover:bg-gray-100">
@@ -121,7 +121,7 @@ function HeroParallaxSection({
         </p>
         <p className="text-xs px-4 font-mono">
           Our product helps developers write, review, and ship better code with
-          AI-powered tools. Get instant code reviews, automated testing, and
+          AI-powered tools. Get instant code reviews, Test Case Generation, and
           intelligent suggestions.
         </p>
         <button className="mt-4 px-8 py-3 rounded-full bg-white text-black text-sm font-semibold shadow-md transition hover:bg-gray-100">

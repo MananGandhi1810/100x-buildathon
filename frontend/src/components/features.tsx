@@ -68,7 +68,7 @@ const defaultFeatures: FeatureItem[] = [
     },
     {
         id: 7,
-        title: "Automated Testing",
+        title: "Test Case Generation",
         description:
             "AI-generated test suites with edge case detection, performance testing, and coverage optimization.",
         gradient: "bg1",

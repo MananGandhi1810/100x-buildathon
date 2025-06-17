@@ -67,7 +67,7 @@ export function DevToolsSidebar({ id, ...props }: DevToolsSidebarProps) {
             icon: Network,
         },
         {
-            title: "Automated Testing",
+            title: "Test Case Generation",
             url: `/dashboard/${id}/automated-testing`,
             icon: TestTube,
         },

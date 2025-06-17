@@ -15,7 +15,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="text-2xl font-medium tracking-tighter text-white hover:text-transparent bg-clip-text hover:bg-gradient-to-r hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 transition-all duration-300">
-              adeos
+              adeon
             </span>
           </Link>
 
@@ -23,11 +23,10 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
-              className={`relative text-sm font-medium transition-all duration-300 group ${
-                pathname === "/"
+              className={`relative text-sm font-medium transition-all duration-300 group ${pathname === "/"
                   ? "text-white"
                   : "text-white/70 hover:text-white"
-              }`}
+                }`}
             >
               Home
               {pathname === "/" && (
@@ -36,11 +35,10 @@ const Navbar = () => {
             </Link>
             <Link
               href="/waitlist"
-              className={`relative text-sm font-medium transition-all duration-300 group ${
-                pathname === "/waitlist"
+              className={`relative text-sm font-medium transition-all duration-300 group ${pathname === "/waitlist"
                   ? "text-white"
                   : "text-white/70 hover:text-white"
-              }`}
+                }`}
             >
               Join Waitlist
               {pathname === "/waitlist" && (
