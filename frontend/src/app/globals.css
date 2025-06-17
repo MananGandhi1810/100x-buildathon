@@ -3,67 +3,77 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
-
 :root {
-  /* === Base === */
-  --background: #0f1013; /* black2 */
-  --foreground: #ffffff; /* white1 */
+  /* Core OpenAI brand colors */
+  --background: oklch(14.5% 0 0); /* OpenAI Black */
+  --foreground: #ffffff; /* White */
 
-  --card: #0f1013e8; /* black4 */
+  /* Card / Popover surfaces */
+  --card: #080808; /* Cod‑Gray (near‑black) */
   --card-foreground: #ffffff;
 
-  --popover: #1a1b1f; /* black3 */
+  --popover: #121212; /* Matches current UI popover */
   --popover-foreground: #ffffff;
 
-  /* === Primary / Secondary === */
-  --primary: #3f4042; /* black6 */
-  --primary-foreground: #ffffff;
+  /* Primary & Secondary accents */
+  --primary: #ffffff;
+  --primary-foreground: oklch(14.5% 0 0);
 
-  --secondary: #3f6d68; /* green2 */
+  --secondary: #1d1d1d; /* Slightly lighter dark */
   --secondary-foreground: #ffffff;
 
-  /* === Accent / Muted === */
-  --accent: #6f8591; /* blue2 */
-  --accent-foreground: #000000;
+  --muted: #222222;
+  --muted-foreground: #a4a4a4; /* Subtle gray for muted text */
 
-  --muted: #121316; /* near-black */
-  --muted-foreground: #5c5c5c; /* very low-contrast gray */
+  --accent: #333333;
+  --accent-foreground: #ffffff;
 
-  /* === Destructive === */
-  --destructive: #c8433f; /* a warm dark red/orange if needed */
-  --destructive-foreground: #ffffff;
+  /* Destructive */
+  --destructive: #ff5b5b;
+  --destructive-foreground: oklch(14.5% 0 0);
 
-  /* === Border / Input / Ring === */
-  --border: #3f4042; /* black6 */
-  --input: #0f1013; /* black2 */
-  --ring: #7ed6c3; /* green3 */
+  /* Borders, inputs, rings */
+  --border: #212121;
+  --input: #333333;
+  --ring: #a4a4a4;
 
-  /* === Sidebar Theme (if used) === */
-  --sidebar: #0f1013;
+  /* Chart palette (keeping your existing tones) */
+  --chart-1: #ffae04;
+  --chart-2: #2671f4;
+  --chart-3: #747474;
+  --chart-4: #525252;
+  --chart-5: #e4e4e4;
+
+  /* Sidebar surfaces */
+  --sidebar: #121212;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #3f4042;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #6f8591;
-  --sidebar-accent-foreground: #5c5c5c;
-  --sidebar-border: #3f4042;
-  --sidebar-ring: #7ed6c3;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: oklch(14.5% 0 0);
+  --sidebar-accent: #333333;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #333333;
+  --sidebar-ring: #a4a4a4;
 
-  /* === Chart / Custom Utility Colors (Optional) === */
-  --chart-1: #6195e8; /* soft blue */
-  --chart-2: #c47ccf; /* purple2 */
-  --chart-3: #dda355; /* orange2 */
-  --chart-4: #7ed6c3; /* green3 */
-  --chart-5: #e0c873; /* orange4 */
+  /* Typography and radius/shadows */
+  --font-sans: Geist, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Geist Mono, monospace;
 
-  /* === Typography (keep defaults or set custom fonts) === */
-  --font-sans: "Inter", sans-serif;
-  --font-mono: "Fira Code", monospace;
-  --font-serif: "Playfair", serif;
+  --radius: 0.5rem;
 
-  /* === Radius / Shadows / Tracking (keep defaults or tweak slightly) === */
-  --radius: 0.75rem;
-  --shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  --tracking-normal: 0em;
+  --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18),
+    0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18),
+    0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18),
+    0px 2px 4px -1px hsl(0 0% 0% / 0.18);
+  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18),
+    0px 4px 6px -1px hsl(0 0% 0% / 0.18);
+  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18),
+    0px 8px 10px -1px hsl(0 0% 0% / 0.18);
+  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
 }
 
 @theme inline {
