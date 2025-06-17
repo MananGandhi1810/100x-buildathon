@@ -121,7 +121,7 @@ export default function SocialProofSection() {
         {devMetrics.map((metric, index) => (
           <div
             key={metric.id}
-            className="group relative overflow-hidden rounded-lg shadow-lg h-[140px] bg-[#0f1013] border border-white/10"
+            className="group relative overflow-hidden rounded-lg shadow-lg h-[140px] bg-card border border-white/10"
           >
             <motion.div
               className="p-4 h-full flex flex-col justify-between"

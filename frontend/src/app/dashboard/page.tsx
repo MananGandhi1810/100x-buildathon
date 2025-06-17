@@ -116,9 +116,9 @@ function ImportRepositoryDialog({
 
       axios
         .get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/repositories`, {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-            },
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
         })
         .then((res) => {
           const repositories = res.data?.data?.repositories;
@@ -562,24 +562,61 @@ export default function Dashboard() {
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md  bg-muted md:flex-row ",
+        "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md  bg-black md:flex-row ",
         "h-screen"
       )}
     >
-      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto ml-4">
+      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto m">
         <div className="space-y-8 p-6 container mx-auto py-6 bg-transparent overflow-y-auto">
+          {" "}
           {/* Header */}
           <div className="flex items-center justify-between gap-4 ">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">
-                Your Repositories
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Manage and analyze your code repositories
-              </p>
+            {" "}
+            <div className="flex items-center gap-4">
+              <Link href="/deployments">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Rocket className="h-4 w-4" />
+                  Deployments
+                </Button>
+              </Link>
+              <div className="h-6 w-px bg-border" />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">
+                  Your Repositories
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Manage and analyze your code repositories
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatarUrl} />
+                        <AvatarFallback>
+                          {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden sm:inline">
+                        {user.name || user.email}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
-
           {/* Search and Import */}
           <div className="flex items-center gap-4 justify-between w-full">
             <SearchBar
@@ -593,7 +630,7 @@ export default function Dashboard() {
               <DialogTrigger asChild>
                 <MagicCard className="cursor-pointer rounded-lg p-2">
                   <Button
-                    className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent cursor-pointer"
+                    className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent cursor-pointer text-foreground"
                     onClick={() => setIsImportDialogOpen(true)}
                   >
                     <Plus className="h-4 w-4" />
@@ -603,7 +640,6 @@ export default function Dashboard() {
               </DialogTrigger>
             </Dialog>
           </div>
-
           {/* Content */}
           {filteredProjects.length === 0 ? (
             <EmptyState

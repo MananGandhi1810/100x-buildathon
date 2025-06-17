@@ -5,11 +5,9 @@ import Navbar from "@/components/navbar";
 import HeroParallaxSection from "@/components/home/HeroParallaxSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import DescriptionBlock from "@/components/home/DescriptionBlock";
-import ProblemSection from "@/components/home/ProblemSection";
 import SocialProofSection from "@/components/home/SocialProofSection";
 import PricingSection from "@/components/home/PricingSection";
 import Footer from "@/components/home/Footer";
-import HowToUseSection from "@/components/home/HowToUse";
 
 const features = [
   {
@@ -86,7 +84,7 @@ export default function Home() {
           <motion.div
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative z-10 rounded-3xl overflow-hidden w-full bg-[#0f1013] py-16 md:py-24 px-8 md:px-16 text-white text-center flex flex-col items-center justify-center max-w-[1400px] mx-auto border border-white/10 shadow-2xl"
+            className="relative z-10 rounded-3xl overflow-hidden w-full bg-[#0f1013] py-16 md:py-24 px-8 md:px-16 text-white text-center flex flex-col items-center justify-center max-w-[2160px] mx-auto border border-white/10 shadow-2xl"
           >
             <motion.img
               src="/cta.png"

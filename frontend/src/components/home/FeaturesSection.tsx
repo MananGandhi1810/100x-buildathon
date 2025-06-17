@@ -13,6 +13,32 @@ export default function FeaturesSection({
 }) {
   return (
     <section className="md:py-16 w-full space-y-24">
+      {/* Video Frame Section */}
+      <div className="w-full">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+          <div className="relative p-6 aspect-[16/9]">
+            <div className="relative w-full h-full rounded-lg overflow-hidden">
+              <video 
+              autoPlay 
+              muted 
+              loop 
+              className="w-full h-full object-cover"
+              >
+              <source src="/bg.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+              </video>
+
+              {/* Video placeholder overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-lg"></div>
+            </div>
+
+            {/* Corner decorations */}
+            <div className="absolute top-4 right-4 w-2 h-2 bg-white/30 rounded-full" />
+            <div className="absolute bottom-4 left-4 w-1 h-1 bg-white/40 rounded-full" />
+          </div>
+        </div>
+      </div>
+
       {features.map((feature, index) => {
         const isEven = index % 2 === 0;
 

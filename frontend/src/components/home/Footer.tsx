@@ -90,7 +90,7 @@ export default function Footer() {
               <h3 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-3 tracking-tight">
                 Zen.
               </h3>
-              <p className="text-white/70 text-sm md:text-base font-mono leading-relaxed max-w-xs">
+              <p className="text-white/70 text-sm md:text-base  leading-relaxed max-w-xs">
                 The developer experience platform that brings clarity to chaos.
                 Ship faster, break less, sleep better.
               </p>
@@ -250,14 +250,14 @@ export default function Footer() {
             {/* Copyright */}
             <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
               <p className="text-white/60 text-xs md:text-base font-mono">
-                © 2024 Zen. All rights reserved.
+                © 2024 Adeon. All rights reserved.
               </p>{" "}
               <div className="flex items-center gap-2 text-xs text-white/40 font-mono">
                 <span>Built with care for developers</span>
               </div>
             </div>{" "}
             {/* Social Links */}
-            <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4">
+            {/* <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4">
               {socialLinks.map((social, index) => (
                 <motion.a
                   key={social.name}
@@ -278,7 +278,7 @@ export default function Footer() {
                   <div className="w-2 h-2 bg-white/60 rounded-full"></div>
                 </motion.a>
               ))}
-            </div>
+            </div> */}
           </div>
         </motion.div>
 

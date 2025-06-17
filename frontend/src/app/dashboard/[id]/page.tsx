@@ -140,7 +140,9 @@ export default function DashboardPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
+                    <BreadcrumbLink href={`/dashboard/${params.id}`}>
+                      Dashboard
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -179,7 +181,9 @@ export default function DashboardPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
+                    <BreadcrumbLink href={`/dashboard/${params.id}`}>
+                      Dashboard
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -210,24 +214,26 @@ export default function DashboardPage() {
   };
 
   return (
-    <SidebarProvider className="bg-muted">
+    <SidebarProvider className="bg-black">
       <DevToolsSidebar id={params.id} />
-      <SidebarInset className="bg-muted">
-        <header className="flex h-16 shrink-0 items-center bg-muted gap-2 ">
+      <SidebarInset className="bg-black">
+        <header className="flex h-16 shrink-0 items-center bg-black gap-2 ">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
+                  <BreadcrumbLink href={`/dashboard/${params.id}`}>
+                    Dashboard
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbPage>{displayData.name}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
-            </Breadcrumb>
+            </Breadcrumb>{" "}
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-6 p-10 bg-background w-full  mx-auto rounded-tl-2xl">
@@ -246,7 +252,7 @@ export default function DashboardPage() {
                   <GitFork className="h-4 w-4" />
                   <span>{displayData.forks.toLocaleString()}</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-muted text-xs font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-black text-xs font-medium">
                   {displayData.language}
                 </span>
                 <span className="text-xs">
@@ -255,98 +261,168 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="mx-auto grid grid-cols-1 gap-2 md:gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-              {tools.map((tool) => (
-                <MagicCard
-                  key={tool.title}
-                  className="group relative text-left bg-card/50 backdrop-blur-[2px] border border-border/20 rounded-lg transition-all ease-in-out duration-300 cursor-pointer hover:bg-card/80 hover:border-border/40 hover:shadow-lg hover:shadow-black/5 min-h-32 md:min-h-44 h-44 !px-0 pt-5 pb-0 overflow-hidden"
-                >
-                  {/* Subtle gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-background/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Deployment Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  Deploy & Manage
+                </h2>
+                <Button asChild size="sm">
+                  <Link href={`/dashboard/${params.id}/deploy`}>
+                    <Rocket className="h-4 w-4 mr-2" />
+                    Deploy Now
+                  </Link>
+                </Button>
+              </div>
 
-                  {/* Micro-pattern background */}
-                  <div
-                    className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity duration-300"
-                    style={{
-                      backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                      backgroundSize: "16px 16px",
-                    }}
-                  />
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <MagicCard className="p-6 group cursor-pointer">
                   <Link
-                    href={tool.href(params.id)}
-                    className="flex h-full w-full flex-col space-y-2 relative z-10"
+                    href={`/dashboard/${params.id}/deploy`}
+                    className="block"
                   >
-                    <div className="w-full justify-between space-y-2 px-5 h-full flex-1">
-                      <div className="flex items-start gap-3">
-                        {/* Icon container with subtle glow */}
-                        <div className="relative flex-shrink-0 mt-0.5">
-                          <div className="absolute inset-0 bg-foreground/5 rounded-md blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          <div className="relative p-1.5 rounded-md bg-muted/30 border border-border/10 group-hover:bg-muted/50 group-hover:border-border/20 transition-all duration-300">
-                            <tool.icon className="h-4 w-4 text-foreground/70 group-hover:text-foreground transition-colors duration-300" />
-                          </div>
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-black/10 border border-black/20">
+                        <Rocket className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm">Quick Deploy</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Deploy this repository with one click using our
+                          automated pipeline
+                        </p>
+                        <div className="flex items-center gap-1 mt-2">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                          <span className="text-xs text-muted-foreground">
+                            Ready to deploy
+                          </span>
                         </div>
+                      </div>
+                    </div>
+                  </Link>
+                </MagicCard>
 
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-foreground truncate pr-8 group-hover:text-foreground transition-colors duration-300">
-                            {tool.title}
-                          </h3>
+                <MagicCard className="p-6 group cursor-pointer">
+                  <Link href="/deployments" className="block">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-black/10 border border-black/20">
+                        <Server className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm">All Deployments</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          View and manage all your active deployments across
+                          projects
+                        </p>
+                        <div className="flex items-center gap-1 mt-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                          <span className="text-xs text-muted-foreground">
+                            Manage deployments
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </MagicCard>
+              </div>
+            </div>
 
-                          {/* Status indicator */}
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 bg-green-500/70 rounded-full animate-pulse" />
-                              <span className="text-xs text-muted-foreground">
-                                Active
-                              </span>
+            <Separator />
+
+            {/* Development Tools Section */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold tracking-tight">
+                Development Tools
+              </h2>
+
+              <div className="mx-auto grid grid-cols-1 gap-2 md:gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+                {tools.map((tool) => (
+                  <MagicCard
+                    key={tool.title}
+                    className="group relative text-left bg-card/50 backdrop-blur-[2px] border border-border/20 rounded-lg transition-all ease-in-out duration-300 cursor-pointer hover:bg-card/80 hover:border-border/40 hover:shadow-lg hover:shadow-black/5 min-h-32 md:min-h-44 h-44 !px-0 pt-5 pb-0 overflow-hidden"
+                  >
+                    {/* Subtle gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-background/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    {/* Micro-pattern background */}
+                    <div
+                      className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity duration-300"
+                      style={{
+                        backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+                        backgroundSize: "16px 16px",
+                      }}
+                    />
+
+                    <Link
+                      href={tool.href(params.id)}
+                      className="flex h-full w-full flex-col space-y-2 relative z-10"
+                    >
+                      <div className="w-full justify-between space-y-2 px-5 h-full flex-1">
+                        <div className="flex items-start gap-3">
+                          {/* Icon container with subtle glow */}
+                          <div className="relative flex-shrink-0 mt-0.5">
+                            <div className="absolute inset-0 bg-foreground/5 rounded-md blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="relative p-1.5 rounded-md bg-black/30 border border-border/10 group-hover:bg-black/50 group-hover:border-border/20 transition-all duration-300">
+                              <tool.icon className="h-4 w-4 text-foreground/70 group-hover:text-foreground transition-colors duration-300" />
+                            </div>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-foreground truncate pr-8 group-hover:text-foreground transition-colors duration-300">
+                              {tool.title}
+                            </h3>
+
+                            {/* Status indicator */}
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <div className="flex items-center gap-1">
+                                <div className="w-1.5 h-1.5 bg-green-500/70 rounded-full animate-pulse" />
+                                <span className="text-xs text-muted-foreground">
+                                  Active
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                      <div className="w-full !mt-auto">
+                        <div className="relative w-full text-sm border-0 px-5 pb-5 bg-transparent">
+                          <div className="flex justify-between items-start w-full gap-x-2">
+                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed group-hover:text-muted-foreground/80 transition-colors duration-300">
+                              {tool.description}
+                            </p>
+                          </div>
 
-                    <div className="w-full !mt-auto">
-                      <div className="relative w-full text-sm border-0 px-5 pb-5 bg-transparent">
-                        <div className="flex justify-between items-start w-full gap-x-2">
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed group-hover:text-muted-foreground/80 transition-colors duration-300">
-                            {tool.description}
-                          </p>
+                          {/* Usage indicator bar */}
                         </div>
-
-                        {/* Usage indicator bar */}
-
                       </div>
-                    </div>
-
-                    {/* Enhanced arrow with micro-animation */}
-                    <div className="absolute right-4 top-4 text-muted-foreground/40 transition-all duration-300 group-hover:right-3 group-hover:text-foreground/60 group-hover:scale-110">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-foreground/5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-chevron-right relative z-10"
-                        >
-                          <path d="m9 18 6-6-6-6" />
-                        </svg>
+                      {/* Enhanced arrow with micro-animation */}
+                      <div className="absolute right-4 top-4 text-muted-foreground/40 transition-all duration-300 group-hover:right-3 group-hover:text-foreground/60 group-hover:scale-110">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-foreground/5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-chevron-right relative z-10"
+                          >
+                            <path d="m9 18 6-6-6-6" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Corner accent */}
-                    <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                    {/* Bottom border accent */}
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </Link>
-                </MagicCard>
-              ))}
+                      {/* Corner accent */}
+                      <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      {/* Bottom border accent */}{" "}
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </Link>
+                  </MagicCard>
+                ))}
+              </div>
             </div>
           </div>
         </div>

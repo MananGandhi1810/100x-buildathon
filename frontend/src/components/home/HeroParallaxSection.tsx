@@ -29,7 +29,7 @@ export default function HeroParallaxSection({
   return (
     <motion.div
       ref={refObj}
-      className="relative z-10 flex flex-col items-center justify-center gap-10 text-center bg-white h-[calc(100vh-6rem)] px-4 md:px-6 py-12 rounded-[2rem] md:rounded-[4rem] overflow-hidden mt-8 w-full max-w-[1400px] max-h-[800px] mx-auto shadow-2xl"
+      className="relative z-10 flex flex-col items-center justify-center gap-10 text-center bg-white h-[calc(100vh-6rem)] px-4 py-12 rounded-[2rem] overflow-hidden mt-8 w-full max-w-[2160px] max-h-[800px] mx-auto shadow-2xl"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       initial={{ opacity: 0, y: 30 }}
