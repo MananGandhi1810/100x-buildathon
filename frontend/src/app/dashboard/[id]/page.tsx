@@ -40,6 +40,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MagicCard } from "@/components/magicui/magic-card";
+import { Skeleton } from "@/components/ui/skeleton"; // <-- Import shadcn Skeleton
 
 const tools = [
   {
@@ -127,7 +128,43 @@ export default function DashboardPage() {
   }, [params.id]);
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    // Shadcn Skeleton loading animation
+    return (
+      <SidebarProvider>
+        <DevToolsSidebar id={params.id} />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 ">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1 size-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-6 p-10 bg-background w-full mx-auto rounded-tl-2xl">
+            <div className="space-y-6 w-full md:max-w-7xl mx-auto">
+              <Skeleton className="h-8 w-1/3 mb-4" />
+              <div className="flex items-center gap-4 mt-4">
+                <Skeleton className="h-4 w-16 rounded" />
+                <Skeleton className="h-4 w-16 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-4 w-24 rounded" />
+              </div>
+              <div className="mx-auto grid grid-cols-1 gap-2 md:gap-4 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 mt-8">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-44 rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    );
   }
 
   if (error || !projectData) {

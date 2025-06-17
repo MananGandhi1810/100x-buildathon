@@ -14,7 +14,7 @@ The project aims to deliver the following key features:
 4.  **Chat with Code**: Allows developers to interact with their codebase using natural language queries.
 5.  **Deploy**: Enables project deployment through chat-based commands.
 6.  **Code Structure Visualization**: Provides tools to visualize the architecture and dependencies of a codebase.
-7.  **Automated Testing**: Facilitates the generation and execution of automated tests.
+7.  **Test Case Generation**: Facilitates the generation of automated test cases.
 8.  **Development Environment Provisioning**: Automates the setup of development environments.
 
 ## Tech Stack
