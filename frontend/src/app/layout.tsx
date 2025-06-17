@@ -1,6 +1,6 @@
 import { Inter, Playfair } from "next/font/google";
 import "./globals.css";
-import { PostHogProvider } from './providers'
+import { PostHogProvider } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 const playfair = Playfair({
@@ -20,10 +20,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${playfair.variable}`}>
-        <PostHogProvider>
-          {children}
-        </PostHogProvider>
+      <body className={`${inter.className} ${playfair.variable} overflow-auto`}>
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   );

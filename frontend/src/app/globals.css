@@ -159,24 +159,151 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-}
 
-.dark {
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-.bgg {
-  background-size: 16.2px 16.2px;
-  background-image: radial-gradient(
-    circle at 50% 50%,
-    #3f4042 0,
-    #3f4042 0.9px,
-    #0f1013 0.9px
-  );
+  /* Custom Scrollbar Styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #333333 transparent;
+  }
+
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #333333;
+    border-radius: 3px;
+    border: none;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: #4a4a4a;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Smooth scrolling for better UX */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Better text rendering */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Focus styles for better accessibility */
+  *:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove focus outline for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Better selection colors */
+  ::selection {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  ::-moz-selection {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  /* Improved button and interactive element defaults */
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    cursor: pointer;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Better disabled state */
+  button:disabled,
+  [role="button"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* Remove default input styling */
+  input,
+  textarea,
+  select {
+    border-radius: inherit;
+  }
+
+  /* Better image defaults */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Smooth animations by default */
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Better link hover states */
+  a {
+    transition: color 0.2s ease, opacity 0.2s ease;
+  }
+
+  a:hover {
+    opacity: 0.8;
+  }
+
+  /* Loading state for images */
+  img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  img[loading="lazy"].loaded {
+    opacity: 1;
+  }
+
+  /* Better table defaults */
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  /* Hide scrollbar on mobile for cleaner look */
+  @media (max-width: 768px) {
+    *::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+  }
 }
