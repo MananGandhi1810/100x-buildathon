@@ -12,33 +12,27 @@ import {
   GitBranch,
   Clock,
   Key,
+  LogOut,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import axios from "axios";
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { MagicCard } from "@/components/magicui/magic-card";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface EnvSecret {
   key: string;
@@ -59,16 +53,76 @@ interface Deployment {
   containerPort?: number;
 }
 
+interface User {
+  name: string;
+  email: string;
+  avatarUrl?: string;
+}
+
+// Loading Skeleton Component
+function DeploymentDetailSkeleton() {
+  return (
+    <div className="space-y-8 p-6 container mx-auto py-6">
+      {/* Header Skeleton */}
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-9 w-20" />
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-6 w-20" />
+          </div>
+          <Skeleton className="h-4 w-48" />
+        </div>
+      </div>
+
+      {/* Cards Skeleton */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Skeleton className="h-80 rounded-xl" />
+        <Skeleton className="h-80 rounded-xl" />
+      </div>
+
+      {/* Environment Variables Skeleton */}
+      <Skeleton className="h-40 rounded-xl" />
+    </div>
+  );
+}
+
 export default function DeploymentDetailPage() {
   const [deployment, setDeployment] = useState<Deployment | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
   const params = useParams();
   const router = useRouter();
 
   useEffect(() => {
-    fetchDeployment();
+    const init = async () => {
+      await fetchUser();
+      await fetchDeployment();
+    };
+    init();
   }, [params.id]);
+
+  const fetchUser = async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
+        {
+          headers: { authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setUser(data.data.user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      router.push("/signup");
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("accessToken");
+    router.push("/signup");
+  };
 
   const fetchDeployment = async () => {
     try {
@@ -78,7 +132,7 @@ export default function DeploymentDetailPage() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       setDeployment(response.data.data.deployment);
     } catch (error) {
@@ -88,22 +142,21 @@ export default function DeploymentDetailPage() {
       setLoading(false);
     }
   };
-
   const refreshStatus = async () => {
     if (!deployment) return;
 
     setStatusLoading(true);
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/deploy/${deployment.id}/status`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deployment.id}/status`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       setDeployment((prev) =>
-        prev ? { ...prev, status: response.data.data.status } : null,
+        prev ? { ...prev, status: response.data.data.status } : null
       );
     } catch (error) {
       toast.error("Failed to refresh status");
@@ -117,13 +170,13 @@ export default function DeploymentDetailPage() {
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/deploy/${deployment.id}/start`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deployment.id}/start`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       toast.success("Deployment started successfully");
       refreshStatus();
@@ -137,13 +190,13 @@ export default function DeploymentDetailPage() {
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/deploy/${deployment.id}/stop`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deployment.id}/stop`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       toast.success("Deployment stopped successfully");
       refreshStatus();
@@ -164,198 +217,273 @@ export default function DeploymentDetailPage() {
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
-
   if (loading) {
     return (
-      <>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
-
-        </header>
-        <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">
-              Loading deployment details...
-            </p>
-          </div>
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md bg-muted md:flex-row",
+          "h-screen"
+        )}
+      >
+        <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto ml-4">
+          <DeploymentDetailSkeleton />
         </div>
-      </>
+      </div>
     );
   }
 
   if (!deployment) {
     return (
-
-      <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Deployment not found</p>
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md bg-black md:flex-row",
+          "h-screen"
+        )}
+      >
+        <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto m">
+          <div className="flex flex-1 flex-col items-center justify-center p-6">
+            <h1 className="text-2xl font-bold">Deployment Not Found</h1>
+            <p className="text-muted-foreground mt-2">
+              The deployment you&apos;re looking for doesn&apos;t exist or could
+              not be loaded.
+            </p>
+            <Button className="mt-4" asChild>
+              <Link href="/deployments">Back to Deployments</Link>
+            </Button>
+          </div>
         </div>
       </div>
-
     );
   }
 
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
-
-      </header>
-      <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {deployment.name}
-                </h1>
-                {getStatusBadge(deployment.status)}
+    <div
+      className={cn(
+        "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md bg-black md:flex-row",
+        "h-screen"
+      )}
+    >
+      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto m">
+        <div className="space-y-8 p-6 container mx-auto py-6 bg-transparent overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => router.back()}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div className="h-6 w-px bg-border" />
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl font-bold tracking-tight">
+                    {deployment.name}
+                  </h1>
+                  {getStatusBadge(deployment.status)}
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  {deployment.description || "No description"}
+                </p>
               </div>
-              <p className="text-muted-foreground">
-                {deployment.description || "No description"}
-              </p>
             </div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Server className="h-5 w-5" />
-                  Deployment Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Status</span>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(deployment.status)}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={refreshStatus}
-                      disabled={statusLoading}
-                    >
-                      <RefreshCw
-                        className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""
-                          }`}
-                      />
-                    </Button>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Framework</span>
-                  <div className="flex items-center gap-2">
-                    <GitBranch className="h-4 w-4" />
-                    <span className="text-sm">{deployment.framework}</span>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Created</span>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm">
-                      {new Date(deployment.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Last Updated</span>
-                  <span className="text-sm">
-                    {new Date(deployment.updatedAt).toLocaleDateString()}
-                  </span>
-                </div>
-                {deployment.containerPort && (
-                  <>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Container Port
+            <div className="flex items-center gap-2">
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatarUrl} />
+                        <AvatarFallback>
+                          {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden sm:inline">
+                        {user.name || user.email}
                       </span>
-                      <span className="text-sm">
-                        {deployment.containerPort}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>{" "}
+          {/* Content */}
+          <div className="grid gap-8 md:grid-cols-2">
+            <MagicCard className="hover:border-primary/50 transition-all duration-200 hover:shadow-md rounded-xl p-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Server className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Deployment Info</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Status
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {getStatusBadge(deployment.status)}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={refreshStatus}
+                        disabled={statusLoading}
+                        className="h-8 w-8 p-0"
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 ${
+                            statusLoading ? "animate-spin" : ""
+                          }`}
+                        />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Framework
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <GitBranch className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        {deployment.framework}
                       </span>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
-                <CardDescription>Manage your deployment</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={startDeployment}
-                    disabled={deployment.status === "running"}
-                    className="flex-1"
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Start
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={stopDeployment}
-                    disabled={deployment.status !== "running"}
-                    className="flex-1"
-                  >
-                    <Square className="h-4 w-4 mr-2" />
-                    Stop
+                  <Separator />
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Created
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        {new Date(deployment.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Last Updated
+                    </span>
+                    <span className="text-sm font-medium">
+                      {new Date(deployment.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {deployment.containerPort && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Container Port
+                        </span>
+                        <span className="text-sm font-medium font-mono">
+                          {deployment.containerPort}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </MagicCard>
+
+            <MagicCard className="hover:border-primary/50 transition-all duration-200 hover:shadow-md rounded-xl p-6">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Actions</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage your deployment
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={startDeployment}
+                      disabled={deployment.status === "running"}
+                      className="flex-1 h-11"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Start
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={stopDeployment}
+                      disabled={deployment.status !== "running"}
+                      className="flex-1 h-11"
+                    >
+                      <Square className="h-4 w-4 mr-2" />
+                      Stop
+                    </Button>
+                  </div>
+
+                  <Button variant="outline" className="w-full h-11" asChild>
+                    <a
+                      href={deployment.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View on GitHub
+                    </a>
                   </Button>
                 </div>
-                <Button variant="outline" className="w-full" asChild>
-                  <a
-                    href={deployment.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View on GitHub
-                  </a>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
+              </div>
+            </MagicCard>
+          </div>{" "}
           {deployment.envSecrets && deployment.envSecrets.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Key className="h-5 w-5" />
-                  Environment Variables
-                </CardTitle>
-                <CardDescription>
-                  Environment variables configured for this deployment
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+            <MagicCard className="hover:border-primary/50 transition-all duration-200 hover:shadow-md rounded-xl p-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Key className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Environment Variables
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Environment variables configured for this deployment
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
                   {deployment.envSecrets.map((secret, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50"
                     >
-                      <span className="font-mono text-sm">{secret.key}</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="font-mono text-sm font-medium">
+                        {secret.key}
+                      </span>
+                      <span className="text-sm text-muted-foreground font-mono">
                         ••••••••
                       </span>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </MagicCard>
           )}
         </div>
       </div>
-    </>
-
+    </div>
   );
 }

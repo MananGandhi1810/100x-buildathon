@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Play,
@@ -10,6 +10,11 @@ import {
   GitBranch,
   Clock,
   Server,
+  LogOut,
+  User,
+  Github,
+  LayoutDashboard,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,22 +45,20 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "axios";
-import { useParams } from "next/navigation";
-import { DevToolsSidebar } from "@/components/dev-tools-sidebar";
+import { useRouter } from "next/navigation";
+import { MagicCard } from "@/components/magicui/magic-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface EnvSecret {
   key: string;
@@ -76,6 +79,12 @@ interface Deployment {
   containerPort?: number;
 }
 
+interface User {
+  name: string;
+  email: string;
+  avatarUrl?: string;
+}
+
 const frameworks = [
   "Node",
   "React",
@@ -87,11 +96,204 @@ const frameworks = [
   "Other",
 ];
 
+// Search Bar Component
+function SearchBar({
+  searchQuery,
+  onSearchChange,
+}: {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+}) {
+  return (
+    <div className="relative flex-1 max-w-2xl">
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        placeholder="Search deployments..."
+        className="pl-9 h-11 shadow-sm border-2 border-border focus-visible:ring-0 focus-visible:ring-offset-0"
+        value={searchQuery}
+        onChange={(e) => onSearchChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+// Deployment Card Component
+function DeploymentCard({
+  deployment,
+  onStart,
+  onStop,
+}: {
+  deployment: Deployment;
+  onStart: (id: string) => void;
+  onStop: (id: string) => void;
+}) {
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case "running":
+        return <Badge className="bg-green-100 text-green-800">Running</Badge>;
+      case "stopped":
+        return <Badge variant="secondary">Stopped</Badge>;
+      case "exited":
+        return <Badge variant="destructive">Exited</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  return (
+    <MagicCard className="group hover:border-primary/50 transition-all duration-200 hover:shadow-md rounded-xl">
+      <div className="p-6">
+        <div className="pb-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold">{deployment.name}</h3>
+            {getStatusBadge(deployment.status)}
+          </div>
+          <p className="text-muted-foreground line-clamp-2">
+            {deployment.description || "No description"}
+          </p>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <GitBranch className="h-4 w-4" />
+            <span>{deployment.framework}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>
+              Updated {new Date(deployment.createdAt).toLocaleString()}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="font-medium">Status:</span>
+            <span>
+              {deployment.status
+                ? deployment.status.charAt(0).toUpperCase() +
+                  deployment.status.slice(1)
+                : "Unknown"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-3">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onStart(deployment.id)}
+            disabled={deployment.status === "running"}
+          >
+            <Play className="h-4 w-4 mr-1" />
+            Start
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onStop(deployment.id)}
+            disabled={deployment.status !== "running"}
+          >
+            <Square className="h-4 w-4 mr-1" />
+            Stop
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <a href={`/deployments/${deployment.id}`}>
+              <Eye className="h-4 w-4 mr-1" />
+              View
+            </a>
+          </Button>
+        </div>
+
+        <Button size="sm" variant="ghost" className="w-full" asChild>
+          <a
+            href={deployment.githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="h-4 w-4 mr-1" />
+            View on GitHub
+          </a>
+        </Button>
+      </div>
+    </MagicCard>
+  );
+}
+
+// Loading Skeleton Component
+function DeploymentsSkeleton() {
+  return (
+    <div className="space-y-8 p-6 container mx-auto py-6">
+      {/* Header Skeleton */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-48 mt-2" />
+        </div>
+      </div>
+
+      {/* Search and Create Skeleton */}
+      <div className="flex items-center gap-4 justify-between w-full">
+        <div className="relative flex-1 max-w-2xl">
+          <Skeleton className="h-11 w-full" />
+        </div>
+        <Skeleton className="h-11 w-40" />
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, index) => (
+          <MagicCard key={index} className="rounded-xl">
+            <div className="p-6">
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-full mb-4" />
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
+          </MagicCard>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Empty State Component
+function EmptyState({
+  hasDeployments,
+  onCreateClick,
+}: {
+  hasDeployments: boolean;
+  onCreateClick: () => void;
+}) {
+  return (
+    <div className="text-center py-12">
+      <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">No deployments found</h3>
+      <p className="text-muted-foreground mb-4">
+        {!hasDeployments
+          ? "Get started by creating your first deployment"
+          : "No deployments match your search criteria"}
+      </p>
+      {!hasDeployments && (
+        <MagicCard className="inline-block">
+          <Button
+            onClick={onCreateClick}
+            className="gap-2 bg-transparent hover:bg-transparent text-white"
+          >
+            <Plus className="h-4 w-4" />
+            Create Deployment
+          </Button>
+        </MagicCard>
+      )}
+    </div>
+  );
+}
+
 export default function DeploymentsPage() {
+  const router = useRouter();
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const params = useParams<{ id: string }>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<User | null>(null);
 
   // Form state for new deployment
   const [formData, setFormData] = useState({
@@ -101,15 +303,29 @@ export default function DeploymentsPage() {
     framework: "",
     envSecrets: [{ key: "", value: "" }],
   });
-
-
-
   useEffect(() => {
     const init = async () => {
+      await fetchUser();
       await fetchDeployments();
     };
     init();
-  }, []);
+  }, [router]);
+
+  const fetchUser = async () => {
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
+        {
+          headers: { authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setUser(data.data.user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      router.push("/signup");
+    }
+  };
 
   const fetchDeployments = async () => {
     try {
@@ -119,7 +335,7 @@ export default function DeploymentsPage() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       setDeployments(response.data.data.deployments);
     } catch (error) {
@@ -133,7 +349,7 @@ export default function DeploymentsPage() {
   const createDeployment = async () => {
     try {
       const filteredEnvSecrets = formData.envSecrets.filter(
-        (secret) => secret.key.trim() && secret.value.trim(),
+        (secret) => secret.key.trim() && secret.value.trim()
       );
 
       await axios.post(
@@ -146,7 +362,7 @@ export default function DeploymentsPage() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
 
       toast.success("Deployment created successfully");
@@ -177,7 +393,7 @@ export default function DeploymentsPage() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       toast.success("Deployment started successfully");
       fetchDeployments();
@@ -196,7 +412,7 @@ export default function DeploymentsPage() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       toast.success("Deployment stopped successfully");
       fetchDeployments();
@@ -214,7 +430,7 @@ export default function DeploymentsPage() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
-        },
+        }
       );
       return response.data.data.status;
     } catch (error) {
@@ -239,12 +455,12 @@ export default function DeploymentsPage() {
   const updateEnvSecret = (
     index: number,
     field: "key" | "value",
-    value: string,
+    value: string
   ) => {
     setFormData((prev) => ({
       ...prev,
       envSecrets: prev.envSecrets.map((secret, i) =>
-        i === index ? { ...secret, [field]: value } : secret,
+        i === index ? { ...secret, [field]: value } : secret
       ),
     }));
   };
@@ -262,77 +478,110 @@ export default function DeploymentsPage() {
     }
   };
 
+  const handleLogout = () => {
+    sessionStorage.removeItem("accessToken");
+    router.push("/signup");
+  };
+
+  const filteredDeployments = deployments.filter(
+    (deployment) =>
+      deployment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      deployment.description
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      deployment.framework.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   if (loading) {
     return (
-      <SidebarProvider>
-        <DevToolsSidebar id={params.id} />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink
-                      href="/dashboard"
-                      className="hover:text-primary transition-colors"
-                    >
-                      Dashboard
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink
-                      href={`/dashboard/${params.id}`}
-                      className="hover:text-primary transition-colors"
-                    >
-                      Repository
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Deployments</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Loading deployments...</p>
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md bg-muted md:flex-row",
+          "h-screen"
+        )}
+      >
+        <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto ml-4">
+          <DeploymentsSkeleton />
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-grain">
-
-      </header>
-      <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Deployments
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your application deployments
-              </p>
+    <div
+      className={cn(
+        "mx-auto flex w-full max-w-[1920px] flex-col overflow-hidden rounded-md  bg-black md:flex-row ",
+        "h-screen"
+      )}
+    >
+      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl h-full w-full max-h-[97vh] max-w-[97vw] m-auto m">
+        <div className="space-y-8 p-6 container mx-auto py-6 bg-transparent overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
+              <div className="h-6 w-px bg-border" />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">
+                  Your Deployments
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Manage and monitor your application deployments
+                </p>
+              </div>
             </div>
+            <div className="flex items-center gap-2">
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatarUrl} />
+                        <AvatarFallback>
+                          {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden sm:inline">
+                        {user.name || user.email}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+          {/* Search and Create */}
+          <div className="flex items-center gap-4 justify-between w-full">
+            <SearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
             <Dialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
             >
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Deployment
-                </Button>
+                <MagicCard className="cursor-pointer rounded-lg p-2">
+                  <Button
+                    className="gap-2 shadow-sm hover:shadow-md transition-all whitespace-nowrap bg-transparent hover:bg-transparent cursor-pointer text-foreground"
+                    onClick={() => setIsCreateDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Deployment
+                  </Button>
+                </MagicCard>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
@@ -396,9 +645,7 @@ export default function DeploymentsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">
-                      Description (Optional)
-                    </Label>
+                    <Label htmlFor="description">Description (Optional)</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -440,11 +687,7 @@ export default function DeploymentsPage() {
                         </Button>
                       </div>
                     ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addEnvSecret}
-                    >
+                    <Button variant="outline" size="sm" onClick={addEnvSecret}>
                       Add Variable
                     </Button>
                   </div>
@@ -462,108 +705,27 @@ export default function DeploymentsPage() {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
-
-          {deployments.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Server className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No deployments yet
-                </h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Get started by creating your first deployment
-                </p>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Deployment
-                </Button>
-              </CardContent>
-            </Card>
+          </div>{" "}
+          {/* Content */}
+          {filteredDeployments.length === 0 ? (
+            <EmptyState
+              hasDeployments={deployments.length > 0}
+              onCreateClick={() => setIsCreateDialogOpen(true)}
+            />
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {deployments.map((deployment) => (
-                <Card
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDeployments.map((deployment) => (
+                <DeploymentCard
                   key={deployment.id}
-                  className="hover:shadow-md transition-shadow"
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        {deployment.name}
-                      </CardTitle>
-                      {getStatusBadge(deployment.status)}
-                    </div>
-                    <CardDescription>
-                      {deployment.description || "No description"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <GitBranch className="h-4 w-4" />
-                      <span>{deployment.framework}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        Updated{" "}
-                        {new Date(deployment.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    {/* Add status text here */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">Status:</span>
-                      <span>{deployment.status ? deployment.status.charAt(0).toUpperCase() + deployment.status.slice(1) : "Unknown"}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => startDeployment(deployment.id)}
-                        disabled={deployment.status === "running"}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        Start
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => stopDeployment(deployment.id)}
-                        disabled={deployment.status !== "running"}
-                      >
-                        <Square className="h-4 w-4 mr-1" />
-                        Stop
-                      </Button>
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={`/deployments/${deployment.id}`}>
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </a>
-                      </Button>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="w-full"
-                      asChild
-                    >
-                      <a
-                        href={deployment.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        View on GitHub
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
+                  deployment={deployment}
+                  onStart={startDeployment}
+                  onStop={stopDeployment}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
-    </>
-
+    </div>
   );
 }
