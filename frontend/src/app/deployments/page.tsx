@@ -169,7 +169,7 @@ function DeploymentCard({
             <span>
               {deployment.status
                 ? deployment.status.charAt(0).toUpperCase() +
-                  deployment.status.slice(1)
+                deployment.status.slice(1)
                 : "Unknown"}
             </span>
           </div>
@@ -307,6 +307,20 @@ export default function DeploymentsPage() {
     const init = async () => {
       await fetchUser();
       await fetchDeployments();
+
+      const storedGithubUrl = sessionStorage.getItem("githubUrl");
+      const projectName = sessionStorage.getItem("projectName");
+      if (storedGithubUrl && projectName) {
+        setFormData((prev) => ({
+          ...prev,
+          githubUrl: storedGithubUrl,
+          name: projectName,
+        }));
+        setIsCreateDialogOpen(true);
+        sessionStorage.removeItem("githubUrl");
+        sessionStorage.removeItem("projectName");
+
+      }
     };
     init();
   }, [router]);

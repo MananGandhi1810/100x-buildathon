@@ -40,6 +40,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MagicCard } from "@/components/magicui/magic-card";
+import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton"; // <-- Import shadcn Skeleton
 
 const tools = [
@@ -102,6 +103,7 @@ export default function DashboardPage() {
   const [error, setError] = useState(false);
   const params = useParams<{ id: string }>();
   const repoSlug = params.id;
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -126,7 +128,12 @@ export default function DashboardPage() {
 
     fetchProjectData();
   }, [params.id]);
-
+  const handleDeploy = () => {
+    console.log(projectData)
+    sessionStorage.setItem("githubUrl", projectData.repoUrl);
+    sessionStorage.setItem("projectName", projectData.title)
+    router.push('/deployments');
+  }
   if (loading) {
     // Shadcn Skeleton loading animation
     return (
@@ -267,20 +274,18 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold tracking-tight">
                   Deploy & Manage
                 </h2>
-                <Button asChild size="sm">
-                  <Link href={`/dashboard/${params.id}/deploy`}>
+                <Button asChild size="sm" className="cursor-pointer" onClick={handleDeploy}>
+                  <div>
                     <Rocket className="h-4 w-4 mr-2" />
                     Deploy Now
-                  </Link>
+                  </div>
                 </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <MagicCard className="p-6 group cursor-pointer">
-                  <Link
-                    href={`/dashboard/${params.id}/deploy`}
-                    className="block"
-                  >
+
+                  <div onClick={handleDeploy}>
                     <div className="flex items-start gap-4">
                       <div className="p-2 rounded-lg bg-black/10 border border-black/20">
                         <Rocket className="h-6 w-6 text-white" />
@@ -299,7 +304,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </MagicCard>
 
                 <MagicCard className="p-6 group cursor-pointer">
