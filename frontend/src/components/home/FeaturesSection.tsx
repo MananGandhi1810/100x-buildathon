@@ -12,7 +12,7 @@ export default function FeaturesSection({
   }[];
 }) {
   return (
-    <section className="md:py-16 w-full space-y-24">
+    <section className="md:py-16 w-full space-y-24" id="features">
       {/* Video Frame Section */}
       <div className="w-full">
         <div className="relative overflow-hidden rounded-2xl border border-white/10 shadow-2xl">

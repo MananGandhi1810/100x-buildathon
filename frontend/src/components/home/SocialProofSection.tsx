@@ -69,7 +69,7 @@ export default function SocialProofSection() {
   ];
 
   return (
-    <div className="relative z-10 my-24 max-w-[1400px] mx-auto px-5 md:px-10">
+    <div className="relative z-10 my-24 max-w-[1400px] mx-auto px-5 md:px-10" id="social-proof">
       {/* Section Header */}
       <motion.div
         className="mb-16"
