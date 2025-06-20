@@ -284,7 +284,7 @@ const provisionProjectHandler = async (req, res) => {
         const containerName = `code-server-${projectId}-${Date.now()}`;
         const container = await docker.createContainer({
             Image: "ghcr.io/manangandhi1810/10000x-devs-code-server:latest",
-            Cmd: ["/home/coder/workspace"],
+            Cmd: ["/home/coder"],
             name: containerName,
             Tty: true,
             WorkingDir: "/home/coder",
@@ -306,7 +306,7 @@ const provisionProjectHandler = async (req, res) => {
         await container.start();
 
         const createDirExec = await container.exec({
-            Cmd: ["mkdir", "-p", "/home/coder/workspace"],
+            Cmd: ["mkdir", "-p", "/home/coder"],
             AttachStdout: true,
             AttachStderr: true,
         });
