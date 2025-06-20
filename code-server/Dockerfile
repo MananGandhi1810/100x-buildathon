@@ -1,19 +1,30 @@
-FROM gitpod/openvscode-server:latest
+FROM codercom/code-server:latest
 
-ENV OPENVSCODE_SERVER_ROOT="/home/.openvscode-server"
-ENV OPENVSCODE="${OPENVSCODE_SERVER_ROOT}/bin/openvscode-server"
+ENV DEBIAN_FRONTEND=noninteractive
+ENV 
 
-SHELL ["/bin/bash", "-c"]
-RUN urls=(\
-        https://github.com/rust-lang/rust-analyzer/releases/download/2022-12-26/rust-analyzer-linux-x64.vsix \
-        https://github.com/VSCodeVim/Vim/releases/download/v1.24.3/vim-1.24.3.vsix \
-    )\
-    && tdir=/tmp/exts && mkdir -p "${tdir}" && cd "${tdir}" \
-    && wget "${urls[@]}" && \
-    exts=(\
-        gitpod.gitpod-theme \
-        "${tdir}"/* \
-    )\
-    && for ext in "${exts[@]}"; do ${OPENVSCODE} --install-extension "${ext}"; done
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    build-essential \
+    gcc \
+    g++ \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 3000
+
+USER coder
+WORKDIR /home/coder
+RUN code-server --install-extension ms-python.python \
+    && code-server --install-extension GitHub.vscode-pull-request-github \
+    && code-server --install-extension dbaeumer.vscode-eslint \
+    && code-server --install-extension esbenp.prettier-vscode \
+    && code-server --install-extension redhat.vscode-yaml \
+    && code-server --install-extension golang.go \
+    && code-server --install-extension vscode.npm \
+    && code-server --install-extension google.geminicodeassist
+EXPOSE 8080
