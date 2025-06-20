@@ -1,7 +1,8 @@
 "use client";
-import { Pricing4 } from "../price";
 
-export default function PricingSection() {
+import { Pricing4 } from "@/components/price";
+
+export default function PricingPage() {
   const plans = [
     {
       name: "Free",
@@ -15,6 +16,7 @@ export default function PricingSection() {
         "Basic Support",
         "Limited Features",
         "Community Access",
+        "Basic Templates",
       ],
       badge: "Free Forever",
       isPopular: false,
@@ -31,6 +33,9 @@ export default function PricingSection() {
         "Priority Support",
         "Advanced Features",
         "All Integrations",
+        "Custom Templates",
+        "Analytics Dashboard",
+        "API Access",
       ],
       badge: "Most Popular",
       isPopular: true,
@@ -41,18 +46,23 @@ export default function PricingSection() {
         monthly: 0, // This will show as "Custom"
         yearly: 0,
       },
-      description: "For large organizations",
+      description: "For large organizations with custom needs",
       features: [
         "Unlimited Users",
-        "24/7 Support",
+        "24/7 Dedicated Support",
         "All Features",
         "Dedicated Account Manager",
+        "Custom Integrations",
+        "Advanced Security",
+        "SLA Guarantee",
+        "On-premise Deployment",
       ],
       isPopular: false,
     },
   ];
+
   return (
-    <div id="pricing">
+    <div className="min-h-screen bg-background">
       <Pricing4
         title="Choose Your Plan"
         description="Start free and scale as you grow. All plans include our core features with different limits and support levels."

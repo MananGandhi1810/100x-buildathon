@@ -65,7 +65,7 @@ export default function ChatWithCodePage() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
         {
           headers: { authorization: `Bearer ${accessToken}` },
-        },
+        }
       );
       setProjectData(response.data.data.project);
     } catch (error) {
@@ -103,7 +103,7 @@ export default function ChatWithCodePage() {
     if (params.id) {
       localStorage.setItem(
         `chat_messages_${params.id}`,
-        JSON.stringify(messages),
+        JSON.stringify(messages)
       );
     }
   }, [messages, params.id]);
@@ -157,7 +157,7 @@ export default function ChatWithCodePage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        },
+        }
       );
 
       // Add assistant response to chat
@@ -221,10 +221,10 @@ export default function ChatWithCodePage() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-6 p-6 bg-grain">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
+        </header>{" "}
+        <div className="flex flex-1 flex-col h-screen bg-grain overflow-hidden">
+          <div className="flex flex-1 flex-col p-6 gap-6 h-full">
+            <div className="flex items-center gap-3 flex-shrink-0">
               <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
                 <MessageSquare className="h-6 w-6" />
               </div>
@@ -244,116 +244,137 @@ export default function ChatWithCodePage() {
               </div>
             </div>
 
-            <Card className="flex flex-col h-[calc(100vh-220px)] shadow-sm">
-              <CardHeader className="border-b pb-4">
+            <Card className="flex flex-col shadow-sm h-[calc(100vh-200px)] overflow-hidden">
+              {" "}
+              <CardHeader className="border-b pb-4 flex-shrink-0">
                 <CardTitle>Code Assistant</CardTitle>
                 <CardDescription>
                   Ask questions about your code, get explanations, and receive
                   suggestions
                 </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-1 p-4 overflow-y-auto">
-                <div className="flex-1 pr-4 overflow-y-auto">
-                  <div className="space-y-6 ">
+              </CardHeader>{" "}
+              <CardContent className="flex flex-col flex-1 overflow-hidden relative">
+                <div className="flex-1 overflow-y-auto p-6 pb-20">
+                  <div className="space-y-4">
                     {messages.map((message, index) => (
                       <div
                         key={index}
-                        className={`flex gap-3 ${
+                        className={`flex gap-4 ${
                           message.role === "user"
                             ? "justify-end"
                             : "justify-start"
                         }`}
                       >
                         <div
-                          className={`flex gap-3 max-w-[80%] ${
+                          className={`flex gap-4 max-w-[85%] ${
                             message.role === "user"
                               ? "flex-row-reverse"
                               : "flex-row"
                           }`}
                         >
+                          {" "}
                           <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
                               message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
+                                ? "bg-blue-500 text-white border-blue-400"
+                                : "bg-neutral-700 text-neutral-300 border-neutral-600"
                             }`}
                           >
                             {message.role === "user" ? (
-                              <User className="h-4 w-4" />
+                              <User className="h-5 w-5" />
                             ) : (
-                              <Bot className="h-4 w-4" />
+                              <Bot className="h-5 w-5" />
                             )}
-                          </div>
+                          </div>{" "}
                           <div
-                            className={`rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap ${
+                            className={`rounded-xl px-6 py-4 text-sm leading-relaxed shadow-sm ${
                               message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
+                                ? "bg-neutral-900 text-white"
+                                : "text-white"
                             }`}
                           >
-                            <ReactMarkdown
-                              components={{
-                                code: ({ className, children, ...props }) => {
-                                  const match = /language-(\w+)/.exec(
-                                    className || "",
-                                  );
-                                  return !match ? (
-                                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                            <div className="prose prose-sm max-w-none prose-invert">
+                              <ReactMarkdown
+                                components={{
+                                  code: ({ className, children, ...props }) => {
+                                    const match = /language-(\w+)/.exec(
+                                      className || ""
+                                    );
+                                    return !match ? (
+                                      <code className="bg-transparent text-neutral-200 px-2 py-1 rounded text-xs font-mono border ">
+                                        {children}
+                                      </code>
+                                    ) : (
+                                      <code
+                                        className={`language-${match[1]} bg-transparent text-neutral-200 px-2 py-1 rounded text-xs font-mono  block p-4 my-2`}
+                                        {...props}
+                                      >
+                                        {children}
+                                      </code>
+                                    );
+                                  },
+                                  p: ({ children }) => (
+                                    <p className="mb-2 last:mb-0 text-current">
                                       {children}
-                                    </code>
-                                  ) : (
-                                    <code
-                                      className={`language-${match[1]} bg-muted px-1.5 py-0.5 rounded text-sm font-mono`}
-                                      {...props}
-                                    >
+                                    </p>
+                                  ),
+                                  ul: ({ children }) => (
+                                    <ul className="mb-2 last:mb-0 pl-4 text-current">
                                       {children}
-                                    </code>
-                                  );
-                                },
-                              }}
-                            >
-                              {message.content || "No response from AI."}
-                            </ReactMarkdown>
+                                    </ul>
+                                  ),
+                                  ol: ({ children }) => (
+                                    <ol className="mb-2 last:mb-0 pl-4 text-current">
+                                      {children}
+                                    </ol>
+                                  ),
+                                }}
+                              >
+                                {message.content || "No response from AI."}
+                              </ReactMarkdown>
+                            </div>
                           </div>
                         </div>
                       </div>
                     ))}
                     {isLoading && (
-                      <div className="flex gap-3 justify-start">
-                        <div className="flex gap-3 max-w-[80%]">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-muted">
-                            <Bot className="h-4 w-4" />
+                      <div className="flex gap-4 justify-start">
+                        <div className="flex gap-4 max-w-[85%]">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-neutral-700 text-neutral-300 border-neutral-600">
+                            <Bot className="h-5 w-5" />
                           </div>
-                          <div className="rounded-lg px-4 py-2.5 text-sm bg-muted flex items-center gap-2">
+                          <div className="rounded-xl px-6 py-4 text-sm text-white flex items-center gap-3 shadow-sm">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Thinking...
+                            <span>Analyzing your code...</span>
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="mt-4 flex gap-2 pt-4 border-t">
-                  <Input
-                    placeholder="Ask a question about your code..."
-                    className="flex-1 h-11 shadow-sm"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    disabled={isLoading}
-                  />
-                  <Button
-                    size="icon"
-                    className="h-11 w-11 shadow-sm"
-                    onClick={sendMessage}
-                    disabled={isLoading || !inputMessage.trim()}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-transparent">
+                  <div className="flex gap-3 max-w-3xl mx-auto">
+                    <Input
+                      placeholder="Ask a question about your code..."
+                      className="flex-1 h-12 text-sm shadow-sm border-black focus:border-blue-400 bg-neutral-900 text-neutral-100 placeholder:text-neutral-400"
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      disabled={isLoading}
+                    />
+                    <Button
+                      size="icon"
+                      className="h-12 w-12 shadow-sm bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={sendMessage}
+                      disabled={isLoading || !inputMessage.trim()}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Send className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 
 // Add proper types for PR analysis
 interface PRAnalysis {
@@ -71,7 +72,7 @@ export default function PRAnalyzerPage() {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          },
+          }
         );
         const prs = response.data.data.pullRequests || [];
         setPullRequests(prs);
@@ -179,8 +180,8 @@ export default function PRAnalyzerPage() {
                                   pr.state === "merged"
                                     ? "default"
                                     : pr.state === "open"
-                                      ? "secondary"
-                                      : "destructive"
+                                    ? "secondary"
+                                    : "destructive"
                                 }
                               >
                                 {pr.state}
@@ -231,34 +232,33 @@ export default function PRAnalyzerPage() {
                     ) : (
                       <div className="space-y-6">
                         <div className="space-y-4">
+                          {" "}
                           <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-5 w-5 text-green-500" />
                             <h3 className="font-medium">AI Review</h3>
                           </div>
-                          <div className="whitespace-pre-line text-muted-foreground">
-                            <ReactMarkdown
-                              components={{
-                                code: ({ className, children, ...props }) => {
-                                  const match = /language-(\w+)/.exec(
-                                    className || "",
-                                  );
-                                  return !match ? (
-                                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
-                                      {children}
-                                    </code>
-                                  ) : (
-                                    <code
-                                      className={`language-${match[1]} bg-muted px-1.5 py-0.5 rounded text-sm font-mono`}
-                                      {...props}
-                                    >
-                                      {children}
-                                    </code>
-                                  );
-                                },
-                              }}
-                            >
-                              {selectedPR.aiReview}
-                            </ReactMarkdown>
+                          <div className="min-h-[400px] rounded-md border bg-muted/50 p-4">
+                            <div className="prose max-w-none prose-pink prose-invert">
+                              <ReactMarkdown
+                                rehypePlugins={[rehypeRaw]}
+                                components={{
+                                  img: ({ node, ...props }) => {
+                                    let src = props.src || "";
+                                    if (!src) return <img {...props} />;
+                                    // If src is already absolute, return as is
+                                    if (
+                                      typeof src === "string" &&
+                                      /^(https?:)?\/\//.test(src)
+                                    ) {
+                                      return <img {...props} />;
+                                    }
+                                    return <img {...props} />;
+                                  },
+                                }}
+                              >
+                                {selectedPR.aiReview}
+                              </ReactMarkdown>
+                            </div>
                           </div>
                         </div>
                       </div>

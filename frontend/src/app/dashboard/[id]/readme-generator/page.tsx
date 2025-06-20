@@ -92,7 +92,9 @@ export default function ReadmeGeneratorPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={`/dashboard/${params.id}`}>Dashboard</BreadcrumbLink>
+                  <BreadcrumbLink href={`/dashboard/${params.id}`}>
+                    Dashboard
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -114,9 +116,8 @@ export default function ReadmeGeneratorPage() {
                   Generate comprehensive README files for your projects
                 </p>
               </div>
-            </div>
-
-            <div className="grid gap-6 max-w-6xl">
+            </div>{" "}
+            <div className="w-full">
               <Card className="w-full">
                 <CardHeader>
                   <CardTitle>Generated README</CardTitle>
@@ -198,7 +199,7 @@ export default function ReadmeGeneratorPage() {
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </Button>
-                  </div>
+                  </div>{" "}
                 </CardContent>
               </Card>
             </div>

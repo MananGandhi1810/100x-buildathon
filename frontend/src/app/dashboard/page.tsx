@@ -206,11 +206,17 @@ function ImportRepositoryDialog({
                       : "Select a repository..."}
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                </PopoverTrigger>{" "}
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-[300px] overflow-hidden">
                   <Command>
                     <CommandInput placeholder="Search repository..." />
-                    <CommandList>
+                    <CommandList
+                      className="max-h-[250px] overflow-y-scroll"
+                      style={{
+                        scrollbarWidth: "thin",
+                        scrollBehavior: "smooth",
+                      }}
+                    >
                       <CommandEmpty>No repository found.</CommandEmpty>
                       <CommandGroup>
                         {repositories.map((repo) => (
@@ -250,6 +256,7 @@ function ImportRepositoryDialog({
                           </CommandItem>
                         ))}
                       </CommandGroup>
+                      a
                     </CommandList>
                   </Command>
                 </PopoverContent>
