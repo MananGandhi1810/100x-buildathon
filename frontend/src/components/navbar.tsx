@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const pathname = usePathname();
-  const isHomeOrSignup = pathname === "/" || pathname === "/waitlist";
+  const isHomeOrSignup = pathname === "/" || pathname === "/signup";
 
   if (!isHomeOrSignup) return null;
   return (
@@ -22,10 +22,11 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
-              className={`relative text-sm font-medium transition-all duration-300 group ${pathname === "/"
+              className={`relative text-sm font-medium transition-all duration-300 group ${
+                pathname === "/"
                   ? "text-white"
                   : "text-white/70 hover:text-white"
-                }`}
+              }`}
             >
               Home
               {pathname === "/" && (
@@ -33,14 +34,15 @@ const Navbar = () => {
               )}
             </Link>
             <Link
-              href="/waitlist"
-              className={`relative text-sm font-medium transition-all duration-300 group ${pathname === "/waitlist"
+              href="/signup"
+              className={`relative text-sm font-medium transition-all duration-300 group ${
+                pathname === "/signup"
                   ? "text-white"
                   : "text-white/70 hover:text-white"
-                }`}
+              }`}
             >
-              Join Waitlist
-              {pathname === "/waitlist" && (
+              Sign Up
+              {pathname === "/signup" && (
                 <div className="absolute -bottom-1 left-0 w-full h-[2px] bg-gradient-to-r from-[#6195e8] via-[#c47ccf] to-[#dda355] rounded-full"></div>
               )}
             </Link>
@@ -48,7 +50,7 @@ const Navbar = () => {
 
           <div className="flex items-center">
             <Link
-              href="/waitlist"
+              href="/signup"
               className="group relative inline-flex items-center text-sm font-medium text-white rounded-full 
               p-[1px] bg-gradient-to-r from-[#7c3aed] via-[#06b6d4] to-[#fbbf24]
               hover:from-[#6366f1] hover:via-[#06b6d4] hover:to-[#fbbf24]
