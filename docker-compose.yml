@@ -5,7 +5,7 @@ services:
         image: bitnami/postgresql:latest
         restart: unless-stopped
         ports:
-            - "8003:5432/tcp"
+            - "2345:5432/tcp"
         volumes:
             - pg-data:/bitnami/postgresql
         environment:
