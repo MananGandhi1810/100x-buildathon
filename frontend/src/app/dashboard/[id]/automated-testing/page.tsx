@@ -27,11 +27,14 @@ import {
   TestTube,
   Clock,
   AlertCircle,
+  Copy as CopyIcon,
+  Check,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useParams } from "next/navigation";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
 
 type TestSuiteMap = {
   [file: string]: {
@@ -59,6 +62,7 @@ export default function AutomatedTestingPage() {
   const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchTestData = async () => {
@@ -105,6 +109,15 @@ export default function AutomatedTestingPage() {
 
     fetchTestData();
   }, [params.id]);
+
+  // Copy to clipboard handler
+  const handleCopy = async () => {
+    if (selectedTest?.testCode) {
+      await navigator.clipboard.writeText(selectedTest.testCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    }
+  };
 
   return (
     <SidebarProvider className="bg-grain">
@@ -270,11 +283,26 @@ export default function AutomatedTestingPage() {
                           </Card>
                         </div>
                         <Card>
-                          <CardHeader>
-                            <CardTitle>Test Code</CardTitle>
-                            <CardDescription>
-                              View the complete test code for this suite
-                            </CardDescription>
+                          <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                              <CardTitle>Test Code</CardTitle>
+                              <CardDescription>
+                                View the complete test code for this suite
+                              </CardDescription>
+                            </div>
+                            <Button
+                              size="icon"
+                              className="ml-2"
+                              onClick={handleCopy}
+                              aria-label="Copy test code"
+                              disabled={copied}
+                            >
+                              {copied ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <CopyIcon className="h-4 w-4" />
+                              )}
+                            </Button>
                           </CardHeader>
                           <CardContent>
                             <pre className="text-xs bg-muted p-4 rounded-lg overflow-auto max-h-96">
