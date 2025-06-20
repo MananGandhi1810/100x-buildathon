@@ -1,7 +1,6 @@
 FROM codercom/code-server:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV 
 
 USER root
 RUN apt-get update \
