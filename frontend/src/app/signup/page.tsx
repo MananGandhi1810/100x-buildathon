@@ -25,7 +25,7 @@ export default function SignupPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const accessToken = sessionStorage.getItem("accessToken");
+        const accessToken = localStorage.getItem("accessToken");
         if (accessToken) {
           const response = await axios.get(
             `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,

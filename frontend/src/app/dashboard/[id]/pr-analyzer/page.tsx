@@ -70,7 +70,7 @@ export default function PRAnalyzerPage() {
           `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
           {
             headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );
@@ -166,11 +166,10 @@ export default function PRAnalyzerPage() {
                         pullRequests.map((pr) => (
                           <div
                             key={pr.number}
-                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                              selectedPR?.number === pr.number
+                            className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedPR?.number === pr.number
                                 ? "bg-primary/10 border border-primary/20"
                                 : "hover:bg-muted/50"
-                            }`}
+                              }`}
                             onClick={() => setSelectedPR(pr)}
                           >
                             <div className="flex items-center justify-between mb-1">
@@ -180,8 +179,8 @@ export default function PRAnalyzerPage() {
                                   pr.state === "merged"
                                     ? "default"
                                     : pr.state === "open"
-                                    ? "secondary"
-                                    : "destructive"
+                                      ? "secondary"
+                                      : "destructive"
                                 }
                               >
                                 {pr.state}

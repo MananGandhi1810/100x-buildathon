@@ -308,8 +308,8 @@ export default function DeploymentsPage() {
       await fetchUser();
       await fetchDeployments();
 
-      const storedGithubUrl = sessionStorage.getItem("githubUrl");
-      const projectName = sessionStorage.getItem("projectName");
+      const storedGithubUrl = localStorage.getItem("githubUrl");
+      const projectName = localStorage.getItem("projectName");
       if (storedGithubUrl && projectName) {
         setFormData((prev) => ({
           ...prev,
@@ -317,8 +317,8 @@ export default function DeploymentsPage() {
           name: projectName,
         }));
         setIsCreateDialogOpen(true);
-        sessionStorage.removeItem("githubUrl");
-        sessionStorage.removeItem("projectName");
+        localStorage.removeItem("githubUrl");
+        localStorage.removeItem("projectName");
 
       }
     };
@@ -327,7 +327,7 @@ export default function DeploymentsPage() {
 
   const fetchUser = async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
         {
@@ -347,7 +347,7 @@ export default function DeploymentsPage() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment`,
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -374,7 +374,7 @@ export default function DeploymentsPage() {
         },
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -405,7 +405,7 @@ export default function DeploymentsPage() {
         {},
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -424,7 +424,7 @@ export default function DeploymentsPage() {
         {},
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -442,7 +442,7 @@ export default function DeploymentsPage() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deploymentId}/status`,
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -493,7 +493,7 @@ export default function DeploymentsPage() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("accessToken");
+    localStorage.removeItem("accessToken");
     router.push("/signup");
   };
 

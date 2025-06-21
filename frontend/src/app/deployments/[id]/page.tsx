@@ -105,7 +105,7 @@ export default function DeploymentDetailPage() {
 
   const fetchUser = async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
         {
@@ -120,7 +120,7 @@ export default function DeploymentDetailPage() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("accessToken");
+    localStorage.removeItem("accessToken");
     router.push("/signup");
   };
 
@@ -130,7 +130,7 @@ export default function DeploymentDetailPage() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${params.id}`,
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -151,7 +151,7 @@ export default function DeploymentDetailPage() {
         `${process.env.NEXT_PUBLIC_SERVER_URL}/deployment/${deployment.id}/status`,
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -174,7 +174,7 @@ export default function DeploymentDetailPage() {
         {},
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -194,7 +194,7 @@ export default function DeploymentDetailPage() {
         {},
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         }
       );
@@ -339,9 +339,8 @@ export default function DeploymentDetailPage() {
                         className="h-8 w-8 p-0"
                       >
                         <RefreshCw
-                          className={`h-4 w-4 ${
-                            statusLoading ? "animate-spin" : ""
-                          }`}
+                          className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""
+                            }`}
                         />
                       </Button>
                     </div>

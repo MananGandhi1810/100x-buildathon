@@ -60,7 +60,7 @@ export default function ChatWithCodePage() {
 
   const fetchProjectData = useCallback(async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
         {
@@ -133,7 +133,7 @@ export default function ChatWithCodePage() {
     setIsLoading(true);
 
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const repoInfo = extractRepoInfo(projectData.repoUrl);
 
       if (!repoInfo) {
@@ -259,26 +259,23 @@ export default function ChatWithCodePage() {
                     {messages.map((message, index) => (
                       <div
                         key={index}
-                        className={`flex gap-4 ${
-                          message.role === "user"
+                        className={`flex gap-4 ${message.role === "user"
                             ? "justify-end"
                             : "justify-start"
-                        }`}
+                          }`}
                       >
                         <div
-                          className={`flex gap-4 max-w-[85%] ${
-                            message.role === "user"
+                          className={`flex gap-4 max-w-[85%] ${message.role === "user"
                               ? "flex-row-reverse"
                               : "flex-row"
-                          }`}
+                            }`}
                         >
                           {" "}
                           <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
-                              message.role === "user"
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${message.role === "user"
                                 ? "bg-blue-500 text-white border-blue-400"
                                 : "bg-neutral-700 text-neutral-300 border-neutral-600"
-                            }`}
+                              }`}
                           >
                             {message.role === "user" ? (
                               <User className="h-5 w-5" />
@@ -287,11 +284,10 @@ export default function ChatWithCodePage() {
                             )}
                           </div>{" "}
                           <div
-                            className={`rounded-xl px-6 py-4 text-sm leading-relaxed shadow-sm ${
-                              message.role === "user"
+                            className={`rounded-xl px-6 py-4 text-sm leading-relaxed shadow-sm ${message.role === "user"
                                 ? "bg-neutral-900 text-white"
                                 : "text-white"
-                            }`}
+                              }`}
                           >
                             <div className="prose prose-sm max-w-none prose-invert">
                               <ReactMarkdown

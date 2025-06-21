@@ -117,7 +117,7 @@ function ImportRepositoryDialog({
       axios
         .get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/repositories`, {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         })
         .then((res) => {
@@ -473,7 +473,7 @@ export default function Dashboard() {
 
   const fetchUser = async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,
         {
@@ -489,7 +489,7 @@ export default function Dashboard() {
 
   const fetchProjects = async () => {
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/project/list`,
         {
@@ -513,10 +513,9 @@ export default function Dashboard() {
   }) => {
     setIsImporting(true);
     try {
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       const response = await axios.post(
-        `${
-          process.env.NEXT_PUBLIC_SERVER_URL
+        `${process.env.NEXT_PUBLIC_SERVER_URL
         }/project/create?repo=${encodeURIComponent(
           data.url
         )}&title=${encodeURIComponent(
@@ -540,7 +539,7 @@ export default function Dashboard() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("accessToken");
+    localStorage.removeItem("accessToken");
     router.push("/signup");
   };
 

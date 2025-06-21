@@ -91,7 +91,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );
@@ -108,8 +108,8 @@ const EnvironmentProvisioningPage: React.FC = () => {
         console.error("Error provisioning environment:", error);
         setError(
           error.response?.data?.message ||
-            error.message ||
-            "Failed to provision environment"
+          error.message ||
+          "Failed to provision environment"
         );
         toast.error("Failed to provision environment");
       } finally {
@@ -364,7 +364,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                  
+
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">
                         Container Name

@@ -63,7 +63,7 @@ export default function CodeStructurePage() {
           `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}/diagram`,
           {
             headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );

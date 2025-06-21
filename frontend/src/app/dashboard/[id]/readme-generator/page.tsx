@@ -44,7 +44,7 @@ export default function ReadmeGeneratorPage() {
           `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}/readme`,
           {
             headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );

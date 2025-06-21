@@ -112,7 +112,7 @@ export default function DashboardPage() {
           `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${repoSlug}`,
           {
             headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           }
         );
@@ -130,8 +130,8 @@ export default function DashboardPage() {
   }, [params.id]);
   const handleDeploy = () => {
     console.log(projectData)
-    sessionStorage.setItem("githubUrl", projectData.repoUrl);
-    sessionStorage.setItem("projectName", projectData.title)
+    localStorage.setItem("githubUrl", projectData.repoUrl);
+    localStorage.setItem("projectName", projectData.title)
     router.push('/deployments');
   }
   if (loading) {

@@ -43,7 +43,7 @@ export function UserNav() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const accessToken = sessionStorage.getItem("accessToken"); // retrieve token from sessionStorage
+        const accessToken = localStorage.getItem("accessToken"); // retrieve token from localStorage
 
         const res = await axios.get(
           `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/user`,

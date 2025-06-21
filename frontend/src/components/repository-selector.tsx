@@ -72,7 +72,7 @@ export function RepositorySelector() {
       setIsLoading(true);
       setError(null);
 
-      const accessToken = sessionStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) {
         router.push("/signup");
         return;

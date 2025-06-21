@@ -45,7 +45,7 @@ export default function TokenPage() {
         if (!data.accessToken) throw new Error("No access token in response");
 
         const token = data.accessToken;
-        sessionStorage.setItem("accessToken", token);
+        localStorage.setItem("accessToken", token);
         console.log("Access token retrieved successfully:", data);
 
         const userResponse = await axios.get(
@@ -57,7 +57,7 @@ export default function TokenPage() {
           }
         );
         console.log("User data response:", userResponse);
-        const user = userResponse.data.data.user; 
+        const user = userResponse.data.data.user;
         console.log("User data retrieved successfully:", user);
 
         posthog.identify(user.id, {
@@ -66,7 +66,7 @@ export default function TokenPage() {
         });
         console.log("User identified in PostHog:", user.id);
 
-     
+
         router.push("/dashboard");
       } catch (err: unknown) {
         const error = err as ApiError;

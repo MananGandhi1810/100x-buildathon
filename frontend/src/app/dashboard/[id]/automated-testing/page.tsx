@@ -73,7 +73,7 @@ export default function AutomatedTestingPage() {
           `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${params.id}`,
           {
             headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           },
         );
