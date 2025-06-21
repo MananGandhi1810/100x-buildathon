@@ -4,16 +4,15 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const createProjectProxy = (projectId, target) => {
+const createProjectProxy = (projectId, port) => {
     return createProxyMiddleware({
-        target: target,
+        target: `http://localhost:${port}`,
         changeOrigin: true,
         ws: true,
         timeout: 60000,
         proxyTimeout: 60000,
         onProxyReq: (proxyReq, req, res) => {
-            const url = new URL(target);
-            proxyReq.setHeader("Host", url.host);
+            proxyReq.setHeader("Host", `localhost:${port}`);
             proxyReq.setHeader(
                 "X-Forwarded-For",
                 req.ip || req.connection.remoteAddress
@@ -26,8 +25,7 @@ const createProjectProxy = (projectId, target) => {
             }
         },
         onProxyReqWs: (proxyReq, req, socket, options, head) => {
-            const url = new URL(target);
-            proxyReq.setHeader("Host", url.host);
+            proxyReq.setHeader("Host", `localhost:${port}`);
             proxyReq.setHeader(
                 "X-Forwarded-For",
                 req.ip || req.connection.remoteAddress,
@@ -82,7 +80,6 @@ const subdomainHandler = async (req, res) => {
             select: {
                 id: true,
                 containerPort: true,
-                containerName: true,
             },
         });
 
@@ -92,48 +89,41 @@ const subdomainHandler = async (req, res) => {
         ]);
         console.log(codeEnvData, deploymentData);
 
-        let target = null;
-        const isDevelopment = process.env.NODE_ENV === "development";
+        let containerData = null;
+        let port = null;
 
-        if (codeEnvData && !deploymentData) {
-            const container = JSON.parse(codeEnvData);
-            if (container && container.port) {
-                if (isDevelopment) {
-                    target = `http://localhost:${container.port}`;
-                } else {
-                    if (container.containerName) {
-                        target = `http://${container.containerName}:${container.port}`;
-                    }
-                }
+        if (!deploymentData) {
+            containerData = codeEnvData;
+            const container = JSON.parse(containerData);
+            port = container.port;
+            if (!containerData) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Project container not found or expired",
+                    data: null,
+                });
             }
-        } else if (deploymentData && !codeEnvData) {
-            if (deploymentData.containerPort) {
-                if (isDevelopment) {
-                    target = `http://localhost:${deploymentData.containerPort}`;
-                } else {
-                    if (deploymentData.containerName) {
-                        target = `http://${deploymentData.containerName}:${deploymentData.containerPort}`;
-                    }
-                }
-            }
-        } else if (deploymentData && codeEnvData) {
-            return res.status(404).json({
+        }
+        else if (!codeEnvData) {
+            port = deploymentData.containerPort;
+        }
+        else {
+            res.status(404).json({
                 success: false,
-                message:
-                    "Ambiguous project ID, exists in both dev and deployment",
+                message: "404",
                 data: null,
             });
         }
 
-        if (!target) {
-            return res.status(404).json({
+        if (!port) {
+            return res.status(400).json({
                 success: false,
-                message: "Project container not found or not running",
+                message: "Container port not available",
                 data: null,
             });
         }
 
-        const proxy = createProjectProxy(projectId, target);
+        const proxy = createProjectProxy(projectId, port);
         proxy(req, res);
     } catch (error) {
         console.error("Error in proxy handler:", error);

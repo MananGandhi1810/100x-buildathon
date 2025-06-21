@@ -43,7 +43,6 @@ model Deployment {
     imageName     String?
     deployCommit  String?
     containerId   String?          @unique
-    containerName String?
     containerPort String?
     containerLogs String?
     createdAt     DateTime         @default(now())

@@ -108,7 +108,6 @@ ${e}
     const containerDetails = {
         containerId: containerInspection.Id,
         imageName: imageTag,
-        containerName: containerInspection.Name.substring(1),
         deployCommit: commitHash,
         lastDeploy: new Date(),
         status: containerStatus,
