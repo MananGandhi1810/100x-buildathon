@@ -93,7 +93,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
             },
-          },
+          }
         );
 
         if (response.data.success) {
@@ -101,7 +101,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
           toast.success("Environment provisioned successfully!");
         } else {
           throw new Error(
-            response.data.message || "Failed to provision environment",
+            response.data.message || "Failed to provision environment"
           );
         }
       } catch (error: any) {
@@ -109,7 +109,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
         setError(
           error.response?.data?.message ||
             error.message ||
-            "Failed to provision environment",
+            "Failed to provision environment"
         );
         toast.error("Failed to provision environment");
       } finally {
@@ -364,27 +364,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Container ID</span>
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {provisioningData.containerId.substring(0, 12)}...
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            copyToClipboard(
-                              provisioningData.containerId,
-                              "Container ID",
-                            )
-                          }
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <Separator />
+                  
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">
                         Container Name
@@ -399,7 +379,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
                           onClick={() =>
                             copyToClipboard(
                               provisioningData.containerName,
-                              "Container Name",
+                              "Container Name"
                             )
                           }
                         >
@@ -407,11 +387,7 @@ const EnvironmentProvisioningPage: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Port</span>
-                      <Badge variant="secondary">{provisioningData.port}</Badge>
-                    </div>
+
                     <Separator />
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Access URL</span>
